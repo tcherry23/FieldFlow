@@ -1,2 +1,2 @@
-// Placeholder for FieldFlow core logic
-console.log('FieldFlow App Loaded');
+console.log('FieldFlow main app loaded');
+// Placeholder for interactive JS logic
