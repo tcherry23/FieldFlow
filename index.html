@@ -1,18 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>FieldFlow App</title>
+  <title>FieldFlow</title>
+  <style>
+    body { font-family: Arial; text-align: center; padding: 40px; background-color: #f4f4f4; }
+    .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
+    .icon { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px #ccc; width: 150px; text-align: center; }
+    .icon img { width: 50px; height: 50px; }
+    .icon p { margin-top: 10px; }
+  </style>
 </head>
 <body>
-    <h1>Welcome to FieldFlow</h1>
-    <p>This is the live version of the Underground Gas Storage App.</p>
-    <ul>
-        <li><a href="annual_inspection.html">Annual Inspection Form</a></li>
-        <li><a href="shut_in_log.html">Shut-In Pressure Log</a></li>
-        <li><a href="swd_log.html">SWD Log</a></li>
-        <li><a href="gps_route_log.html">GPS Route Tracker</a></li>
-        <li><a href="export.html">Export Data</a></li>
-    </ul>
+  <h1>Welcome to FieldFlow</h1>
+  <div class="container">
+    <a class="icon" href="annual_inspection.html"><img src="https://img.icons8.com/ios-filled/50/inspection.png"/><p>Annual Inspection</p></a>
+    <a class="icon" href="shut_in_log.html"><img src="https://img.icons8.com/ios-filled/50/pressure-gauge.png"/><p>Shut-In Log</p></a>
+    <a class="icon" href="daily_log.html"><img src="https://img.icons8.com/ios-filled/50/flow-chart.png"/><p>Daily Pressure</p></a>
+    <a class="icon" href="swd_log.html"><img src="https://img.icons8.com/ios-filled/50/water.png"/><p>SWD Log</p></a>
+    <a class="icon" href="gps_route_log.html"><img src="https://img.icons8.com/ios-filled/50/map.png"/><p>GPS Tracker</p></a>
+    <a class="icon" href="export.html"><img src="https://img.icons8.com/ios-filled/50/export.png"/><p>Export</p></a>
+  </div>
 </body>
 </html>
