@@ -1,68 +1,162 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Daily Pressure Log</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      padding: 20px;
+      background-color: #f2f2f2;
     }
-    h2 {
+    h1, h2 {
       text-align: center;
     }
-    .well-form {
-      border: 1px solid #ccc;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 5px;
-    }
-    label {
-      display: inline-block;
-      width: 150px;
-    }
-    input {
-      margin-bottom: 8px;
-    }
-    .note {
+    select, input, button, textarea {
+      padding: 8px;
+      margin: 5px 0;
       width: 100%;
+      box-sizing: border-box;
     }
-    .home-button {
-      display: block;
+    .well-card {
+      background: white;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 0 5px #ccc;
+    }
+    .field-container {
+      max-width: 600px;
+      margin: auto;
+    }
+    .summary-box {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
       text-align: center;
+      font-weight: bold;
+    }
+    .green { background-color: #d4edda; color: #155724; }
+    .yellow { background-color: #fff3cd; color: #856404; }
+    .red { background-color: #f8d7da; color: #721c24; }
+    .btn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+    .nav-btn {
       margin-top: 20px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h2>Daily Pressure Log</h2>
+  <h1>Daily Pressure Log</h1>
 
-  <!-- Repeat this block for each well -->
-  <div class="well-form">
-    <strong>Well Name:</strong> Dixon #1<br><br>
+  <div class="field-container">
+    <label for="field">Select Field:</label>
+    <select id="field" onchange="loadWells()">
+      <option value="">-- Choose Field --</option>
+      <option value="Simpson Chapel">Simpson Chapel</option>
+      <option value="Mineral City">Mineral City</option>
+      <option value="Dixon">Dixon</option>
+    </select>
 
-    <label>Time:</label><input type="time"><br>
-    <label>Orifice Size:</label><input type="text" value="5/16" readonly><br>
-    <label>Upstream PSI:</label><input type="number"><br>
-    <label>Downstream PSI:</label><input type="number"><br>
-    <label>Differential:</label><input type="text" readonly><br>
-    <label>Notes:</label><br><textarea class="note" rows="2"></textarea>
+    <label for="mcfGoal">Daily MCF Target:</label>
+    <input type="number" id="mcfGoal" placeholder="Enter target MCF for today" onchange="updateSummary()" />
+
+    <div id="summary" class="summary-box"></div>
+
+    <div id="wellList"></div>
+
+    <div class="nav-btn">
+      <button class="btn" onclick="location.href='index.html'">🏠 Home</button>
+    </div>
   </div>
 
-  <div class="well-form">
-    <strong>Well Name:</strong> Dixon #2<br><br>
+  <script>
+    const wells = {
+      "Simpson Chapel": ["SC-1", "SC-2", "SC-3"],
+      "Mineral City": ["MC-1", "MC-2", "MC-3"],
+      "Dixon": ["DX-1", "DX-2", "DX-3"]
+    };
 
-    <label>Time:</label><input type="time"><br>
-    <label>Orifice Size:</label><input type="text" value="3/8" readonly><br>
-    <label>Upstream PSI:</label><input type="number"><br>
-    <label>Downstream PSI:</label><input type="number"><br>
-    <label>Differential:</label><input type="text" readonly><br>
-    <label>Notes:</label><br><textarea class="note" rows="2"></textarea>
-  </div>
+    const orificeSizes = {
+      "SC-1": "0.75", "SC-2": "0.75", "SC-3": "0.75",
+      "MC-1": "0.625", "MC-2": "0.625", "MC-3": "0.625",
+      "DX-1": "0.5", "DX-2": "0.5", "DX-3": "0.5"
+    };
 
-  <!-- Add more wells here -->
+    function loadWells() {
+      const field = document.getElementById("field").value;
+      const wellList = document.getElementById("wellList");
+      wellList.innerHTML = "";
 
-  <div class="home-button">
-    <a href="index.html">🏠 Home</a>
-  </div>
+      if (wells[field]) {
+        wells[field].forEach(well => {
+          const now = new Date();
+          const time = now.toLocaleTimeString();
+          const date = now.toLocaleDateString();
+
+          const card = document.createElement("div");
+          card.className = "well-card";
+          card.innerHTML = `
+            <h3>${well}</h3>
+            <label>Date:</label>
+            <input type="text" value="${date}" readonly />
+            <label>Time:</label>
+            <input type="text" value="${time}" readonly />
+            <label>Orifice Size:</label>
+            <input type="text" value="${orificeSizes[well]}" readonly />
+            <label>Upstream Pressure:</label>
+            <input type="number" id="${well}-up" onchange="calculateDiff('${well}')" />
+            <label>Downstream Pressure:</label>
+            <input type="number" id="${well}-down" onchange="calculateDiff('${well}')" />
+            <label>Differential Pressure:</label>
+            <input type="text" id="${well}-diff" readonly />
+            <label>Notes:</label>
+            <textarea rows="2"></textarea>
+          `;
+          wellList.appendChild(card);
+        });
+      }
+
+      updateSummary();
+    }
+
+    function calculateDiff(well) {
+      const up = parseFloat(document.getElementById(`${well}-up`).value) || 0;
+      const down = parseFloat(document.getElementById(`${well}-down`).value) || 0;
+      const diff = Math.max(0, up - down).toFixed(2);
+      document.getElementById(`${well}-diff`).value = diff;
+      updateSummary();
+    }
+
+    function updateSummary() {
+      const field = document.getElementById("field").value;
+      if (!wells[field]) return;
+
+      let totalMCF = 0;
+      wells[field].forEach(well => {
+        const diff = parseFloat(document.getElementById(`${well}-diff`)?.value) || 0;
+        totalMCF += diff * 10; // simple formula for MCF est.
+      });
+
+      const target = parseFloat(document.getElementById("mcfGoal").value) || 0;
+      const summaryBox = document.getElementById("summary");
+
+      let className = "green";
+      if (totalMCF < target * 0.9) className = "red";
+      else if (totalMCF < target) className = "yellow";
+
+      summaryBox.className = `summary-box ${className}`;
+      summaryBox.textContent = `Total Estimated MCF: ${totalMCF.toFixed(1)} | Target: ${target}`;
+    }
+  </script>
 </body>
 </html>
