@@ -1,12 +1,68 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Coming Soon</title>
-  </head>
-  <body style="text-align:center; font-family:sans-serif;">
-    <h2>This feature is coming soon!</h2>
-    <a href="index.html" style="display:inline-block; padding:10px 20px; background-color:#007bff; color:white; text-decoration:none; border-radius:5px; margin-top:20px;">
-      🏠 Home
-    </a>
-  </body>
+<head>
+  <title>Daily Pressure Log</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    .well-form {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+    }
+    label {
+      display: inline-block;
+      width: 150px;
+    }
+    input {
+      margin-bottom: 8px;
+    }
+    .note {
+      width: 100%;
+    }
+    .home-button {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Daily Pressure Log</h2>
+
+  <!-- Repeat this block for each well -->
+  <div class="well-form">
+    <strong>Well Name:</strong> Dixon #1<br><br>
+
+    <label>Time:</label><input type="time"><br>
+    <label>Orifice Size:</label><input type="text" value="5/16" readonly><br>
+    <label>Upstream PSI:</label><input type="number"><br>
+    <label>Downstream PSI:</label><input type="number"><br>
+    <label>Differential:</label><input type="text" readonly><br>
+    <label>Notes:</label><br><textarea class="note" rows="2"></textarea>
+  </div>
+
+  <div class="well-form">
+    <strong>Well Name:</strong> Dixon #2<br><br>
+
+    <label>Time:</label><input type="time"><br>
+    <label>Orifice Size:</label><input type="text" value="3/8" readonly><br>
+    <label>Upstream PSI:</label><input type="number"><br>
+    <label>Downstream PSI:</label><input type="number"><br>
+    <label>Differential:</label><input type="text" readonly><br>
+    <label>Notes:</label><br><textarea class="note" rows="2"></textarea>
+  </div>
+
+  <!-- Add more wells here -->
+
+  <div class="home-button">
+    <a href="index.html">🏠 Home</a>
+  </div>
+</body>
 </html>
