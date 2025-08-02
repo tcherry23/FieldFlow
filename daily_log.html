@@ -3,175 +3,177 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Daily Pressure Log - Dixon</title>
+  <title>Daily Pressure Log</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f1f1f1;
       padding: 20px;
+      background-color: #f2f2f2;
     }
-    h1 {
+    h2 {
       text-align: center;
     }
-    .field-container {
-      background: #fff;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 10px;
+    select, input, button, textarea {
+      padding: 5px;
+      margin: 5px;
     }
-    label {
-      display: block;
-      margin-top: 5px;
-    }
-    input {
-      width: 100%;
-      padding: 8px;
-      margin-top: 3px;
+    .well-container {
+      border: 1px solid #ccc;
+      background: white;
+      padding: 10px;
       margin-bottom: 10px;
     }
     .status {
       font-weight: bold;
-      padding: 5px;
-      border-radius: 5px;
-      display: inline-block;
-      margin-top: 5px;
+      padding-left: 10px;
     }
-    .status.green { color: green; }
-    .status.yellow { color: orange; }
-    .status.red { color: red; }
-    .home-button {
-      display: block;
-      width: 100%;
-      padding: 10px;
-      text-align: center;
-      background: #007bff;
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-      margin-top: 20px;
-    }
-    .top-box {
-      background: #fff;
-      padding: 10px;
-      border-radius: 10px;
-      margin-bottom: 15px;
+    .status.good { color: green; }
+    .status.warning { color: orange; }
+    .status.bad { color: red; }
+    .flex-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>Daily Pressure Log - Dixon</h1>
 
-  <div class="top-box">
-    <label for="date">Date:</label>
-    <input type="text" id="date" readonly />
+<h2>Daily Pressure Log</h2>
 
-    <label for="target">Daily MCF Target:</label>
-    <input type="number" id="target" placeholder="Enter target MCF" />
-    <p><strong>Total MCF Recorded:</strong> <span id="total-mcf">0</span></p>
-  </div>
+<label for="field-select">Select Field:</label>
+<select id="field-select" onchange="renderWells()">
+  <option value="Dixon">Dixon</option>
+  <option value="Simpson Chapel">Simpson Chapel</option>
+  <option value="Mineral City">Mineral City</option>
+</select>
 
-  <div id="wellContainer"></div>
+<br>
+<label for="target-mcf">Daily MCF Target:</label>
+<input type="number" id="target-mcf" placeholder="Enter target">
+<h3>Total MCF/hr: <span id="total-mcf">0</span></h3>
 
-  <a class="home-button" href="index.html">🏠 Home</a>
+<div id="well-forms"></div>
 
-  <script>
-    const wells = [
-      "Evans 10", "Evans 5", "Evan 4-H",
-      "Cory 8", "Cory 4", "Cory 2", "Cory 7",
-      "Cory 3", "Cory 6", "Cory 5", "Cory 1"
-    ];
+<button onclick="goHome()">Home</button>
 
-    const C = 10;
-    const orifice = 1; // 1 inch
+<script>
+  const wells = {
+    "Dixon": ["Evans 10", "Evans 5", "Evan 4-H", "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6", "Cory 5", "Cory 1"],
+    "Simpson Chapel": ["Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 5", "Crays 4", "Crays 3", "Crays 7", "Crays 2", "Crays 6", "Royal 6", "Royal 5", "Royal 4", "Royal 7", "Royal 1"],
+    "Mineral City": {
+      "Haines 1": 0.75,
+      "Haines 2": 0.75,
+      "Haines 3": 0.75,
+      "Haines 4": 0.75,
+      "G. Axe 1": 0.5,
+      "G. Axe 2": 0.5,
+      "G. Axe 3": 0.5,
+      "G. Axe 4": 0.5,
+      "G. Axe 5": 0.5,
+      "G. Axe 6": 0.5,
+      "J. Axe 1": 0.5,
+      "Rollison 1": 0.75,
+      "Rollison 2": 0.75,
+      "Rollison 3": 0.75,
+      "Rollison 4": 0.75,
+      "Headley 1": 1
+    }
+  };
 
-    const container = document.getElementById("wellContainer");
+  const defaultOrifice = 1;
 
-    wells.forEach(well => {
+  function goHome() {
+    window.location.href = 'index.html';
+  }
+
+  function renderWells() {
+    const field = document.getElementById("field-select").value;
+    const container = document.getElementById("well-forms");
+    container.innerHTML = "";
+
+    const now = new Date().toLocaleString();
+
+    const fieldWells = typeof wells[field] === "object" && !Array.isArray(wells[field])
+      ? Object.keys(wells[field])
+      : wells[field];
+
+    fieldWells.forEach(well => {
+      const orifice = typeof wells[field] === "object" && !Array.isArray(wells[field])
+        ? wells[field][well]
+        : defaultOrifice;
+
       const div = document.createElement("div");
-      div.className = "field-container";
-
+      div.className = "well-container";
       div.innerHTML = `
-        <h3>${well}</h3>
-        <label>Time:</label>
-        <input type="time" class="time" />
-
-        <label>Orifice Size (inch):</label>
-        <input type="text" class="orifice" value="${orifice}" readonly />
-
-        <label>Upstream Pressure (psi):</label>
-        <input type="number" class="up" />
-
-        <label>Downstream Pressure (psi):</label>
-        <input type="number" class="down" />
-
-        <label>Differential Pressure (ΔP):</label>
-        <input type="number" class="diff" readonly />
-
-        <label>MCF/hour:</label>
-        <input type="number" class="mcf" readonly />
-
-        <div class="status"></div>
-        <label>Notes:</label>
-        <input type="text" class="notes" />
+        <strong>${well}</strong><br>
+        Date/Time: <input type="text" value="${now}" readonly><br>
+        Orifice Size (in): <input type="number" value="${orifice}" id="orifice-${well}"><br>
+        Upstream PSI: <input type="number" id="up-${well}" onchange="calculate('${well}')">
+        Downstream PSI: <input type="number" id="down-${well}" onchange="calculate('${well}')"><br>
+        Diff: <input type="text" id="diff-${well}" readonly>
+        d/p H₂O: <input type="text" id="dp-${well}" readonly>
+        MCF/hr: <input type="text" id="mcf-${well}" readonly>
+        <span id="status-${well}" class="status"></span><br>
+        Notes:<br><textarea rows="2" cols="40"></textarea>
       `;
-
       container.appendChild(div);
     });
+  }
 
-    function updateFields() {
-      const entries = document.querySelectorAll(".field-container");
-      let total = 0;
-      const target = parseFloat(document.getElementById("target").value);
+  function calculate(well) {
+    const up = parseFloat(document.getElementById(`up-${well}`).value);
+    const down = parseFloat(document.getElementById(`down-${well}`).value);
+    const orifice = parseFloat(document.getElementById(`orifice-${well}`).value);
+    if (isNaN(up) || isNaN(down)) return;
 
-      entries.forEach(entry => {
-        const up = entry.querySelector(".up");
-        const down = entry.querySelector(".down");
-        const diff = entry.querySelector(".diff");
-        const mcf = entry.querySelector(".mcf");
-        const status = entry.querySelector(".status");
+    const diff = up - down;
+    const dph2o = diff * 27.7;
+    const mcf = 0.2628 * Math.pow(orifice, 2) * Math.sqrt(up * dph2o);
 
-        const upVal = parseFloat(up.value);
-        const downVal = parseFloat(down.value);
+    document.getElementById(`diff-${well}`).value = diff.toFixed(2);
+    document.getElementById(`dp-${well}`).value = dph2o.toFixed(2);
+    document.getElementById(`mcf-${well}`).value = isNaN(mcf) ? '' : mcf.toFixed(2);
 
-        if (!isNaN(upVal) && !isNaN(downVal)) {
-          const delta = upVal - downVal;
-          diff.value = delta.toFixed(2);
+    updateTotal();
+  }
 
-          const calcMCF = C * Math.sqrt(delta);
-          mcf.value = isNaN(calcMCF) ? "" : calcMCF.toFixed(2);
-          total += calcMCF;
+  function updateTotal() {
+    const mcfInputs = document.querySelectorAll("[id^='mcf-']");
+    let total = 0;
+    mcfInputs.forEach(input => {
+      const val = parseFloat(input.value);
+      if (!isNaN(val)) total += val;
+    });
+    document.getElementById("total-mcf").innerText = total.toFixed(2);
 
-          if (!isNaN(target)) {
-            const pct = (calcMCF / target) * 100;
-            if (pct >= 100) {
-              status.textContent = "On Target";
-              status.className = "status green";
-            } else if (pct >= 70) {
-              status.textContent = "Below Target";
-              status.className = "status yellow";
-            } else {
-              status.textContent = "Too Low";
-              status.className = "status red";
-            }
-          } else {
-            status.textContent = "";
-            status.className = "status";
-          }
+    const target = parseFloat(document.getElementById("target-mcf").value);
+    if (!isNaN(target)) {
+      document.querySelectorAll(".well-container").forEach(div => {
+        const mcfInput = div.querySelector("[id^='mcf-']");
+        const statusSpan = div.querySelector(".status");
+        const val = parseFloat(mcfInput.value);
+        if (isNaN(val)) {
+          statusSpan.innerText = "";
+          return;
+        }
+        if (val >= target / mcfInputs.length * 0.95) {
+          statusSpan.innerText = "✔ On Track";
+          statusSpan.className = "status good";
+        } else if (val >= target / mcfInputs.length * 0.6) {
+          statusSpan.innerText = "⚠ Below";
+          statusSpan.className = "status warning";
         } else {
-          diff.value = "";
-          mcf.value = "";
-          status.textContent = "";
-          status.className = "status";
+          statusSpan.innerText = "❌ Too Low";
+          statusSpan.className = "status bad";
         }
       });
-
-      document.getElementById("total-mcf").textContent = total.toFixed(2);
     }
+  }
 
-    document.getElementById("target").addEventListener("input", updateFields);
-    container.addEventListener("input", updateFields);
+  document.getElementById("target-mcf").addEventListener("input", updateTotal);
+  window.onload = renderWells;
+</script>
 
-    document.getElementById("date").value = new Date().toLocaleDateString();
-  </script>
 </body>
 </html>
