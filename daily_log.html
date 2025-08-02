@@ -3,139 +3,173 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Daily Pressure Log</title>
+  <title>Daily Pressure Log - Dixon</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 10px;
-      background: #f4f4f4;
+      margin: 15px;
+      background-color: #f4f4f4;
     }
     h2, h3 {
       text-align: center;
     }
-    select, input, button {
-      margin: 4px;
-      padding: 5px;
+    .well-entry {
+      background: #fff;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border-left: 5px solid #ccc;
     }
-    .well-block {
-      border: 1px solid #ccc;
+    .well-entry.green { border-left-color: green; }
+    .well-entry.yellow { border-left-color: goldenrod; }
+    .well-entry.red { border-left-color: red; }
+    label {
+      display: block;
+      margin-top: 6px;
+    }
+    input {
+      width: 100%;
+      padding: 6px;
+      margin-top: 2px;
+    }
+    .summary {
       padding: 10px;
-      margin-bottom: 12px;
-      background: white;
+      background: #e8e8e8;
+      border-radius: 8px;
+      margin-bottom: 15px;
     }
-    .status {
-      font-weight: bold;
+    button {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
     }
-    .green { color: green; }
-    .yellow { color: goldenrod; }
-    .red { color: red; }
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+    }
+    .nav-buttons button {
+      width: 48%;
+      background-color: #444;
+    }
   </style>
 </head>
 <body>
 
-  <h2>Daily Pressure Log</h2>
+  <h2>Daily Pressure Log - Dixon</h2>
 
-  <label for="fieldSelect">Select Field:</label>
-  <select id="fieldSelect" onchange="loadWells()">
-    <option value="">-- Select --</option>
-    <option value="Simpson Chapel">Simpson Chapel</option>
-    <option value="Mineral City">Mineral City</option>
-    <option value="Dixon">Dixon</option>
-  </select>
-
-  <br><br>
-
-  <label for="targetMCF">Daily MCF Target:</label>
-  <input type="number" id="targetMCF" placeholder="Enter target MCF" />
-
-  <h3>Total MCF: <span id="totalMCF">0</span></h3>
+  <div class="summary">
+    <label for="dailyTarget">Daily MCF Target:</label>
+    <input type="number" id="dailyTarget" placeholder="Enter daily target MCF" oninput="updateColors()">
+    <p>Total MCF so far: <span id="totalMCF">0</span></p>
+  </div>
 
   <div id="wellsContainer"></div>
 
-  <button onclick="goHome()">Home</button>
+  <div class="nav-buttons">
+    <button onclick="goHome()">Home</button>
+    <button onclick="submitForm()">Submit</button>
+  </div>
 
   <script>
-    const fieldWells = {
-      "Simpson Chapel": ["Well SC1", "Well SC2", "Well SC3"],
-      "Mineral City": ["Well MC1", "Well MC2"],
-      "Dixon": ["Well D1", "Well D2", "Well D3"]
-    };
+    const wells = [
+      "Dixon 1",
+      "Dixon 2",
+      "Dixon 3",
+      "Dixon 4",
+      "Dixon 5",
+      "Dixon 6"
+    ];
 
-    const defaultOrificeSize = 1.0;
-    const flowConstant = 24.22; // example constant for 1-inch orifice
+    function createWellEntry(wellName) {
+      const container = document.createElement('div');
+      container.className = 'well-entry';
+      container.id = `entry-${wellName.replace(/\s/g, '')}`;
+      container.innerHTML = `
+        <h3>${wellName}</h3>
+        <label>Time:</label>
+        <input type="time" value="${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}">
 
-    function loadWells() {
-      const field = document.getElementById("fieldSelect").value;
-      const wells = fieldWells[field] || [];
-      const container = document.getElementById("wellsContainer");
-      container.innerHTML = "";
+        <label>Orifice Size (in):</label>
+        <input type="number" value="1" readonly>
 
-      wells.forEach(well => {
-        const block = document.createElement("div");
-        block.className = "well-block";
-        block.innerHTML = `
-          <h4>${well}</h4>
-          Time: <input type="time" value="${getCurrentTime()}" /><br>
-          Orifice Size: <input type="number" value="${defaultOrificeSize}" step="0.01" readonly /><br>
-          Upstream Pressure: <input type="number" onchange="recalculate()" class="up" placeholder="psi" /><br>
-          Downstream Pressure: <input type="number" onchange="recalculate()" class="down" placeholder="psi" /><br>
-          Differential Pressure: <input type="number" class="diff" readonly /><br>
-          MCF/hour: <input type="number" class="mcf" readonly /><br>
-          Status: <span class="status">-</span><br>
-          Notes: <input type="text" /><br>
-        `;
-        container.appendChild(block);
-      });
+        <label>Upstream Pressure (psi):</label>
+        <input type="number" oninput="calculate('${wellName}')">
+
+        <label>Downstream Pressure (psi):</label>
+        <input type="number" oninput="calculate('${wellName}')">
+
+        <label>Differential Pressure (psi):</label>
+        <input type="number" class="differential" readonly>
+
+        <label>MCF/hour:</label>
+        <input type="number" class="mcf" readonly>
+
+        <label>Notes (optional):</label>
+        <input type="text">
+      `;
+      document.getElementById("wellsContainer").appendChild(container);
     }
 
-    function recalculate() {
+    function calculate(wellName) {
+      const entry = document.getElementById(`entry-${wellName.replace(/\s/g, '')}`);
+      const inputs = entry.getElementsByTagName('input');
+      const upstream = parseFloat(inputs[2].value) || 0;
+      const downstream = parseFloat(inputs[3].value) || 0;
+      const differential = upstream - downstream;
+      const orifice = parseFloat(inputs[1].value) || 1;
+
+      inputs[4].value = differential.toFixed(2);
+
+      const flowConst = 24.16; // C for 1" orifice default
+      const mcf = flowConst * Math.sqrt(differential > 0 ? differential : 0);
+      inputs[5].value = mcf.toFixed(2);
+
+      updateTotalMCF();
+    }
+
+    function updateTotalMCF() {
       let total = 0;
-      const target = parseFloat(document.getElementById("targetMCF").value || 0);
-      const blocks = document.querySelectorAll(".well-block");
-
-      blocks.forEach(block => {
-        const up = parseFloat(block.querySelector(".up").value || 0);
-        const down = parseFloat(block.querySelector(".down").value || 0);
-        const diffInput = block.querySelector(".diff");
-        const mcfInput = block.querySelector(".mcf");
-        const statusSpan = block.querySelector(".status");
-
-        const diff = Math.max(up - down, 0);
-        const mcf = Math.round(flowConstant * Math.sqrt(diff) * 100) / 100;
-
-        diffInput.value = diff.toFixed(2);
-        mcfInput.value = isNaN(mcf) ? "" : mcf;
-        total += isNaN(mcf) ? 0 : mcf;
-
-        if (!target) {
-          statusSpan.innerHTML = "-";
-          statusSpan.className = "status";
-        } else {
-          const perWellTarget = target / blocks.length;
-          if (mcf >= perWellTarget * 0.95) {
-            statusSpan.innerHTML = "On Track";
-            statusSpan.className = "status green";
-          } else if (mcf >= perWellTarget * 0.7) {
-            statusSpan.innerHTML = "Below Target";
-            statusSpan.className = "status yellow";
-          } else {
-            statusSpan.innerHTML = "Too Low";
-            statusSpan.className = "status red";
-          }
-        }
+      const entries = document.querySelectorAll(".well-entry");
+      entries.forEach(entry => {
+        const mcfInput = entry.querySelector(".mcf");
+        total += parseFloat(mcfInput.value) || 0;
       });
-
       document.getElementById("totalMCF").innerText = total.toFixed(2);
+      updateColors();
     }
 
-    function getCurrentTime() {
-      const now = new Date();
-      return now.toTimeString().slice(0,5);
+    function updateColors() {
+      const target = parseFloat(document.getElementById("dailyTarget").value) || 0;
+      const current = parseFloat(document.getElementById("totalMCF").innerText) || 0;
+      const entries = document.querySelectorAll(".well-entry");
+
+      entries.forEach(entry => {
+        entry.classList.remove("green", "yellow", "red");
+        const mcf = parseFloat(entry.querySelector(".mcf").value) || 0;
+        if (!target) return;
+        const ratio = mcf / (target / wells.length);
+        if (ratio >= 1) entry.classList.add("green");
+        else if (ratio >= 0.75) entry.classList.add("yellow");
+        else entry.classList.add("red");
+      });
     }
 
     function goHome() {
       window.location.href = "index.html";
     }
+
+    function submitForm() {
+      alert("Form submitted. (This is a demo — saving is not yet live.)");
+    }
+
+    // Build all well entries on load
+    wells.forEach(createWellEntry);
   </script>
 </body>
 </html>
