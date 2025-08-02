@@ -1,23 +1,98 @@
-<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; margin-top: 40px;">
-  <a href="annual.html" style="text-align: center;">
-    <img src="icons/inspection.png" width="60"><br>Annual Inspection
-  </a>
-  <a href="shutin.html" style="text-align: center;">
-    <img src="icons/valve.png" width="60"><br>Shut-In Log
-  </a>
-  <a href="daily-pressure.html" style="text-align: center;">
-    <img src="icons/pressure.png" width="60"><br>Daily Pressure
-  </a>
-  <a href="swd.html" style="text-align: center;">
-    <img src="icons/water.png" width="60"><br>SWD Log
-  </a>
-  <a href="gps.html" style="text-align: center;">
-    <img src="icons/gps.png" width="60"><br>GPS Tracker
-  </a>
-  <a href="export.html" style="text-align: center;">
-    <img src="icons/export.png" width="60"><br>Export
-  </a>
-  <a href="well-status.html" style="text-align: center;">
-    <img src="icons/tools.png" width="60"><br>Well Status
-  </a>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FieldFlow App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f1f1f1;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      justify-items: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .icon-button {
+      background-color: white;
+      border: 2px solid #3498db;
+      border-radius: 10px;
+      padding: 20px;
+      width: 130px;
+      height: 130px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: #333;
+      transition: 0.2s;
+    }
+
+    .icon-button:hover {
+      background-color: #e8f4ff;
+    }
+
+    .icon-button img {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 10px;
+    }
+
+    .label {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+  </style>
+</head>
+<body>
+  <h1>FieldFlow App</h1>
+
+  <div class="grid">
+    <a href="annual-inspection.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/inspection.png" alt="Annual Inspection" />
+      <div class="label">Annual Inspection</div>
+    </a>
+
+    <a href="shut-in.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/valve.png" alt="Shut-In Log" />
+      <div class="label">Shut-In Log</div>
+    </a>
+
+    <a href="daily-pressure.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/gas.png" alt="Daily Pressure" />
+      <div class="label">Daily Pressure</div>
+    </a>
+
+    <a href="swd-log.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/water.png" alt="SWD Log" />
+      <div class="label">SWD Log</div>
+    </a>
+
+    <a href="export.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/export.png" alt="Export" />
+      <div class="label">Export</div>
+    </a>
+
+    <a href="well-status.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/ok.png" alt="Well Status" />
+      <div class="label">Well Status Tracker</div>
+    </a>
+  </div>
+</body>
+</html>
