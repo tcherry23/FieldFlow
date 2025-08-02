@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Well Status Tracker</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; }
+    h2 { text-align: center; }
+    select, button { padding: 10px; font-size: 16px; margin: 10px 0; }
+    .well-container { margin-top: 20px; display: none; }
+    .well { margin-bottom: 10px; padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .status-select { padding: 6px; font-size: 14px; }
+    .green { background-color: #c8f7c5; }
+    .red { background-color: #f7c5c5; }
+    .button-row { margin-top: 20px; text-align: center; }
+    .home-button { margin-top: 40px; display: block; text-align: center; }
+    .home-button a { padding: 10px 20px; background: #333; color: #fff; text-decoration: none; border-radius: 5px; }
+  </style>
+</head>
+<body>
+
+<h2>Well Status Tracker</h2>
+
+<label for="field-select">Select Field:</label>
+<select id="field-select" onchange="displayWells(this.value)">
+  <option value="">-- Select a Field --</option>
+  <option value="Dixon">Dixon</option>
+  <option value="Simpson Chapel">Simpson Chapel</option>
+  <option value="Mineral City">Mineral City</option>
+</select>
+
+<div id="wells-container"></div>
+
+<div class="button-row">
+  <button onclick="submitStatus()">Submit</button>
+  <button onclick="exportData()">Export</button>
+</div>
+
+<div class="home-button">
+  <a href="index.html">🏠 Home</a>
+</div>
+
+<script>
+  const wellsByField = {
+    "Dixon": ["Evans 10", "Evans 5", "Evan 4-H", "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6", "Cory 5", "Cory 1"],
+    "Simpson Chapel": ["Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 5", "Crays 4", "Crays 3", "Crays 7", "Crays 2", "Crays 6", "Royal 6", "Royal 5", "Royal 4", "Royal 7", "Royal 1"],
+    "Mineral City": ["Haines 1", "Haines 2", "Haines 3", "Haines 4", "G. Axe 1", "G. Axe 2", "G. Axe 3", "G. Axe 4", "G. Axe 5", "G. Axe 6", "J. Axe 1", "Rollison 1", "Rollison 2", "Rollison 3", "Rollison 4", "Headley 1"]
+  };
+
+  function displayWells(field) {
+    const container = document.getElementById("wells-container");
+    container.innerHTML = '';
+    if (!field || !wellsByField[field]) return;
+
+    wellsByField[field].forEach(well => {
+      const div = document.createElement("div");
+      div.className = "well";
+      div.innerHTML = `
+        <strong>${well}</strong><br>
+        Date: <input type="text" value="${new Date().toISOString().split('T')[0]}" readonly><br>
+        Status:
+        <select class="status-select" onchange="updateColor(this)">
+          <option value="Open">Open</option>
+          <option value="Closed">Closed</option>
+        </select>
+      `;
+      container.appendChild(div);
+    });
+    container.style.display = 'block';
+  }
+
+  function updateColor(select) {
+    const box = select.closest('.well');
+    box.classList.remove('green', 'red');
+    if (select.value === 'Open') {
+      box.classList.add('green');
+    } else if (select.value === 'Closed') {
+      box.classList.add('red');
+    }
+  }
+
+  function submitStatus() {
+    alert("Well statuses saved locally (mock submission).");
+  }
+
+  function exportData() {
+    let field = document.getElementById("field-select").value;
+    let rows = document.querySelectorAll(".well");
+    let csv = "Field,Well,Date,Status\n";
+    rows.forEach(row => {
+      let well = row.querySelector("strong").innerText;
+      let date = row.querySelector("input").value;
+      let status = row.querySelector("select").value;
+      csv += `${field},${well},${date},${status}\n`;
+    });
+
+    let blob = new Blob([csv], { type: "text/csv" });
+    let url = URL.createObjectURL(blob);
+
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = "Well_Status_Report.csv";
+    a.click();
+
+    // Optional: Email link
+    let subject = encodeURIComponent("Underground Storage Field Reports");
+    let body = encodeURIComponent(csv);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  }
+</script>
+
+</body>
+</html>
