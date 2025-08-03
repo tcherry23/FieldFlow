@@ -1,12 +1,144 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Coming Soon</title>
-  </head>
-  <body style="text-align:center; font-family:sans-serif; margin-top:100px;">
-    <h2>This feature is coming soon!</h2>
-    <a href="index.html" style="display:inline-block; margin-top:20px; text-decoration:none; font-size:18px;">
-      🏠 Home
-    </a>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shut-In Log - FieldFlow</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f9fc;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #004466;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    .container {
+      padding: 1rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    select, input, textarea, button {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    .well-card {
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 5px;
+    }
+    .row {
+      display: flex;
+      gap: 1rem;
+    }
+    .row > div {
+      flex: 1;
+    }
+    button {
+      background-color: #004466;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #006699;
+    }
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Shut-In Logs</h1>
+  </header>
+
+  <div class="container">
+    <label for="fieldSelect">Select Field:</label>
+    <select id="fieldSelect" onchange="loadWells()">
+      <option value="">-- Choose a Field --</option>
+      <option value="Dixon">Dixon</option>
+      <option value="Simpson Chapel">Simpson Chapel</option>
+      <option value="Mineral City">Mineral City</option>
+    </select>
+
+    <div id="wellContainer"></div>
+
+    <div class="nav-buttons">
+      <button onclick="window.location.href='index.html'">🏠 Home</button>
+    </div>
+  </div>
+
+  <script>
+    const wellsByField = {
+      "Dixon": [
+        "Evans 10", "Evans 5", "Evan 4-H", "Cory 8", "Cory 4", "Cory 2",
+        "Cory 7", "Cory 3", "Cory 6", "Cory 5", "Cory 1"
+      ],
+      "Simpson Chapel": [
+        "Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 5", "Crays 4", 
+        "Crays 3", "Crays 7", "Crays 2", "Crays 6", "Royal 6", "Royal 5", 
+        "Royal 4", "Royal 7", "Royal 1"
+      ],
+      "Mineral City": [
+        "Haines 1", "Haines 2", "Haines 3", "Haines 4", "G. Axe 1", "G. Axe 2",
+        "G. Axe 3", "G. Axe 4", "G. Axe 5", "G. Axe 6", "J. Axe 1",
+        "Rollison 1", "Rollison 2", "Rollison 3", "Rollison 4", "Headley 1"
+      ]
+    };
+
+    function loadWells() {
+      const field = document.getElementById('fieldSelect').value;
+      const wellContainer = document.getElementById('wellContainer');
+      wellContainer.innerHTML = '';
+
+      if (field && wellsByField[field]) {
+        wellsByField[field].forEach(well => {
+          const wellCard = document.createElement('div');
+          wellCard.className = 'well-card';
+          wellCard.innerHTML = `
+            <h3>${well}</h3>
+            <div class="row">
+              <div>
+                <label>Date:</label>
+                <input type="date" />
+              </div>
+              <div>
+                <label>Time:</label>
+                <input type="time" />
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Type:</label>
+                <select>
+                  <option value="Tubing">Tubing</option>
+                  <option value="Annulus">Annulus</option>
+                </select>
+              </div>
+              <div>
+                <label>Pressure (PSI):</label>
+                <input type="number" step="0.1" />
+              </div>
+            </div>
+            <label>Notes:</label>
+            <textarea rows="2" placeholder="Optional notes..."></textarea>
+            <button onclick="alert('Submitted for ${well}')">Submit</button>
+          `;
+          wellContainer.appendChild(wellCard);
+        });
+      }
+    }
+  </script>
+</body>
 </html>
