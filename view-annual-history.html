@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Past Annual Inspections</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f2f2f2;
+    }
+    h1 {
+      text-align: center;
+    }
+    .accordion {
+      background-color: #fff;
+      color: #333;
+      cursor: pointer;
+      padding: 18px;
+      margin-bottom: 10px;
+      border: none;
+      text-align: left;
+      outline: none;
+      font-size: 16px;
+      transition: 0.3s;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .active, .accordion:hover {
+      background-color: #dfeffc;
+    }
+    .panel {
+      padding: 0 18px;
+      background-color: white;
+      display: none;
+      overflow: hidden;
+      border-radius: 0 0 5px 5px;
+      border-top: 1px solid #ccc;
+      margin-bottom: 15px;
+    }
+    .entry-field {
+      margin-bottom: 10px;
+    }
+    .entry-field strong {
+      display: inline-block;
+      width: 150px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Past Annual Inspection Logs</h1>
+
+<a href="index.html" class="btn">🏠 Home</a>
+
+<div id="logContainer"></div>
+
+<script>
+  function createAccordionEntry(entry, index) {
+    const button = document.createElement("button");
+    button.className = "accordion";
+    button.innerHTML = `${entry.date} - ${entry.field} - ${entry.well}`;
+
+    const panel = document.createElement("div");
+    panel.className = "panel";
+
+    panel.innerHTML = `
+      <div class="entry-field"><strong>Date:</strong> ${entry.date}</div>
+      <div class="entry-field"><strong>Field:</strong> ${entry.field}</div>
+      <div class="entry-field"><strong>Well:</strong> ${entry.well}</div>
+      <div class="entry-field"><strong>Tubing Pressure:</strong> ${entry.tubingPressure} psi</div>
+      <div class="entry-field"><strong>Annulus Pressure:</strong> ${entry.annulusPressure} psi</div>
+      <div class="entry-field"><strong>Valve 1 Checked:</strong> ${entry.valve1Checked}</div>
+      <div class="entry-field"><strong>Valve 2 Checked:</strong> ${entry.valve2Checked}</div>
+      <div class="entry-field"><strong>Valve 3 Checked:</strong> ${entry.valve3Checked}</div>
+      <div class="entry-field"><strong>Leak Test:</strong> ${entry.leakTest}</div>
+      <div class="entry-field"><strong>Leak Type:</strong> ${entry.leakType || 'N/A'}</div>
+      <div class="entry-field"><strong>Notes:</strong> ${entry.notes || 'N/A'}</div>
+    `;
+
+    button.addEventListener("click", function () {
+      this.classList.toggle("active");
+      panel.style.display = panel.style.display === "block" ? "none" : "block";
+    });
+
+    return { button, panel };
+  }
+
+  function loadLogs() {
+    const container = document.getElementById("logContainer");
+    const savedLogs = JSON.parse(localStorage.getItem("annualInspectionLogs") || "[]");
+
+    if (savedLogs.length === 0) {
+      container.innerHTML = "<p>No past inspections found.</p>";
+      return;
+    }
+
+    savedLogs.forEach((entry, index) => {
+      // Convert true/false to Yes/No
+      entry.valve1Checked = entry.valve1Checked === true ? "Yes" : "No";
+      entry.valve2Checked = entry.valve2Checked === true ? "Yes" : "No";
+      entry.valve3Checked = entry.valve3Checked === true ? "Yes" : "No";
+      entry.leakTest = entry.leakTest === true ? "Yes" : "No";
+
+      const { button, panel } = createAccordionEntry(entry, index);
+      container.appendChild(button);
+      container.appendChild(panel);
+    });
+  }
+
+  window.onload = loadLogs;
+</script>
+
+</body>
+</html>
