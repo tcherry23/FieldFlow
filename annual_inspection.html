@@ -7,65 +7,59 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
       background: #f4f4f4;
+      padding: 20px;
     }
-    h1 {
+    h1, h2 {
       text-align: center;
     }
-    select, input, textarea, button {
+    select, input, button, label {
       display: block;
-      margin: 10px 0;
-      width: 100%;
-      padding: 10px;
-      box-sizing: border-box;
+      margin: 10px auto;
+      font-size: 16px;
     }
-    .well-entry {
+    .well-section {
       background: #fff;
-      border: 1px solid #ccc;
       padding: 15px;
-      margin-top: 15px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
-    .valve-buttons button {
-      font-size: 1.5em;
-      margin-right: 10px;
-      padding: 5px 10px;
-      background: #eee;
-      border: 2px solid transparent;
-      border-radius: 5px;
-      cursor: pointer;
+    .leak-options {
+      display: none;
+      text-align: center;
     }
-    .valve-buttons button.active {
-      border-color: #007bff;
-      background-color: #d9ecff;
+    .form-group {
+      margin: 10px 0;
+      text-align: center;
     }
-    .home-btn {
-      background: #333;
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
+    .home-button {
       margin-top: 20px;
-      cursor: pointer;
-      width: auto;
+      display: block;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-
   <h1>Annual Inspection</h1>
 
-  <label for="fieldSelect">Select Field:</label>
-  <select id="fieldSelect" onchange="populateWells()">
-    <option value="">-- Select Field --</option>
+  <label for="field">Select Field:</label>
+  <select id="field" onchange="loadWells()">
+    <option value="">--Select Field--</option>
     <option value="Dixon">Dixon</option>
     <option value="Simpson Chapel">Simpson Chapel</option>
     <option value="Mineral City">Mineral City</option>
   </select>
 
-  <div id="wellContainer"></div>
+  <div id="wellsContainer"></div>
 
-  <button onclick="submitForm()">Submit All</button>
-  <button class="home-btn" onclick="location.href='index.html'">🏠 Home</button>
+  <div style="text-align:center">
+    <button onclick="submitForm()">Submit Inspection</button>
+  </div>
+
+  <div class="home-button">
+    <a href="index.html">← Back to Home</a>
+  </div>
 
   <script>
     const fieldWells = {
@@ -74,73 +68,79 @@
       "Mineral City": ["Haines 1", "Haines 2", "Haines 3", "Haines 4", "G. Axe 1", "G. Axe 2", "G. Axe 3", "G. Axe 4", "G. Axe 5", "G. Axe 6", "J. Axe 1", "Rollison 1", "Rollison 2", "Rollison 3", "Rollison 4", "Headley 1"]
     };
 
-    function populateWells() {
-      const field = document.getElementById('fieldSelect').value;
-      const container = document.getElementById('wellContainer');
-      container.innerHTML = '';
+    function loadWells() {
+      const field = document.getElementById("field").value;
+      const container = document.getElementById("wellsContainer");
+      container.innerHTML = "";
+      if (field && fieldWells[field]) {
+        fieldWells[field].forEach(well => {
+          const section = document.createElement("div");
+          section.className = "well-section";
+          section.innerHTML = `
+            <h2>${well}</h2>
 
-      if (!fieldWells[field]) return;
+            <div class="form-group">
+              <label>Valve Check:</label>
+              <select class="valve" name="${well}-valve">
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
 
-      fieldWells[field].forEach(well => {
-        const div = document.createElement('div');
-        div.className = 'well-entry';
-        div.innerHTML = `
-          <h3>${well}</h3>
-          <label>Date:</label>
-          <input type="date" name="date" value="${new Date().toISOString().split('T')[0]}">
+            <div class="form-group">
+              <label>Leak Detected:</label>
+              <select class="leak" name="${well}-leak" onchange="toggleLeakOptions(this)">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
 
-          <label>Time:</label>
-          <input type="time" name="time" value="${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}">
-
-          <label>Upstream Pressure (PSI):</label>
-          <input type="number" step="any" name="upstream">
-
-          <label>Downstream Pressure (PSI):</label>
-          <input type="number" step="any" name="downstream">
-
-          <label>Valve Check:</label>
-          <div class="valve-buttons">
-            <button type="button" onclick="setValveStatus(this, 'Pass')">✅</button>
-            <button type="button" onclick="setValveStatus(this, 'Fail')">❌</button>
-            <input type="hidden" name="valve_status" value="">
-          </div>
-
-          <label>Leak Check:</label>
-          <select name="leak" onchange="toggleLeakDetails(this)">
-            <option value="None">None</option>
-            <option value="Yes">Yes</option>
-          </select>
-
-          <div class="leak-details" style="display:none;">
-            <label>Leak Type:</label>
-            <select name="leak_type">
-              <option value="Internal">Internal</option>
-              <option value="External">External</option>
-              <option value="Both">Both</option>
-            </select>
-          </div>
-
-          <label>Notes:</label>
-          <textarea name="notes" placeholder="Enter any notes..."></textarea>
-        `;
-        container.appendChild(div);
-      });
+            <div class="form-group leak-options">
+              <label>Leak Location:</label>
+              <select class="leak-detail" name="${well}-leak-detail">
+                <option value="Internal">Internal</option>
+                <option value="External">External</option>
+                <option value="Both">Both</option>
+              </select>
+            </div>
+          `;
+          container.appendChild(section);
+        });
+      }
     }
 
-    function setValveStatus(button, status) {
-      const container = button.closest('.valve-buttons');
-      container.querySelector('input[type=hidden]').value = status;
-      container.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
-      button.classList.add('active');
-    }
-
-    function toggleLeakDetails(select) {
-      const details = select.closest('.well-entry').querySelector('.leak-details');
-      details.style.display = select.value === "Yes" ? "block" : "none";
+    function toggleLeakOptions(selectElement) {
+      const leakOptions = selectElement.parentElement.nextElementSibling;
+      if (selectElement.value === "Yes") {
+        leakOptions.style.display = "block";
+      } else {
+        leakOptions.style.display = "none";
+      }
     }
 
     function submitForm() {
-      alert("Annual inspection submitted! (Data handling coming soon)");
+      const field = document.getElementById("field").value;
+      const sections = document.querySelectorAll(".well-section");
+      const results = [];
+
+      sections.forEach(section => {
+        const wellName = section.querySelector("h2").innerText;
+        const valve = section.querySelector(".valve").value;
+        const leak = section.querySelector(".leak").value;
+        const leakDetailDropdown = section.querySelector(".leak-detail");
+        const leakDetail = leak === "Yes" ? leakDetailDropdown.value : "None";
+
+        results.push({
+          field,
+          well: wellName,
+          valveCheck: valve,
+          leakDetected: leak,
+          leakLocation: leakDetail
+        });
+      });
+
+      console.log("Inspection Results:", results);
+      alert("Annual Inspection Submitted!");
     }
   </script>
 </body>
