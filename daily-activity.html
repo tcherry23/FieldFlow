@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daily Activity Log</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f2f2f2;
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      max-width: 700px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 15px;
+    }
+    select, input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+      border-radius: 5px;
+      border: 1px solid #aaa;
+    }
+    textarea {
+      resize: vertical;
+    }
+    .hour-entry {
+      margin-top: 10px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    .nav-buttons {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .nav-buttons a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: white;
+      background: #888;
+      padding: 10px 15px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Daily Activity Log</h2>
+  <form id="activityForm">
+    <label for="attendant">Attendant:</label>
+    <select id="attendant" name="attendant" required>
+      <option value="">Select...</option>
+      <option value="T. Cherry">T. Cherry</option>
+      <option value="T. Ressler">T. Ressler</option>
+    </select>
+
+    <label for="logDate">Date:</label>
+    <input type="date" id="logDate" name="logDate" required>
+
+    <!-- Hourly entries 7am to 3pm -->
+    <div id="hourlyEntries">
+      <div class="hour-entry">
+        <label for="7am">7:00 AM:</label>
+        <input type="text" id="7am" name="7am" />
+      </div>
+      <div class="hour-entry">
+        <label for="8am">8:00 AM:</label>
+        <input type="text" id="8am" name="8am" />
+      </div>
+      <div class="hour-entry">
+        <label for="9am">9:00 AM:</label>
+        <input type="text" id="9am" name="9am" />
+      </div>
+      <div class="hour-entry">
+        <label for="10am">10:00 AM:</label>
+        <input type="text" id="10am" name="10am" />
+      </div>
+      <div class="hour-entry">
+        <label for="11am">11:00 AM:</label>
+        <input type="text" id="11am" name="11am" />
+      </div>
+      <div class="hour-entry">
+        <label for="12pm">12:00 PM:</label>
+        <input type="text" id="12pm" name="12pm" />
+      </div>
+      <div class="hour-entry">
+        <label for="1pm">1:00 PM:</label>
+        <input type="text" id="1pm" name="1pm" />
+      </div>
+      <div class="hour-entry">
+        <label for="2pm">2:00 PM:</label>
+        <input type="text" id="2pm" name="2pm" />
+      </div>
+      <div class="hour-entry">
+        <label for="3pm">3:00 PM:</label>
+        <input type="text" id="3pm" name="3pm" />
+      </div>
+    </div>
+
+    <label for="remarks">Remarks:</label>
+    <textarea id="remarks" name="remarks" rows="3"></textarea>
+
+    <label for="signature">Signature:</label>
+    <input type="text" id="signature" name="signature" required />
+
+    <button type="submit">Submit Log</button>
+  </form>
+
+  <div class="nav-buttons">
+    <a href="index.html">Home</a>
+  </div>
+
+  <script>
+    document.getElementById('logDate').valueAsDate = new Date();
+
+    document.getElementById('activityForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      alert('Activity Log Submitted!');
+      // Optional: Add save/export/email functionality here
+      this.reset();
+      document.getElementById('logDate').valueAsDate = new Date();
+    });
+  </script>
+</body>
+</html>
