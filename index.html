@@ -3,125 +3,110 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FieldFlow</title>
+  <title>FieldFlow App</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f8fc;
+      background: #f2f2f2;
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      text-align: center;
     }
 
-    header {
-      background-color: #004080;
+    h1 {
+      background: #0077cc;
       color: white;
-      padding: 20px;
-      text-align: center;
-      font-size: 28px;
-      font-weight: bold;
+      margin: 0;
+      padding: 20px 10px;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 20px;
       padding: 30px;
-      flex-grow: 1;
+      max-width: 800px;
+      margin: auto;
     }
 
-    .card {
-      background-color: white;
+    .icon-box {
+      background: white;
       border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      text-align: center;
       padding: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
       transition: 0.2s;
+      text-decoration: none;
+      color: black;
     }
 
-    .card:hover {
-      transform: scale(1.05);
+    .icon-box:hover {
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+      transform: translateY(-3px);
     }
 
-    .card img {
-      width: 50px;
-      height: 50px;
+    .icon-box img {
+      width: 60px;
+      height: 60px;
       margin-bottom: 10px;
     }
 
-    .card p {
-      font-size: 16px;
-      font-weight: 600;
-      color: #003366;
-    }
-
-    footer {
-      text-align: center;
+    .footer {
+      margin-top: 30px;
       padding: 15px;
       font-size: 14px;
       color: #777;
     }
 
-    .footer-links {
-      margin-top: 5px;
-    }
-
-    .footer-links a {
-      color: #004080;
+    .footer a {
+      color: #0077cc;
       text-decoration: none;
       margin-left: 10px;
-    }
-
-    .footer-links a:hover {
-      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <header>FieldFlow</header>
+
+  <h1>FieldFlow</h1>
 
   <div class="grid">
-    <a class="card" href="daily-pressure.html">
-      <img src="pressure.png" alt="Daily Pressure" />
-      <p>Daily Pressure</p>
+    <a href="daily-pressure.html" class="icon-box">
+      <img src="icons/pressure.png" alt="Daily Pressure" />
+      <div>Daily Pressure</div>
     </a>
-    <a class="card" href="shut-in.html">
-      <img src="valve.png" alt="Shut-In Logs" />
-      <p>Shut-In Logs</p>
+    <a href="shut-in.html" class="icon-box">
+      <img src="icons/valve.png" alt="Shut-In" />
+      <div>Shut-In</div>
     </a>
-    <a class="card" href="swd.html">
-      <img src="water.png" alt="SWD Logs" />
-      <p>SWD Log</p>
+    <a href="swd.html" class="icon-box">
+      <img src="icons/water.png" alt="SWD Log" />
+      <div>SWD</div>
     </a>
-    <a class="card" href="annual-inspection.html">
-      <img src="inspection.png" alt="Annual Inspection" />
-      <p>Annual Inspection</p>
+    <a href="annual-inspection.html" class="icon-box">
+      <img src="icons/inspection.png" alt="Annual Inspection" />
+      <div>Annuals</div>
     </a>
-    <a class="card" href="view-annual-history.html">
-      <img src="history.png" alt="View Annuals" />
-      <p>View Annuals</p>
+    <a href="well-status.html" class="icon-box">
+      <img src="icons/status.png" alt="Well Status" />
+      <div>Status Tracker</div>
     </a>
-    <a class="card" href="well-status.html">
-      <img src="well-status.png" alt="Well Tracker" />
-      <p>Well Tracker</p>
+    <a href="gps.html" class="icon-box">
+      <img src="icons/gps.png" alt="GPS Route" />
+      <div>GPS</div>
     </a>
-    <a class="card" href="obs.html">
-      <img src="obs.png" alt="OBS Readings" />
-      <p>OBS Readings</p>
+    <a href="view-annual-history.html" class="icon-box">
+      <img src="icons/history.png" alt="History" />
+      <div>Annual History</div>
     </a>
-    <a class="card" href="gps.html">
-      <img src="gps.png" alt="GPS Tracker" />
-      <p>GPS Tracker</p>
+    <a href="obs.html" class="icon-box">
+      <img src="icons/obs.png" alt="OBS Readings" />
+      <div>OBS Readings</div>
     </a>
   </div>
 
-  <footer>
+  <div class="footer">
     © 2025 FieldFlow | Underground Gas Storage
-    <div class="footer-links">
-      <a href="terms.html">Terms of Use</a>
-    </div>
-  </footer>
+    <a href="terms.html">Terms of Use</a>
+  </div>
+
 </body>
 </html>
