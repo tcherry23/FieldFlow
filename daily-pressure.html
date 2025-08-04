@@ -1,143 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Daily Pressure Log</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f7f7f7; }
-    h2, h3 { color: #333; }
-    select, input[type="text"], input[type="number"], input[type="datetime-local"], button {
-      padding: 5px;
-      margin: 4px;
-    }
-    .well-section {
-      background: #fff;
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 5px;
-    }
-    .green { background-color: #d4edda; }
-    .yellow { background-color: #fff3cd; }
-    .red { background-color: #f8d7da; }
-    .home-button {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #007bff;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1, h2 { text-align: center; }
+    .field-select, .goal, .summary { text-align: center; margin: 10px 0; }
+    .well-container { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+    label { display: inline-block; width: 150px; }
+    input[type="number"], input[type="text"] { width: 100px; margin: 5px; }
+    .note-box { width: 100%; height: 40px; }
+    .status-indicator { font-weight: bold; margin-left: 10px; }
+    .green { color: green; }
+    .yellow { color: orange; }
+    .red { color: red; }
+    .button-bar { text-align: center; margin-top: 20px; }
   </style>
 </head>
 <body>
-  <h2>Daily Pressure Log</h2>
+  <h1>Daily Pressure Log</h1>
 
-  <label for="dailyTarget">Daily MCF Target:</label>
-  <input type="number" id="dailyTarget" placeholder="Enter MCF goal">
+  <div class="field-select">
+    <label for="field">Select Field:</label>
+    <select id="field" onchange="populateWells()">
+      <option value="">--Select Field--</option>
+      <option value="Dixon">Dixon</option>
+      <option value="Simpson Chapel">Simpson Chapel</option>
+      <option value="Mineral City">Mineral City</option>
+    </select>
+  </div>
 
-  <h3>Select Field:</h3>
-  <select id="fieldSelector" onchange="renderWells()">
-    <option value="Dixon">Dixon</option>
-    <option value="Simpson">Simpson Chapel</option>
-    <option value="Mineral">Mineral City</option>
-  </select>
+  <div class="goal">
+    <label for="dailyGoal">Daily MCF Goal:</label>
+    <input type="number" id="dailyGoal" placeholder="Enter MCF goal" onchange="updateTotals()" />
+  </div>
 
-  <div id="wellsContainer"></div>
+  <div id="wellsSection"></div>
 
-  <h3>Total MCF: <span id="totalMcf">0</span></h3>
+  <div class="summary">
+    <h2>Total MCF/Hour: <span id="totalMCF">0</span></h2>
+    <div id="goalStatus" class="status-indicator"></div>
+  </div>
 
-  <button class="home-button" onclick="location.href='index.html'">Home</button>
+  <div class="button-bar">
+    <button onclick="goHome()">Home</button>
+    <button onclick="submitData()">Submit</button>
+  </div>
 
   <script>
-    const wells = {
-      Dixon: ["Evans 10", "Evans 5", "Evan 4-H", "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6", "Cory 5", "Cory 1"],
-      Simpson: ["Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 5", "Crays 4", "Crays 3", "Crays 7", "Crays 2", "Crays 6", "Royal 6", "Royal 5", "Royal 4", "Royal 7", "Royal 1"],
-      Mineral: {
-        "Haines 1": 0.875, "Haines 2": 0.875, "Haines 3": 0.875, "Haines 4": 0.875,
-        "G. Axe 1": 1, "G. Axe 2": 1, "G. Axe 3": 1, "G. Axe 4": 1, "G. Axe 5": 1, "G. Axe 6": 1,
-        "J. Axe 1": 0.75,
-        "Rollison 1": 0.75, "Rollison 2": 0.75, "Rollison 3": 0.75, "Rollison 4": 0.75,
-        "Headley 1": 0.75
+    const fields = {
+      "Dixon": {
+        wells: {
+          "Evans 10": 1.0000, "Evans 5": 1.2500, "Evans 4-H": 1.0000,
+          "Cory 8": 1.0000, "Cory 4": 1.0000, "Cory 2": 1.0000,
+          "Cory 7": 1.0000, "Cory 3": 1.0000, "Cory 6": 1.0000,
+          "Cory 5": 1.0000, "Cory 1": 1.0000
+        }
+      },
+      "Simpson Chapel": {
+        wells: {
+          "Blaker 1": 0.5000, "Emery 2": 0.7500, "Emery 1": 0.7500,
+          "Crays 8": 1.0000, "Crays 1": 0.5000, "Crays 5": 0.7500,
+          "Crays 4": 0.2500, "Crays 3": 0.7500, "Crays 7": 1.0000,
+          "Crays 2": 1.0000, "Crays 6": 1.0000, "Royal 6": 0.6250,
+          "Royal 5": 0.5000, "Royal 4": 0.5000, "Royal 7": 1.0000,
+          "Royal 1": 0.5000
+        }
+      },
+      "Mineral City": {
+        wells: {
+          "Rollison 4": 0.7500, "Rollison 1": 0.7500, "Rollison 2": 0.7500,
+          "G. Axe 6": 1.0000, "Haines 4": 0.3750, "Haines 1": 1.0000,
+          "Haines 2": 1.0000, "Haines 3": 1.0000, "G. Axe 1": 1.0000,
+          "Allen 1": 1.0000, "G. Axe 2": 0.7500, "G. Axe 4": 0.7500,
+          "G. Axe 5": 1.0000, "G. Axe 3": 0.5000, "J. Axe 1": 1.0000
+        }
       }
     };
 
-    function renderWells() {
-      const field = document.getElementById("fieldSelector").value;
-      const container = document.getElementById("wellsContainer");
-      container.innerHTML = "";
+    function populateWells() {
+      const section = document.getElementById('wellsSection');
+      section.innerHTML = '';
+      const field = document.getElementById('field').value;
+      if (!field || !fields[field]) return;
 
-      let fieldWells = Array.isArray(wells[field]) ? wells[field] : Object.keys(wells[field]);
-
-      fieldWells.forEach(well => {
-        const orificeSize = typeof wells[field] === 'object' ? wells[field][well] : 1;
-        const section = document.createElement("div");
-        section.className = "well-section";
-        section.innerHTML = `
-          <h4>${well}</h4>
-          <label>Date/Time:</label>
-          <input type="datetime-local" onchange="updateMcf()" class="datetime">
-          <label>Orifice Size (in):</label>
-          <input type="number" value="${orificeSize}" class="orifice">
-          <label>Upstream PSI:</label>
-          <input type="number" class="upstream">
-          <label>Downstream PSI:</label>
-          <input type="number" class="downstream">
-          <label>Differential:</label>
-          <input type="number" class="differential" readonly>
-          <label>d/p H₂O:</label>
-          <input type="number" class="h2o" readonly>
-          <label>MCF/Hour:</label>
-          <input type="number" class="mcf" readonly>
-          <label>Notes:</label>
-          <input type="text" class="notes">
+      Object.entries(fields[field].wells).forEach(([well, orifice]) => {
+        const container = document.createElement('div');
+        container.className = 'well-container';
+        container.innerHTML = `
+          <h3>${well}</h3>
+          <label>Date:</label><input type="text" class="date" value="${new Date().toLocaleDateString()}" readonly>
+          <label>Time:</label><input type="text" class="time" value="${new Date().toLocaleTimeString()}" readonly><br>
+          <label>Orifice Size:</label><input type="number" value="${orifice}" class="orifice" readonly><br>
+          <label>Upstream PSI:</label><input type="number" class="upstream" onchange="calculateMCF(this)">
+          <label>Downstream PSI:</label><input type="number" class="downstream" onchange="calculateMCF(this)"><br>
+          <label>d/p H₂O:</label><input type="text" class="dpH2O" readonly>
+          <label>MCF/Hour:</label><input type="text" class="mcfHour" readonly>
+          <span class="status-indicator"></span><br>
+          <label>Notes:</label><br><textarea class="note-box"></textarea>
         `;
-        container.appendChild(section);
-      });
-
-      document.querySelectorAll(".upstream, .downstream").forEach(input => {
-        input.addEventListener("input", updateMcf);
+        section.appendChild(container);
       });
     }
 
-    function updateMcf() {
-      let totalMcf = 0;
-      const target = parseFloat(document.getElementById("dailyTarget").value || 0);
-      const sections = document.querySelectorAll(".well-section");
+    function calculateMCF(el) {
+      const container = el.closest('.well-container');
+      const upstream = parseFloat(container.querySelector('.upstream').value) || 0;
+      const downstream = parseFloat(container.querySelector('.downstream').value) || 0;
+      const orifice = parseFloat(container.querySelector('.orifice').value) || 1;
+      const fieldPressure = upstream; // Assume upstream as field pressure for calc
+      const dpH2O = (upstream - downstream) * 27.7;
+      container.querySelector('.dpH2O').value = dpH2O.toFixed(2);
+      const mcfHour = 0.2628 * Math.pow(orifice, 2) * Math.sqrt(Math.max(fieldPressure * dpH2O, 0));
+      container.querySelector('.mcfHour').value = mcfHour.toFixed(2);
 
-      sections.forEach(section => {
-        const orifice = parseFloat(section.querySelector(".orifice").value || 0);
-        const up = parseFloat(section.querySelector(".upstream").value || 0);
-        const down = parseFloat(section.querySelector(".downstream").value || 0);
-        const differential = up - down;
-        const h2o = differential * 27.7;
-        const mcf = 0.2628 * (orifice ** 2) * Math.sqrt(up * h2o);
-
-        section.querySelector(".differential").value = differential.toFixed(2);
-        section.querySelector(".h2o").value = h2o.toFixed(2);
-        section.querySelector(".mcf").value = isNaN(mcf) ? "" : mcf.toFixed(2);
-
-        section.classList.remove("green", "yellow", "red");
-        if (!isNaN(mcf)) {
-          totalMcf += mcf;
-          if (mcf >= (target / sections.length)) {
-            section.classList.add("green");
-          } else if (mcf >= (target / sections.length) * 0.7) {
-            section.classList.add("yellow");
-          } else {
-            section.classList.add("red");
-          }
-        }
-      });
-
-      document.getElementById("totalMcf").textContent = totalMcf.toFixed(2);
+      updateTotals();
     }
 
-    // Load default field on first load
-    window.onload = renderWells;
+    function updateTotals() {
+      const mcfFields = document.querySelectorAll('.mcfHour');
+      let total = 0;
+      mcfFields.forEach(f => total += parseFloat(f.value) || 0);
+      document.getElementById('totalMCF').textContent = total.toFixed(2);
+
+      const goal = parseFloat(document.getElementById('dailyGoal').value) || 0;
+      const status = document.getElementById('goalStatus');
+      if (!goal) {
+        status.textContent = '';
+      } else if (total >= goal) {
+        status.textContent = 'On Track';
+        status.className = 'status-indicator green';
+      } else if (total >= goal * 0.75) {
+        status.textContent = 'Slightly Below Target';
+        status.className = 'status-indicator yellow';
+      } else {
+        status.textContent = 'Too Low';
+        status.className = 'status-indicator red';
+      }
+    }
+
+    function goHome() {
+      window.location.href = "index.html";
+    }
+
+    function submitData() {
+      alert("Data submitted (feature coming soon).");
+    }
   </script>
 </body>
 </html>
