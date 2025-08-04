@@ -5,149 +5,186 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Daily Pressure Log</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    h1, h2 { text-align: center; }
-    .field-select, .goal, .summary { text-align: center; margin: 10px 0; }
-    .well-container { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
-    label { display: inline-block; width: 150px; }
-    input[type="number"], input[type="text"] { width: 100px; margin: 5px; }
-    .note-box { width: 100%; height: 40px; }
-    .status-indicator { font-weight: bold; margin-left: 10px; }
-    .green { color: green; }
-    .yellow { color: orange; }
-    .red { color: red; }
-    .button-bar { text-align: center; margin-top: 20px; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .well-entry {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+    }
+    .status {
+      font-weight: bold;
+    }
+    .status.green { color: green; }
+    .status.yellow { color: orange; }
+    .status.red { color: red; }
   </style>
 </head>
 <body>
   <h1>Daily Pressure Log</h1>
+  <form id="pressureForm">
+    <label for="attendant">Attendant:</label>
+    <select id="attendant" name="attendant">
+      <option value="T. Cherry">T. Cherry</option>
+      <option value="T. Ressler">T. Ressler</option>
+    </select><br><br>
 
-  <div class="field-select">
-    <label for="field">Select Field:</label>
-    <select id="field" onchange="populateWells()">
-      <option value="">--Select Field--</option>
+    <label for="fieldSelect">Select Field:</label>
+    <select id="fieldSelect">
+      <option value="">-- Select Field --</option>
       <option value="Dixon">Dixon</option>
       <option value="Simpson Chapel">Simpson Chapel</option>
       <option value="Mineral City">Mineral City</option>
-    </select>
-  </div>
+    </select><br><br>
 
-  <div class="goal">
-    <label for="dailyGoal">Daily MCF Goal:</label>
-    <input type="number" id="dailyGoal" placeholder="Enter MCF goal" onchange="updateTotals()" />
-  </div>
+    <label for="mcfTarget">Daily MCF Target:</label>
+    <input type="number" id="mcfTarget" placeholder="Enter target"><br><br>
 
-  <div id="wellsSection"></div>
-
-  <div class="summary">
-    <h2>Total MCF/Hour: <span id="totalMCF">0</span></h2>
-    <div id="goalStatus" class="status-indicator"></div>
-  </div>
-
-  <div class="button-bar">
-    <button onclick="goHome()">Home</button>
-    <button onclick="submitData()">Submit</button>
-  </div>
+    <strong>Total MCF: <span id="totalMCF">0</span></strong>
+    <div id="wellsContainer"></div>
+  </form>
 
   <script>
     const fields = {
       "Dixon": {
-        wells: {
-          "Evans 10": 1.0000, "Evans 5": 1.2500, "Evans 4-H": 1.0000,
-          "Cory 8": 1.0000, "Cory 4": 1.0000, "Cory 2": 1.0000,
-          "Cory 7": 1.0000, "Cory 3": 1.0000, "Cory 6": 1.0000,
-          "Cory 5": 1.0000, "Cory 1": 1.0000
-        }
+        wells: [
+          { name: "Evans 7", orifice: 1.0000 },
+          { name: "Evans 8", orifice: 1.0000 },
+          { name: "Evans 3", orifice: 1.0000 },
+          { name: "Evans 10", orifice: 1.0000 },
+          { name: "Evans 5", orifice: 1.2500 },
+          { name: "Evans 4-H", orifice: 1.0000 },
+          { name: "Evans 6", orifice: 1.0000 },
+          { name: "Cory 8", orifice: 1.0000 },
+          { name: "Cory 4", orifice: 1.0000 },
+          { name: "Cory 2", orifice: 1.0000 },
+          { name: "Cory 7", orifice: 1.0000 },
+          { name: "Cory 3", orifice: 1.0000 },
+          { name: "Cory 6", orifice: 1.0000 },
+          { name: "Cory 5", orifice: 1.0000 },
+          { name: "Cory 1", orifice: 1.0000 }
+        ]
       },
       "Simpson Chapel": {
-        wells: {
-          "Blaker 1": 0.5000, "Emery 2": 0.7500, "Emery 1": 0.7500,
-          "Crays 8": 1.0000, "Crays 1": 0.5000, "Crays 5": 0.7500,
-          "Crays 4": 0.2500, "Crays 3": 0.7500, "Crays 7": 1.0000,
-          "Crays 2": 1.0000, "Crays 6": 1.0000, "Royal 6": 0.6250,
-          "Royal 5": 0.5000, "Royal 4": 0.5000, "Royal 7": 1.0000,
-          "Royal 1": 0.5000
-        }
+        wells: [
+          { name: "Blaker 1", orifice: 0.5000 },
+          { name: "Emery 2", orifice: 0.7500 },
+          { name: "Emery 1", orifice: 0.7500 },
+          { name: "Crays 8", orifice: 1.0000 },
+          { name: "Crays 1", orifice: 0.5000 },
+          { name: "Crays 5", orifice: 0.7500 },
+          { name: "Crays 4", orifice: 0.2500 },
+          { name: "Crays 3", orifice: 0.7500 },
+          { name: "Crays 7", orifice: 1.0000 },
+          { name: "Crays 2", orifice: 1.0000 },
+          { name: "Crays 6", orifice: 1.0000 },
+          { name: "Royal 6", orifice: 0.6250 },
+          { name: "Royal 5", orifice: 0.5000 },
+          { name: "Royal 4", orifice: 0.5000 },
+          { name: "Royal 7", orifice: 1.0000 },
+          { name: "Royal 1", orifice: 0.5000 }
+        ]
       },
       "Mineral City": {
-        wells: {
-          "Rollison 4": 0.7500, "Rollison 1": 0.7500, "Rollison 2": 0.7500,
-          "G. Axe 6": 1.0000, "Haines 4": 0.3750, "Haines 1": 1.0000,
-          "Haines 2": 1.0000, "Haines 3": 1.0000, "G. Axe 1": 1.0000,
-          "Allen 1": 1.0000, "G. Axe 2": 0.7500, "G. Axe 4": 0.7500,
-          "G. Axe 5": 1.0000, "G. Axe 3": 0.5000, "J. Axe 1": 1.0000
-        }
+        wells: [
+          { name: "Rollison 4", orifice: 0.7500 },
+          { name: "Rollison 1", orifice: 0.7500 },
+          { name: "Rollison 2", orifice: 0.7500 },
+          { name: "G. Axe 6", orifice: 1.0000 },
+          { name: "Haines 4", orifice: 0.3750 },
+          { name: "Haines 1", orifice: 1.0000 },
+          { name: "Haines 2", orifice: 1.0000 },
+          { name: "Haines 3", orifice: 1.0000 },
+          { name: "G. Axe 1", orifice: 1.0000 },
+          { name: "Allen 1", orifice: 1.0000 },
+          { name: "G. Axe 2", orifice: 0.7500 },
+          { name: "G. Axe 4", orifice: 0.7500 },
+          { name: "G. Axe 5", orifice: 1.0000 },
+          { name: "G. Axe 3", orifice: 0.5000 },
+          { name: "J. Axe 1", orifice: 1.0000 }
+        ]
       }
     };
 
-    function populateWells() {
-      const section = document.getElementById('wellsSection');
-      section.innerHTML = '';
-      const field = document.getElementById('field').value;
-      if (!field || !fields[field]) return;
+    const fieldSelect = document.getElementById('fieldSelect');
+    const wellsContainer = document.getElementById('wellsContainer');
+    const totalMCF = document.getElementById('totalMCF');
+    const mcfTargetInput = document.getElementById('mcfTarget');
 
-      Object.entries(fields[field].wells).forEach(([well, orifice]) => {
-        const container = document.createElement('div');
-        container.className = 'well-container';
-        container.innerHTML = `
-          <h3>${well}</h3>
-          <label>Date:</label><input type="text" class="date" value="${new Date().toLocaleDateString()}" readonly>
-          <label>Time:</label><input type="text" class="time" value="${new Date().toLocaleTimeString()}" readonly><br>
-          <label>Orifice Size:</label><input type="number" value="${orifice}" class="orifice" readonly><br>
-          <label>Upstream PSI:</label><input type="number" class="upstream" onchange="calculateMCF(this)">
-          <label>Downstream PSI:</label><input type="number" class="downstream" onchange="calculateMCF(this)"><br>
-          <label>d/p H₂O:</label><input type="text" class="dpH2O" readonly>
-          <label>MCF/Hour:</label><input type="text" class="mcfHour" readonly>
-          <span class="status-indicator"></span><br>
-          <label>Notes:</label><br><textarea class="note-box"></textarea>
-        `;
-        section.appendChild(container);
-      });
-    }
-
-    function calculateMCF(el) {
-      const container = el.closest('.well-container');
-      const upstream = parseFloat(container.querySelector('.upstream').value) || 0;
-      const downstream = parseFloat(container.querySelector('.downstream').value) || 0;
-      const orifice = parseFloat(container.querySelector('.orifice').value) || 1;
-      const fieldPressure = upstream; // Assume upstream as field pressure for calc
-      const dpH2O = (upstream - downstream) * 27.7;
-      container.querySelector('.dpH2O').value = dpH2O.toFixed(2);
-      const mcfHour = 0.2628 * Math.pow(orifice, 2) * Math.sqrt(Math.max(fieldPressure * dpH2O, 0));
-      container.querySelector('.mcfHour').value = mcfHour.toFixed(2);
-
-      updateTotals();
-    }
-
-    function updateTotals() {
-      const mcfFields = document.querySelectorAll('.mcfHour');
+    fieldSelect.addEventListener('change', () => {
+      const field = fieldSelect.value;
+      wellsContainer.innerHTML = '';
       let total = 0;
-      mcfFields.forEach(f => total += parseFloat(f.value) || 0);
-      document.getElementById('totalMCF').textContent = total.toFixed(2);
 
-      const goal = parseFloat(document.getElementById('dailyGoal').value) || 0;
-      const status = document.getElementById('goalStatus');
-      if (!goal) {
-        status.textContent = '';
-      } else if (total >= goal) {
-        status.textContent = 'On Track';
-        status.className = 'status-indicator green';
-      } else if (total >= goal * 0.75) {
-        status.textContent = 'Slightly Below Target';
-        status.className = 'status-indicator yellow';
-      } else {
-        status.textContent = 'Too Low';
-        status.className = 'status-indicator red';
+      if (fields[field]) {
+        fields[field].wells.forEach((well, index) => {
+          const id = `well${index}`;
+          const container = document.createElement('div');
+          container.className = 'well-entry';
+
+          const date = new Date().toLocaleDateString();
+
+          container.innerHTML = `
+            <strong>${well.name}</strong> (${date})<br>
+            Orifice: ${well.orifice}<br>
+            Upstream: <input type="number" id="${id}_up" placeholder="Upstream"> psi<br>
+            Downstream: <input type="number" id="${id}_down" placeholder="Downstream"> psi<br>
+            Notes: <input type="text" id="${id}_note" placeholder="Optional notes"><br>
+            d/p H₂O: <span id="${id}_dp">-</span><br>
+            MCF/hr: <span id="${id}_mcf">-</span>
+            <span id="${id}_status" class="status"></span>
+            <br><br>
+          `;
+
+          wellsContainer.appendChild(container);
+
+          const up = container.querySelector(`#${id}_up`);
+          const down = container.querySelector(`#${id}_down`);
+
+          const calculate = () => {
+            const u = parseFloat(up.value);
+            const d = parseFloat(down.value);
+            if (!isNaN(u) && !isNaN(d)) {
+              const diff = (u - d) * 27.7;
+              const mcf = 0.2628 * Math.pow(well.orifice, 2) * Math.sqrt(u * diff);
+              container.querySelector(`#${id}_dp`).innerText = diff.toFixed(2);
+              container.querySelector(`#${id}_mcf`).innerText = mcf.toFixed(2);
+              total = Array.from(document.querySelectorAll('[id$="_mcf"]'))
+                .map(e => parseFloat(e.innerText) || 0).reduce((a, b) => a + b, 0);
+              totalMCF.innerText = total.toFixed(2);
+
+              // Status icon
+              const target = parseFloat(mcfTargetInput.value);
+              const statusSpan = document.getElementById(`${id}_status`);
+              if (!isNaN(target)) {
+                if (mcf >= target) {
+                  statusSpan.textContent = " ✓";
+                  statusSpan.className = "status green";
+                } else if (mcf >= target * 0.75) {
+                  statusSpan.textContent = " ⚠";
+                  statusSpan.className = "status yellow";
+                } else {
+                  statusSpan.textContent = " ↓";
+                  statusSpan.className = "status red";
+                }
+              } else {
+                statusSpan.textContent = "";
+              }
+            }
+          };
+
+          up.addEventListener('input', calculate);
+          down.addEventListener('input', calculate);
+          mcfTargetInput.addEventListener('input', calculate);
+        });
       }
-    }
-
-    function goHome() {
-      window.location.href = "index.html";
-    }
-
-    function submitData() {
-      alert("Data submitted (feature coming soon).");
-    }
+    });
   </script>
 </body>
 </html>
