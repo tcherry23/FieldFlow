@@ -1,12 +1,126 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Coming Soon</title>
-  </head>
-  <body style="text-align:center; font-family:sans-serif; margin-top:100px;">
-    <h2>This feature is coming soon!</h2>
-    <a href="index.html" style="display:inline-block; margin-top:20px; text-decoration:none; font-size:18px;">
-      🏠 Home
-    </a>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SWD Log – FieldFlow</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f9fc;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #004466;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    .container {
+      padding: 1rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    .well-card {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: 5px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    button {
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      background-color: #004466;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #006699;
+    }
+    .home-button {
+      margin-top: 2rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SWD Log – FieldFlow</h1>
+  </header>
+  <div class="container">
+    <form id="swdLogForm">
+      <div class="well-card">
+        <h2>Axe 8</h2>
+        <input type="datetime-local" name="axe8_datetime" required />
+        <input type="text" name="axe8_water" placeholder="Water Level" />
+        <input type="text" name="axe8_psi" placeholder="PSI" />
+        <textarea name="axe8_notes" placeholder="Notes (optional)"></textarea>
+        <input type="file" name="axe8_photo" accept="image/*" />
+      </div>
+
+      <div class="well-card">
+        <h2>Crays 16</h2>
+        <input type="datetime-local" name="crays16_datetime" required />
+        <input type="text" name="crays16_water" placeholder="Water Level" />
+        <input type="text" name="crays16_psi" placeholder="PSI" />
+        <textarea name="crays16_notes" placeholder="Notes (optional)"></textarea>
+        <input type="file" name="crays16_photo" accept="image/*" />
+      </div>
+
+      <div class="well-card">
+        <h2>Crays 14</h2>
+        <input type="datetime-local" name="crays14_datetime" required />
+        <input type="text" name="crays14_water" placeholder="Water Level" />
+        <input type="text" name="crays14_psi" placeholder="PSI" />
+        <textarea name="crays14_notes" placeholder="Notes (optional)"></textarea>
+        <input type="file" name="crays14_photo" accept="image/*" />
+      </div>
+
+      <button type="submit">Export Report</button>
+    </form>
+
+    <div class="home-button">
+      <a href="index.html"><button type="button">Back to Home</button></a>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("swdLogForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const subject = "Underground Storage Field Reports";
+      const body = "SWD Log submitted via FieldFlow app.";
+      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    });
+
+    // Monday 8am reminder
+    function checkReminderTime() {
+      const now = new Date();
+      const isMonday = now.getDay() === 1;
+      const is8AM = now.getHours() === 8 && now.getMinutes() === 0;
+
+      if (isMonday && is8AM) {
+        if (Notification.permission === "granted") {
+          new Notification("Reminder: Submit your SWD readings for Axe 8, Crays 16, and Crays 14.");
+        } else if (Notification.permission !== "denied") {
+          Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+              new Notification("Reminder: Submit your SWD readings.");
+            }
+          });
+        }
+      }
+    }
+    setInterval(checkReminderTime, 60000);
+  </script>
+</body>
 </html>
