@@ -1,149 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Shut-In Log – FieldFlow</title>
+  <meta charset="UTF-8">
+  <title>Shut-In Logs</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f7f9fc;
-      margin: 0;
-      padding: 0;
+      margin: 20px;
     }
-    header {
-      background-color: #044466;
-      color: white;
-      padding: 1rem;
+    h2, h3 {
       text-align: center;
-      font-size: 1.5rem;
-      font-weight: bold;
     }
-    .container {
-      padding: 1rem;
-      max-width: 800px;
-      margin: auto;
+    select, input, button, textarea {
+      margin: 5px;
+      padding: 5px;
+      font-size: 16px;
     }
-    select, input, textarea, button {
-      width: 100%;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      font-size: 1rem;
-    }
-    .well-card {
-      background-color: #ffffff;
+    .well-section {
       border: 1px solid #ccc;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      border-radius: 5px;
+      padding: 10px;
+      margin: 10px 0;
+      background: #f9f9f9;
     }
-    .row {
+    .flex {
       display: flex;
-      gap: 1rem;
       flex-wrap: wrap;
+      gap: 10px;
     }
-    .row > div {
-      flex: 1;
-      min-width: 120px;
+    .flex label {
+      flex: 1 1 200px;
     }
-    .status {
-      font-weight: bold;
-      margin-top: 0.5rem;
+    .button-row {
+      text-align: center;
+      margin-top: 20px;
     }
-    .open {
-      color: green;
-    }
-    .closed {
-      color: red;
-    }
-    .btn-submit {
-      background-color: #044466;
+    .home-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 15px;
+      background-color: #4CAF50;
       color: white;
-      border: none;
-      padding: 0.75rem;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    .btn-submit:hover {
-      background-color: #033144;
+      text-decoration: none;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
-  <header>Shut-In Log</header>
+  <a href="index.html" class="home-button">Home</a>
+  <h2>Shut-In Log</h2>
 
-  <div class="container">
-    <label for="fieldSelect">Select Field:</label>
-    <select id="fieldSelect" onchange="loadWells()">
-      <option value="">-- Select a Field --</option>
-      <option value="Dixon">Dixon</option>
-      <option value="Simpson Chapel">Simpson Chapel</option>
-      <option value="Mineral City">Mineral City</option>
-    </select>
+  <label for="fieldSelect">Select Field:</label>
+  <select id="fieldSelect" onchange="renderWells()">
+    <option value="">-- Choose Field --</option>
+    <option value="Dixon">Dixon</option>
+    <option value="Simpson Chapel">Simpson Chapel</option>
+    <option value="Mineral City">Mineral City</option>
+  </select>
 
-    <div id="wellsContainer"></div>
+  <div id="wellsContainer"></div>
 
-    <button class="btn-submit" onclick="submitLogs()">Submit Logs</button>
+  <div class="button-row">
+    <button onclick="saveLogs()">Save Logs</button>
+    <button onclick="exportLogs()">Export</button>
   </div>
 
   <script>
-    const wellsByField = {
+    const fieldWells = {
       "Dixon": ["Evans 10", "Evans 5", "Evan 4-H", "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6", "Cory 5", "Cory 1"],
       "Simpson Chapel": ["Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 5", "Crays 4", "Crays 3", "Crays 7", "Crays 2", "Crays 6", "Royal 6", "Royal 5", "Royal 4", "Royal 7", "Royal 1"],
       "Mineral City": ["Haines 1", "Haines 2", "Haines 3", "Haines 4", "G. Axe 1", "G. Axe 2", "G. Axe 3", "G. Axe 4", "G. Axe 5", "G. Axe 6", "J. Axe 1", "Rollison 1", "Rollison 2", "Rollison 3", "Rollison 4", "Headley 1"]
     };
 
-    function loadWells() {
-      const field = document.getElementById('fieldSelect').value;
-      const container = document.getElementById('wellsContainer');
+    function renderWells() {
+      const container = document.getElementById("wellsContainer");
       container.innerHTML = "";
+      const selectedField = document.getElementById("fieldSelect").value;
+      if (!selectedField) return;
 
-      if (!wellsByField[field]) return;
-
-      wellsByField[field].forEach(well => {
-        const wellDiv = document.createElement('div');
-        wellDiv.className = "well-card";
-        wellDiv.innerHTML = `
-          <strong>${well}</strong>
-          <div class="row">
-            <div>
-              <label>Date:</label>
-              <input type="date" />
-            </div>
-            <div>
-              <label>Time:</label>
-              <input type="time" />
-            </div>
+      fieldWells[selectedField].forEach(well => {
+        const now = new Date().toISOString().slice(0, 16);
+        const div = document.createElement("div");
+        div.className = "well-section";
+        div.innerHTML = `
+          <h3>${well}</h3>
+          <div class="flex">
+            <label>Annulus or Tubing:
+              <select>
+                <option value="Annulus">Annulus</option>
+                <option value="Tubing">Tubing</option>
+              </select>
+            </label>
+            <label>Pressure (PSI):
+              <input type="number" placeholder="Enter PSI">
+            </label>
+            <label>Temperature (°F):
+              <input type="number" placeholder="Enter Temp">
+            </label>
+            <label>Date/Time:
+              <input type="datetime-local" value="${now}">
+            </label>
+            <label>Notes:
+              <textarea placeholder="Optional notes..." rows="2" cols="30"></textarea>
+            </label>
           </div>
-          <label>Status:</label>
-          <select class="status-dropdown" onchange="updateStatus(this)">
-            <option value="">-- Select Status --</option>
-            <option value="Open">Open</option>
-            <option value="Closed">Closed</option>
-          </select>
-          <div class="status"></div>
         `;
-        container.appendChild(wellDiv);
+        container.appendChild(div);
       });
     }
 
-    function updateStatus(selectEl) {
-      const statusDiv = selectEl.parentElement.querySelector(".status");
-      const value = selectEl.value;
-      if (value === "Open") {
-        statusDiv.textContent = "✔ Open";
-        statusDiv.className = "status open";
-      } else if (value === "Closed") {
-        statusDiv.textContent = "✘ Closed";
-        statusDiv.className = "status closed";
-      } else {
-        statusDiv.textContent = "";
-        statusDiv.className = "status";
-      }
+    function saveLogs() {
+      alert("Logs saved! (Functionality to store or export can be added)");
     }
 
-    function submitLogs() {
-      alert("Shut-in logs submitted successfully.");
+    function exportLogs() {
+      alert("Exporting... (Coming soon)");
     }
   </script>
 </body>
