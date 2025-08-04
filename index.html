@@ -3,105 +3,109 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FieldFlow Homepage</title>
+  <title>FieldFlow - Home</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f0f4f8;
+      background-color: #f2f9ff;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      background-color: #004080;
+      color: white;
+      width: 100%;
+      padding: 15px 0;
       text-align: center;
+      font-size: 24px;
     }
 
-    h1 {
-      color: #004080;
-      margin-bottom: 30px;
-    }
-
-    .grid {
+    .container {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 20px;
-      max-width: 500px;
-      margin: 0 auto;
+      padding: 30px;
+      width: 100%;
+      max-width: 700px;
+      box-sizing: border-box;
     }
 
     .icon-button {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background-color: #ffffff;
-      border: 2px solid #004080;
+      background-color: white;
+      padding: 15px;
       border-radius: 10px;
       text-decoration: none;
       color: #004080;
-      font-weight: bold;
-      transition: 0.3s;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s;
     }
 
     .icon-button:hover {
-      background-color: #e6f0ff;
+      transform: scale(1.05);
     }
 
     .icon-button img {
-      width: 40px;
-      height: 40px;
+      width: 60px;
+      height: 60px;
       margin-bottom: 10px;
     }
 
-    .footer-link {
-      margin-top: 40px;
-      font-size: 14px;
-    }
-
-    .footer-link a {
-      color: #004080;
-      text-decoration: underline;
+    footer {
+      margin-top: 30px;
+      font-size: 12px;
+      color: gray;
     }
   </style>
 </head>
 <body>
-  <h1>FieldFlow</h1>
 
-  <div class="grid">
+  <header>FieldFlow</header>
+
+  <div class="container">
     <a href="daily-pressure.html" class="icon-button">
-      <img src="https://img.icons8.com/ios-filled/50/004080/gas.png" alt="Daily Pressure" />
+      <img src="https://img.icons8.com/fluency/96/gas.png" alt="Daily Pressure" />
       Daily Pressure
     </a>
     <a href="shut-in.html" class="icon-button">
-      <img src="https://img.icons8.com/ios-filled/50/004080/valve.png" alt="Shut-In Logs" />
+      <img src="https://img.icons8.com/external-flatart-icons-flat-flatarticons/64/004080/external-valve-industry-flatart-icons-flat-flatarticons.png" alt="Shut-In Logs" />
       Shut-In Logs
     </a>
-    <a href="swd.html" class="icon-button">
-      <img src="https://img.icons8.com/ios-filled/50/004080/water.png" alt="SWD Log" />
+    <a href="swd-log.html" class="icon-button">
+      <img src="https://img.icons8.com/fluency/96/oil-industry.png" alt="SWD Log" />
       SWD Log
     </a>
-    <a href="gps.html" class="icon-button">
-      <img src="https://img.icons8.com/ios-filled/50/004080/map.png" alt="GPS Tracker" />
-      GPS Tracker
-    </a>
     <a href="annual-inspection.html" class="icon-button">
-      <img src="https://img.icons8.com/ios-filled/50/004080/maintenance.png" alt="Annual Inspection" />
+      <img src="https://img.icons8.com/ios-filled/100/inspection.png" alt="Annual Inspection" />
       Annual Inspection
     </a>
     <a href="view-annual-history.html" class="icon-button">
-      <img src="https://img.icons8.com/ios-filled/50/004080/folder-invoices.png" alt="Annual History" />
+      <img src="https://img.icons8.com/ios/100/open-archive.png" alt="View History" />
       View Annuals
     </a>
     <a href="well-status.html" class="icon-button">
-      <img src="https://img.icons8.com/ios-filled/50/004080/pipeline.png" alt="Well Status" />
-      Well Status
+      <img src="https://img.icons8.com/ios-filled/100/toggle-on.png" alt="Well Status" />
+      Well Tracker
     </a>
-    <a href="export.html" class="icon-button">
-      <img src="https://img.icons8.com/ios-filled/50/004080/export.png" alt="Export" />
-      Export Logs
+    <a href="obs-readings.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/100/microscope.png" alt="OBS Readings" />
+      OBS Readings
+    </a>
+    <a href="coming-soon.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/100/marker.png" alt="GPS" />
+      GPS Tracker
     </a>
   </div>
 
-  <div class="footer-link">
-    <a href="terms.html">Terms of Use</a>
-  </div>
+  <footer>
+    &copy; 2025 FieldFlow | Underground Gas Storage
+  </footer>
+
 </body>
 </html>
