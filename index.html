@@ -7,79 +7,89 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f7f9fc;
+      background: #f2f2f2;
       margin: 0;
       padding: 0;
     }
     header {
-      background-color: #044466;
+      background: #2a4f7c;
       color: white;
-      padding: 1rem;
       text-align: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 20px;
       padding: 20px;
-      max-width: 600px;
-      margin: auto;
     }
-    .icon-card {
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 20px;
+      gap: 20px;
+    }
+    .home-button {
+      background: white;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      width: 140px;
+      height: 140px;
       text-align: center;
       text-decoration: none;
-      color: black;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      transition: transform 0.2s ease;
     }
-    .icon-card img {
-      width: 40px;
-      height: 40px;
-      margin-bottom: 8px;
+    .home-button:hover {
+      transform: scale(1.05);
     }
-    .icon-card span {
-      display: block;
-      font-size: 0.9rem;
+    .home-button img {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 10px;
+    }
+    .home-button span {
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <header>FieldFlow</header>
+  <header>
+    <h1>FieldFlow App</h1>
+  </header>
 
-  <div class="grid">
-    <a href="annual_inspection.html" class="icon-card">
-      <img src="https://img.icons8.com/ios-filled/50/000000/inspection.png" alt="Annual Inspection"/>
-      <span>Annual Inspection</span>
-    </a>
-
-    <a href="shut_in_log.html" class="icon-card">
-      <img src="https://img.icons8.com/ios-filled/50/000000/valve.png" alt="Shut-In Log"/>
-      <span>Shut-In Log</span>
-    </a>
-
-    <a href="daily_log.html" class="icon-card">
-      <img src="https://img.icons8.com/ios-filled/50/000000/time.png" alt="Daily Pressure"/>
+  <div class="container">
+    <a href="daily-pressure.html" class="home-button">
+      <img src="icons/gauge.png" alt="Daily Pressure" />
       <span>Daily Pressure</span>
     </a>
-
-    <a href="swd_log.html" class="icon-card">
-      <img src="https://img.icons8.com/ios-filled/50/000000/water.png" alt="SWD Log"/>
-      <span>SWD Log</span>
+    <a href="shut-in.html" class="home-button">
+      <img src="icons/valve.png" alt="Shut-In Logs" />
+      <span>Shut-In Logs</span>
     </a>
-
-    <a href="gps_route_log.html" class="icon-card">
-      <img src="https://img.icons8.com/ios-filled/50/000000/route.png" alt="GPS Tracker"/>
+    <a href="swd.html" class="home-button">
+      <img src="icons/water.png" alt="SWD Log" />
+      <span>SWD</span>
+    </a>
+    <a href="annual-inspection.html" class="home-button">
+      <img src="icons/clipboard.png" alt="Annual Inspections" />
+      <span>Annual Inspection</span>
+    </a>
+    <a href="well-status.html" class="home-button">
+      <img src="icons/checklist.png" alt="Well Status" />
+      <span>Well Status</span>
+    </a>
+    <a href="gps.html" class="home-button">
+      <img src="icons/gps.png" alt="GPS Route" />
       <span>GPS Tracker</span>
     </a>
-
-    <a href="export.html" class="icon-card">
-      <img src="https://img.icons8.com/ios-filled/50/000000/export.png" alt="Export"/>
-      <span>Export</span>
-    </a>
-
-    <a href="well-status.html" class="icon-card">
-      <img src="https://img.icons8.com/ios-filled/50/000000/maintenance.png" alt="Well Status"/>
-      <span>Well Status</span>
+    <a href="view-annual-history.html" class="home-button">
+      <img src="icons/history.png" alt="Annual History" />
+      <span>Annual History</span>
     </a>
   </div>
 </body>
