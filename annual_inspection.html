@@ -3,113 +3,212 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Annual Inspection - FieldFlow</title>
+  <title>Annual Inspection – FieldFlow</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #eef2f3;
-      padding: 20px;
+      background-color: #f7f9fc;
+      margin: 0;
+      padding: 0;
     }
-    h1 {
+    header {
+      background-color: #044466;
+      color: white;
+      padding: 1rem;
       text-align: center;
     }
-    select, input, button {
-      display: block;
-      margin: 10px auto;
-      padding: 8px;
-      font-size: 16px;
+    .container {
+      padding: 1rem;
+      max-width: 900px;
+      margin: auto;
     }
-    .well-box {
-      background: #fff;
-      padding: 15px;
-      margin: 15px 0;
-      border-radius: 8px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    h2 {
+      color: #044466;
     }
-    .well-box label {
+    label {
+      font-weight: bold;
       display: block;
-      margin: 8px 0 4px;
+      margin-top: 1rem;
     }
-    .home-link {
-      display: block;
-      margin: 20px auto;
-      text-align: center;
+    select, input[type="text"], input[type="number"], textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.2rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .well-section {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .field-group {
+      margin-top: 1rem;
+    }
+    .leak-type {
+      margin-top: 0.5rem;
+    }
+    .hidden {
+      display: none;
+    }
+    button {
+      background-color: #044466;
+      color: white;
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 1rem;
     }
   </style>
 </head>
 <body>
-  <h1>Annual Inspection</h1>
+  <header>
+    <h1>Annual Inspection Log</h1>
+  </header>
+  <div class="container">
+    <div class="well-section">
+      <label>Date/Time</label>
+      <input type="datetime-local" value="" id="datetime" />
 
-  <label for="field">Select Field:</label>
-  <select id="field" onchange="loadWells()">
-    <option value="">--Select Field--</option>
-    <option value="Dixon">Dixon</option>
-    <option value="Simpson Chapel">Simpson Chapel</option>
-    <option value="Mineral City">Mineral City</option>
-  </select>
+      <label>Field</label>
+      <select id="fieldSelect" onchange="populateWells()">
+        <option value="">Select Field</option>
+        <option value="Dixon">Dixon</option>
+        <option value="Simpson Chapel">Simpson Chapel</option>
+        <option value="Mineral City">Mineral City</option>
+      </select>
 
-  <div id="wellContainer"></div>
+      <label>Well</label>
+      <select id="wellSelect">
+        <option value="">Select Well</option>
+      </select>
 
-  <button onclick="submitInspection()">Submit</button>
+      <label>Surface Casing Pressure (PSI)</label>
+      <input type="number" placeholder="Enter surface casing pressure" />
 
-  <div class="home-link">
-    <a href="index.html">← Back to Home</a>
+      <label>Annulus Casing Pressure (PSI)</label>
+      <input type="number" placeholder="Enter annulus casing pressure" />
+
+      <h2>Valve Functional</h2>
+      <div class="field-group">
+        <label>Master</label><select><option>Y</option><option>N</option></select>
+        <label>Tubing</label><select><option>Y</option><option>N</option></select>
+        <label>Annulus</label><select><option>Y</option><option>N</option></select>
+        <label>Crossover</label><select><option>Y</option><option>N</option></select>
+        <label>Tail</label><select><option>Y</option><option>N</option></select>
+        <label>Wing</label><select><option>Y</option><option>N</option></select>
+      </div>
+
+      <h2>Leak Checks</h2>
+      <div class="field-group">
+        <label>Master</label>
+        <select onchange="toggleLeakType(this, 'leakTypeMaster')">
+          <option>N</option>
+          <option>Y</option>
+        </select>
+        <div id="leakTypeMaster" class="leak-type hidden">
+          <label>If “Yes”, Leak Type:</label>
+          <select><option>Internal</option><option>External</option><option>Both</option></select>
+        </div>
+
+        <label>Tubing</label>
+        <select onchange="toggleLeakType(this, 'leakTypeTubing')">
+          <option>N</option>
+          <option>Y</option>
+        </select>
+        <div id="leakTypeTubing" class="leak-type hidden">
+          <label>If “Yes”, Leak Type:</label>
+          <select><option>Internal</option><option>External</option><option>Both</option></select>
+        </div>
+
+        <label>Annulus</label>
+        <select onchange="toggleLeakType(this, 'leakTypeAnnulus')">
+          <option>N</option>
+          <option>Y</option>
+        </select>
+        <div id="leakTypeAnnulus" class="leak-type hidden">
+          <label>If “Yes”, Leak Type:</label>
+          <select><option>Internal</option><option>External</option><option>Both</option></select>
+        </div>
+
+        <label>Crossover</label>
+        <select onchange="toggleLeakType(this, 'leakTypeCrossover')">
+          <option>N</option>
+          <option>Y</option>
+        </select>
+        <div id="leakTypeCrossover" class="leak-type hidden">
+          <label>If “Yes”, Leak Type:</label>
+          <select><option>Internal</option><option>External</option><option>Both</option></select>
+        </div>
+
+        <label>Tail</label>
+        <select onchange="toggleLeakType(this, 'leakTypeTail')">
+          <option>N</option>
+          <option>Y</option>
+        </select>
+        <div id="leakTypeTail" class="leak-type hidden">
+          <label>If “Yes”, Leak Type:</label>
+          <select><option>Internal</option><option>External</option><option>Both</option></select>
+        </div>
+
+        <label>Wing</label>
+        <select onchange="toggleLeakType(this, 'leakTypeWing')">
+          <option>N</option>
+          <option>Y</option>
+        </select>
+        <div id="leakTypeWing" class="leak-type hidden">
+          <label>If “Yes”, Leak Type:</label>
+          <select><option>Internal</option><option>External</option><option>Both</option></select>
+        </div>
+      </div>
+
+      <label>Notes</label>
+      <textarea placeholder="Optional notes..."></textarea>
+
+      <label>Photo Upload</label>
+      <input type="file" accept="image/*" />
+
+      <button type="submit">Submit</button>
+    </div>
   </div>
 
   <script>
-    const fieldWells = {
+    const wellsByField = {
       "Dixon": ["Evans 10", "Evans 5", "Evan 4-H", "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6", "Cory 5", "Cory 1"],
       "Simpson Chapel": ["Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 5", "Crays 4", "Crays 3", "Crays 7", "Crays 2", "Crays 6", "Royal 6", "Royal 5", "Royal 4", "Royal 7", "Royal 1"],
       "Mineral City": ["Haines 1", "Haines 2", "Haines 3", "Haines 4", "G. Axe 1", "G. Axe 2", "G. Axe 3", "G. Axe 4", "G. Axe 5", "G. Axe 6", "J. Axe 1", "Rollison 1", "Rollison 2", "Rollison 3", "Rollison 4", "Headley 1"]
     };
 
-    function loadWells() {
-      const field = document.getElementById("field").value;
-      const container = document.getElementById("wellContainer");
-      container.innerHTML = "";
-
-      if (fieldWells[field]) {
-        fieldWells[field].forEach(well => {
-          const box = document.createElement("div");
-          box.className = "well-box";
-          box.innerHTML = `
-            <h3>${well}</h3>
-            <label>Valve Check:</label>
-            <select name="valve-${well}">
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-            <label>Leak Check:</label>
-            <select name="leak-${well}">
-              <option value="No">No</option>
-              <option value="Yes">Yes</option>
-            </select>
-          `;
-          container.appendChild(box);
+    function populateWells() {
+      const field = document.getElementById("fieldSelect").value;
+      const wellSelect = document.getElementById("wellSelect");
+      wellSelect.innerHTML = "<option value=''>Select Well</option>";
+      if (field && wellsByField[field]) {
+        wellsByField[field].forEach(well => {
+          const option = document.createElement("option");
+          option.value = well;
+          option.textContent = well;
+          wellSelect.appendChild(option);
         });
       }
     }
 
-    function submitInspection() {
-      const field = document.getElementById("field").value;
-      const boxes = document.querySelectorAll(".well-box");
-      const results = [];
-
-      boxes.forEach(box => {
-        const wellName = box.querySelector("h3").innerText;
-        const valve = box.querySelector(`select[name="valve-${wellName}"]`).value;
-        const leak = box.querySelector(`select[name="leak-${wellName}"]`).value;
-        results.push({
-          field,
-          well: wellName,
-          valveCheck: valve,
-          leakCheck: leak
-        });
-      });
-
-      console.log("Annual Inspection Submitted:", results);
-      alert("Inspection Submitted Successfully!");
+    function toggleLeakType(selectEl, leakTypeId) {
+      const leakDiv = document.getElementById(leakTypeId);
+      if (selectEl.value === "Y") {
+        leakDiv.classList.remove("hidden");
+      } else {
+        leakDiv.classList.add("hidden");
+      }
     }
+
+    // Autofill date/time on page load
+    window.onload = () => {
+      document.getElementById("datetime").value = new Date().toISOString().slice(0, 16);
+    };
   </script>
 </body>
 </html>
