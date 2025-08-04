@@ -1,12 +1,180 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Coming Soon</title>
-  </head>
-  <body style="text-align:center; font-family:sans-serif; margin-top:100px;">
-    <h2>This feature is coming soon!</h2>
-    <a href="index.html" style="display:inline-block; margin-top:20px; text-decoration:none; font-size:18px;">
-      🏠 Home
-    </a>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Annual Inspection – FieldFlow</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f9fc;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #044466;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    .container {
+      padding: 1rem;
+      max-width: 900px;
+      margin: auto;
+    }
+    select, input, textarea, button {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    .section {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+    .row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .row > div {
+      flex: 1;
+      min-width: 200px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+    .leak-type {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Annual Inspection Log – FieldFlow</h2>
+  </header>
+  <div class="container">
+    <form id="annualForm">
+      <div class="row">
+        <div>
+          <label>Date</label>
+          <input type="date" id="date" required>
+        </div>
+        <div>
+          <label>Time</label>
+          <input type="time" id="time" required>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Field</label>
+          <select id="field" required onchange="populateWells()">
+            <option value="">Select Field</option>
+            <option value="Dixon">Dixon</option>
+            <option value="Simpson Chapel">Simpson Chapel</option>
+            <option value="Mineral City">Mineral City</option>
+          </select>
+        </div>
+        <div>
+          <label>Well</label>
+          <select id="well" required>
+            <option value="">Select Well</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Pressures</h3>
+        <label>Surface Casing Pressure (psi)</label>
+        <input type="number" step="any" required>
+
+        <label>Annulus Casing Pressure (psi)</label>
+        <input type="number" step="any" required>
+      </div>
+
+      <div class="section">
+        <h3>Valve Functional (Yes/No)</h3>
+        <div class="row">
+          <div><label>Master</label><select><option>Y</option><option>N</option></select></div>
+          <div><label>Tubing</label><select><option>Y</option><option>N</option></select></div>
+          <div><label>Annulus</label><select><option>Y</option><option>N</option></select></div>
+          <div><label>Crossover</label><select><option>Y</option><option>N</option></select></div>
+          <div><label>Tail</label><select><option>Y</option><option>N</option></select></div>
+          <div><label>Wing</label><select><option>Y</option><option>N</option></select></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Leak Checks</h3>
+        <div class="row">
+          <div><label>Master</label><select onchange="showType(this)"><option>N</option><option>Y</option></select></div>
+          <div><label>Tubing</label><select onchange="showType(this)"><option>N</option><option>Y</option></select></div>
+          <div><label>Annulus</label><select onchange="showType(this)"><option>N</option><option>Y</option></select></div>
+          <div><label>Crossover</label><select onchange="showType(this)"><option>N</option><option>Y</option></select></div>
+          <div><label>Tail</label><select onchange="showType(this)"><option>N</option><option>Y</option></select></div>
+          <div><label>Wing</label><select onchange="showType(this)"><option>N</option><option>Y</option></select></div>
+        </div>
+        <div class="leak-type">
+          <label>If “Yes”, Leak Type</label>
+          <select>
+            <option>Internal</option>
+            <option>External</option>
+            <option>Both</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Notes</label>
+      <textarea rows="3"></textarea>
+
+      <label>Upload Photo</label>
+      <input type="file" accept="image/*">
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+
+  <script>
+    const wells = {
+      "Dixon": ["Evans 10", "Evans 5", "Evan 4-H", "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6", "Cory 5", "Cory 1"],
+      "Simpson Chapel": ["Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 5", "Crays 4", "Crays 3", "Crays 7", "Crays 2", "Crays 6", "Royal 6", "Royal 5", "Royal 4", "Royal 7", "Royal 1"],
+      "Mineral City": ["Haines 1", "Haines 2", "Haines 3", "Haines 4", "G. Axe 1", "G. Axe 2", "G. Axe 3", "G. Axe 4", "G. Axe 5", "G. Axe 6", "J. Axe 1", "Rollison 1", "Rollison 2", "Rollison 3", "Rollison 4", "Headley 1"]
+    };
+
+    function populateWells() {
+      const field = document.getElementById("field").value;
+      const wellSelect = document.getElementById("well");
+      wellSelect.innerHTML = '<option value="">Select Well</option>';
+      if (wells[field]) {
+        wells[field].forEach(well => {
+          const option = document.createElement("option");
+          option.value = well;
+          option.textContent = well;
+          wellSelect.appendChild(option);
+        });
+      }
+    }
+
+    function showType(selectElement) {
+      const container = selectElement.closest(".section");
+      const leakType = container.querySelector(".leak-type");
+      if (selectElement.value === "Y") {
+        leakType.style.display = "block";
+      }
+    }
+
+    document.getElementById("date").valueAsDate = new Date();
+    document.getElementById("time").value = new Date().toLocaleTimeString('en-US', {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  </script>
+</body>
 </html>
