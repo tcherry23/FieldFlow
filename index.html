@@ -7,91 +7,79 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f1f1f1;
+      background-color: #f7f9fc;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+    }
+    header {
+      background-color: #044466;
+      color: white;
+      padding: 1rem;
       text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
     }
-
-    h1 {
-      color: #2c3e50;
-      margin-bottom: 30px;
-    }
-
     .grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-      justify-items: center;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
-    .icon-button {
-      background-color: white;
-      border: 2px solid #3498db;
-      border-radius: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 20px;
       padding: 20px;
-      width: 130px;
-      height: 130px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      max-width: 600px;
+      margin: auto;
+    }
+    .icon-card {
+      text-align: center;
       text-decoration: none;
-      color: #333;
-      transition: 0.2s;
+      color: black;
     }
-
-    .icon-button:hover {
-      background-color: #e8f4ff;
+    .icon-card img {
+      width: 40px;
+      height: 40px;
+      margin-bottom: 8px;
     }
-
-    .icon-button img {
-      width: 50px;
-      height: 50px;
-      margin-bottom: 10px;
+    .icon-card span {
+      display: block;
+      font-size: 0.9rem;
     }
-
-    .label {
-      font-weight: bold;
-      font-size: 14px;
-    }
-
   </style>
 </head>
 <body>
-  <h1>FieldFlow App</h1>
+  <header>FieldFlow</header>
 
   <div class="grid">
-    <a href="annual-inspection.html" class="icon-button">
-      <img src="https://img.icons8.com/ios-filled/50/inspection.png" alt="Annual Inspection" />
-      <div class="label">Annual Inspection</div>
+    <a href="annual_inspection.html" class="icon-card">
+      <img src="https://img.icons8.com/ios-filled/50/000000/inspection.png" alt="Annual Inspection"/>
+      <span>Annual Inspection</span>
     </a>
 
-    <a href="shut-in.html" class="icon-button">
-      <img src="https://img.icons8.com/ios-filled/50/valve.png" alt="Shut-In Log" />
-      <div class="label">Shut-In Log</div>
+    <a href="shut_in_log.html" class="icon-card">
+      <img src="https://img.icons8.com/ios-filled/50/000000/valve.png" alt="Shut-In Log"/>
+      <span>Shut-In Log</span>
     </a>
 
-    <a href="daily-pressure.html" class="icon-button">
-      <img src="https://img.icons8.com/ios-filled/50/gas.png" alt="Daily Pressure" />
-      <div class="label">Daily Pressure</div>
+    <a href="daily_log.html" class="icon-card">
+      <img src="https://img.icons8.com/ios-filled/50/000000/time.png" alt="Daily Pressure"/>
+      <span>Daily Pressure</span>
     </a>
 
-    <a href="swd-log.html" class="icon-button">
-      <img src="https://img.icons8.com/ios-filled/50/water.png" alt="SWD Log" />
-      <div class="label">SWD Log</div>
+    <a href="swd_log.html" class="icon-card">
+      <img src="https://img.icons8.com/ios-filled/50/000000/water.png" alt="SWD Log"/>
+      <span>SWD Log</span>
     </a>
 
-    <a href="export.html" class="icon-button">
-      <img src="https://img.icons8.com/ios-filled/50/export.png" alt="Export" />
-      <div class="label">Export</div>
+    <a href="gps_route_log.html" class="icon-card">
+      <img src="https://img.icons8.com/ios-filled/50/000000/route.png" alt="GPS Tracker"/>
+      <span>GPS Tracker</span>
     </a>
 
-    <a href="well-status.html" class="icon-button">
-      <img src="https://img.icons8.com/ios-filled/50/ok.png" alt="Well Status" />
-      <div class="label">Well Status Tracker</div>
+    <a href="export.html" class="icon-card">
+      <img src="https://img.icons8.com/ios-filled/50/000000/export.png" alt="Export"/>
+      <span>Export</span>
+    </a>
+
+    <a href="well-status.html" class="icon-card">
+      <img src="https://img.icons8.com/ios-filled/50/000000/maintenance.png" alt="Well Status"/>
+      <span>Well Status</span>
     </a>
   </div>
 </body>
