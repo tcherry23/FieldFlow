@@ -7,184 +7,184 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
+      margin: 20px;
+      background-color: #f9f9f9;
     }
-    h1 {
+
+    h1, h2 {
       text-align: center;
     }
-    .well-entry {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-bottom: 15px;
-      border-radius: 6px;
+
+    label, select, input, textarea {
+      display: block;
+      width: 100%;
+      margin: 5px 0 15px;
     }
+
+    .well-block {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
     .status {
       font-weight: bold;
     }
-    .status.green { color: green; }
-    .status.yellow { color: orange; }
-    .status.red { color: red; }
+
+    .green { color: green; }
+    .yellow { color: orange; }
+    .red { color: red; }
+
+    .form-header {
+      max-width: 600px;
+      margin: 0 auto 20px;
+    }
   </style>
 </head>
 <body>
   <h1>Daily Pressure Log</h1>
-  <form id="pressureForm">
+
+  <div class="form-header">
+    <label for="field">Select Field:</label>
+    <select id="field" onchange="loadWells()">
+      <option value="">--Select--</option>
+      <option value="Mineral City">Mineral City</option>
+      <option value="Simpson Chapel">Simpson Chapel</option>
+      <option value="Dixon">Dixon</option>
+    </select>
+
     <label for="attendant">Attendant:</label>
-    <select id="attendant" name="attendant">
+    <select id="attendant">
       <option value="T. Cherry">T. Cherry</option>
       <option value="T. Ressler">T. Ressler</option>
-    </select><br><br>
+    </select>
 
-    <label for="fieldSelect">Select Field:</label>
-    <select id="fieldSelect">
-      <option value="">-- Select Field --</option>
-      <option value="Dixon">Dixon</option>
-      <option value="Simpson Chapel">Simpson Chapel</option>
-      <option value="Mineral City">Mineral City</option>
-    </select><br><br>
+    <label for="target">Daily MCF Target:</label>
+    <input type="number" id="target" placeholder="Enter Daily MCF Target"/>
+    <div id="runningTotal" style="margin-top:10px;"></div>
+  </div>
 
-    <label for="mcfTarget">Daily MCF Target:</label>
-    <input type="number" id="mcfTarget" placeholder="Enter target"><br><br>
-
-    <strong>Total MCF: <span id="totalMCF">0</span></strong>
-    <div id="wellsContainer"></div>
-  </form>
+  <div id="wellsContainer"></div>
 
   <script>
     const fields = {
-      "Dixon": {
-        wells: [
-          { name: "Evans 7", orifice: 1.0000 },
-          { name: "Evans 8", orifice: 1.0000 },
-          { name: "Evans 3", orifice: 1.0000 },
-          { name: "Evans 10", orifice: 1.0000 },
-          { name: "Evans 5", orifice: 1.2500 },
-          { name: "Evans 4-H", orifice: 1.0000 },
-          { name: "Evans 6", orifice: 1.0000 },
-          { name: "Cory 8", orifice: 1.0000 },
-          { name: "Cory 4", orifice: 1.0000 },
-          { name: "Cory 2", orifice: 1.0000 },
-          { name: "Cory 7", orifice: 1.0000 },
-          { name: "Cory 3", orifice: 1.0000 },
-          { name: "Cory 6", orifice: 1.0000 },
-          { name: "Cory 5", orifice: 1.0000 },
-          { name: "Cory 1", orifice: 1.0000 }
-        ]
+      "Mineral City": {
+        "Rollison 4": 0.75, "Rollison 1": 0.75, "Rollison 2": 0.75,
+        "G. Axe 6": 1.00, "Haines 4": 0.375, "Haines 1": 1.00,
+        "Haines 2": 1.00, "Haines 3": 1.00, "G. Axe 1": 1.00,
+        "Allen 1": 1.00, "G. Axe 2": 0.75, "G. Axe 4": 0.75,
+        "G. Axe 5": 1.00, "G. Axe 3": 0.5, "J. Axe 1": 1.00
       },
       "Simpson Chapel": {
-        wells: [
-          { name: "Blaker 1", orifice: 0.5000 },
-          { name: "Emery 2", orifice: 0.7500 },
-          { name: "Emery 1", orifice: 0.7500 },
-          { name: "Crays 8", orifice: 1.0000 },
-          { name: "Crays 1", orifice: 0.5000 },
-          { name: "Crays 5", orifice: 0.7500 },
-          { name: "Crays 4", orifice: 0.2500 },
-          { name: "Crays 3", orifice: 0.7500 },
-          { name: "Crays 7", orifice: 1.0000 },
-          { name: "Crays 2", orifice: 1.0000 },
-          { name: "Crays 6", orifice: 1.0000 },
-          { name: "Royal 6", orifice: 0.6250 },
-          { name: "Royal 5", orifice: 0.5000 },
-          { name: "Royal 4", orifice: 0.5000 },
-          { name: "Royal 7", orifice: 1.0000 },
-          { name: "Royal 1", orifice: 0.5000 }
-        ]
+        "Blaker 1": 0.5, "Emery 2": 0.75, "Emery 1": 0.75,
+        "Crays 8": 1.00, "Crays 1": 0.5, "Crays 5": 0.75,
+        "Crays 4": 0.25, "Crays 3": 0.75, "Crays 7": 1.00,
+        "Crays 2": 1.00, "Crays 6": 1.00, "Royal 6": 0.625,
+        "Royal 5": 0.5, "Royal 4": 0.5, "Royal 7": 1.00, "Royal 1": 0.5
       },
-      "Mineral City": {
-        wells: [
-          { name: "Rollison 4", orifice: 0.7500 },
-          { name: "Rollison 1", orifice: 0.7500 },
-          { name: "Rollison 2", orifice: 0.7500 },
-          { name: "G. Axe 6", orifice: 1.0000 },
-          { name: "Haines 4", orifice: 0.3750 },
-          { name: "Haines 1", orifice: 1.0000 },
-          { name: "Haines 2", orifice: 1.0000 },
-          { name: "Haines 3", orifice: 1.0000 },
-          { name: "G. Axe 1", orifice: 1.0000 },
-          { name: "Allen 1", orifice: 1.0000 },
-          { name: "G. Axe 2", orifice: 0.7500 },
-          { name: "G. Axe 4", orifice: 0.7500 },
-          { name: "G. Axe 5", orifice: 1.0000 },
-          { name: "G. Axe 3", orifice: 0.5000 },
-          { name: "J. Axe 1", orifice: 1.0000 }
-        ]
+      "Dixon": {
+        "Evans 7": 1.00, "Evans 8": 1.00, "Evans 3": 1.00,
+        "Evans 10": 1.00, "Evans 5": 1.25, "Evans 4-H": 1.00,
+        "Evans 6": 1.00, "Cory 8": 1.00, "Cory 4": 1.00,
+        "Cory 2": 1.00, "Cory 7": 1.00, "Cory 3": 1.00,
+        "Cory 6": 1.00, "Cory 5": 1.00, "Cory 1": 1.00
       }
     };
 
-    const fieldSelect = document.getElementById('fieldSelect');
-    const wellsContainer = document.getElementById('wellsContainer');
-    const totalMCF = document.getElementById('totalMCF');
-    const mcfTargetInput = document.getElementById('mcfTarget');
+    function loadWells() {
+      const field = document.getElementById("field").value;
+      const container = document.getElementById("wellsContainer");
+      container.innerHTML = "";
 
-    fieldSelect.addEventListener('change', () => {
-      const field = fieldSelect.value;
-      wellsContainer.innerHTML = '';
+      if (!field) return;
+
+      let totalMCF = 0;
+
+      Object.entries(fields[field]).forEach(([well, orifice]) => {
+        const date = new Date().toLocaleDateString();
+
+        const block = document.createElement("div");
+        block.className = "well-block";
+        block.innerHTML = `
+          <h3>${well}</h3>
+          <label>Date:</label>
+          <input type="text" value="${date}" readonly />
+
+          <label>Orifice Size:</label>
+          <input type="number" value="${orifice}" readonly />
+
+          <label>Upstream PSI:</label>
+          <input type="number" class="up" placeholder="Upstream Pressure" />
+
+          <label>Downstream PSI:</label>
+          <input type="number" class="down" placeholder="Downstream Pressure" />
+
+          <label>Differential (Up - Down):</label>
+          <input type="number" class="diff" readonly />
+
+          <label>d/p H₂O:</label>
+          <input type="number" class="dph2o" readonly />
+
+          <label>MCF/Hour:</label>
+          <input type="number" class="mcf" readonly />
+
+          <div class="status"></div>
+
+          <label>Notes:</label>
+          <textarea></textarea>
+        `;
+        container.appendChild(block);
+      });
+
+      document.querySelectorAll(".up, .down").forEach(input => {
+        input.addEventListener("input", calculateMCF);
+      });
+    }
+
+    function calculateMCF() {
       let total = 0;
+      document.querySelectorAll(".well-block").forEach(block => {
+        const up = parseFloat(block.querySelector(".up").value) || 0;
+        const down = parseFloat(block.querySelector(".down").value) || 0;
+        const orifice = parseFloat(block.querySelector("input[readonly]").value);
 
-      if (fields[field]) {
-        fields[field].wells.forEach((well, index) => {
-          const id = `well${index}`;
-          const container = document.createElement('div');
-          container.className = 'well-entry';
+        const diff = up - down;
+        const dph2o = diff * 27.7;
+        const mcf = 0.2628 * (orifice ** 2) * Math.sqrt(dph2o * up || 0);
 
-          const date = new Date().toLocaleDateString();
+        block.querySelector(".diff").value = diff.toFixed(2);
+        block.querySelector(".dph2o").value = dph2o.toFixed(2);
+        block.querySelector(".mcf").value = mcf.toFixed(2);
 
-          container.innerHTML = `
-            <strong>${well.name}</strong> (${date})<br>
-            Orifice: ${well.orifice}<br>
-            Upstream: <input type="number" id="${id}_up" placeholder="Upstream"> psi<br>
-            Downstream: <input type="number" id="${id}_down" placeholder="Downstream"> psi<br>
-            Notes: <input type="text" id="${id}_note" placeholder="Optional notes"><br>
-            d/p H₂O: <span id="${id}_dp">-</span><br>
-            MCF/hr: <span id="${id}_mcf">-</span>
-            <span id="${id}_status" class="status"></span>
-            <br><br>
-          `;
+        const target = parseFloat(document.getElementById("target").value) || 0;
+        const status = block.querySelector(".status");
 
-          wellsContainer.appendChild(container);
+        if (target) {
+          if (mcf >= target) {
+            status.innerText = "On Target";
+            status.className = "status green";
+          } else if (mcf >= target * 0.75) {
+            status.innerText = "Below Target";
+            status.className = "status yellow";
+          } else {
+            status.innerText = "Too Low";
+            status.className = "status red";
+          }
+        }
 
-          const up = container.querySelector(`#${id}_up`);
-          const down = container.querySelector(`#${id}_down`);
+        total += mcf;
+      });
 
-          const calculate = () => {
-            const u = parseFloat(up.value);
-            const d = parseFloat(down.value);
-            if (!isNaN(u) && !isNaN(d)) {
-              const diff = (u - d) * 27.7;
-              const mcf = 0.2628 * Math.pow(well.orifice, 2) * Math.sqrt(u * diff);
-              container.querySelector(`#${id}_dp`).innerText = diff.toFixed(2);
-              container.querySelector(`#${id}_mcf`).innerText = mcf.toFixed(2);
-              total = Array.from(document.querySelectorAll('[id$="_mcf"]'))
-                .map(e => parseFloat(e.innerText) || 0).reduce((a, b) => a + b, 0);
-              totalMCF.innerText = total.toFixed(2);
-
-              // Status icon
-              const target = parseFloat(mcfTargetInput.value);
-              const statusSpan = document.getElementById(`${id}_status`);
-              if (!isNaN(target)) {
-                if (mcf >= target) {
-                  statusSpan.textContent = " ✓";
-                  statusSpan.className = "status green";
-                } else if (mcf >= target * 0.75) {
-                  statusSpan.textContent = " ⚠";
-                  statusSpan.className = "status yellow";
-                } else {
-                  statusSpan.textContent = " ↓";
-                  statusSpan.className = "status red";
-                }
-              } else {
-                statusSpan.textContent = "";
-              }
-            }
-          };
-
-          up.addEventListener('input', calculate);
-          down.addEventListener('input', calculate);
-          mcfTargetInput.addEventListener('input', calculate);
-        });
-      }
-    });
+      document.getElementById("runningTotal").innerText = `Total MCF: ${total.toFixed(2)}`;
+    }
   </script>
 </body>
 </html>
