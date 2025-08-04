@@ -1,128 +1,193 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Daily Pressure Log</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 15px;
-      background: #f4f4f4;
-    }
-    h2 {
-      text-align: center;
-    }
-    select, input, button {
-      margin: 5px 0;
-      padding: 6px;
-      width: 100%;
-      max-width: 400px;
-    }
-    .well-entry {
-      background: #fff;
-      padding: 10px;
-      margin: 10px 0;
-      border-left: 4px solid #007BFF;
-    }
-    .well-entry h4 {
-      margin: 5px 0;
-    }
-    .summary {
-      margin-top: 15px;
-      background: #d9edf7;
-      padding: 10px;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-  <h2>Daily Pressure Log</h2>
+<!-- Continued Daily Pressure Log Section -->
+<div class="well-section">
+  <h3>Cory 8</h3>
+  <label for="date-cory8">Date:</label>
+  <input type="date" id="date-cory8" name="date-cory8"><br>
+  <label for="orifice-cory8">Orifice Size:</label>
+  <input type="text" id="orifice-cory8" name="orifice-cory8" value="1.0000" readonly><br>
+  <label for="upstream-cory8">Upstream PSI:</label>
+  <input type="number" id="upstream-cory8" name="upstream-cory8" step="0.01"><br>
+  <label for="downstream-cory8">Downstream PSI:</label>
+  <input type="number" id="downstream-cory8" name="downstream-cory8" step="0.01"><br>
+  <label for="differential-cory8">Differential PSI:</label>
+  <input type="number" id="differential-cory8" name="differential-cory8" readonly><br>
+  <label for="mcf-cory8">MCF/Hour:</label>
+  <input type="number" id="mcf-cory8" name="mcf-cory8" readonly><br>
+  <label for="notes-cory8">Notes:</label>
+  <input type="text" id="notes-cory8" name="notes-cory8">
+</div>
+          differentialInput.value = differential.toFixed(2);
 
-  <label for="field">Select Field:</label>
-  <select id="field" onchange="populateWells()">
-    <option value="">-- Select Field --</option>
-    <option value="Mineral City">Mineral City</option>
-    <option value="Simpson Chapel">Simpson Chapel</option>
-    <option value="Dixon">Dixon</option>
-  </select>
+          // d/p H₂O
+          const dpH2O = differential * 27.7;
+          document.getElementById(`dp-${wellId}`).value = dpH2O.toFixed(2);
 
-  <label for="attendant">Attendant:</label>
-  <select id="attendant">
-    <option value="T. Cherry">T. Cherry</option>
-    <option value="T. Ressler">T. Ressler</option>
-  </select>
+          // MCF/hr
+          const orificeSize = parseFloat(document.getElementById(`orifice-${wellId}`).value) || 0;
+          const mcf = 0.2628 * (orificeSize ** 2) * Math.sqrt(fieldPressure * dpH2O);
+          document.getElementById(`mcf-${wellId}`).value = mcf.toFixed(2);
 
-  <div id="wells-container"></div>
+          // Update totals
+          updateTotalMCF();
+        }
 
-  <script>
-    const orificeSizes = {
-      "Mineral City": {
-        "Rollison 4": 0.75, "Rollison 1": 0.75, "Rollison 2": 0.75,
-        "G. Axe 6": 1.0, "Haines 4": 0.375, "Haines 1": 1.0,
-        "Haines 2": 1.0, "Haines 3": 1.0, "G. Axe 1": 1.0, "Allen 1": 1.0,
-        "G. Axe 2": 0.75, "G. Axe 4": 0.75, "G. Axe 5": 1.0,
-        "G. Axe 3": 0.5, "J. Axe 1": 1.0
-      },
-      "Simpson Chapel": {
-        "Blaker 1": 0.5, "Emery 2": 0.75, "Emery 1": 0.75,
-        "Crays 8": 1.0, "Crays 1": 0.5, "Crays 5": 0.75,
-        "Crays 4": 0.25, "Crays 3": 0.75, "Crays 7": 1.0,
-        "Crays 2": 1.0, "Crays 6": 1.0, "Royal 6": 0.625,
-        "Royal 5": 0.5, "Royal 4": 0.5, "Royal 7": 1.0, "Royal 1": 0.5
-      },
-      "Dixon": {
-        "Evans 7": 1.0, "Evans 8": 1.0, "Evans 3": 1.0, "Evans 10": 1.0,
-        "Evans 5": 1.25, "Evans 4-H": 1.0, "Evans 6": 1.0, "Cory 8": 1.0,
-        "Cory 4": 1.0, "Cory 2": 1.0, "Cory 7": 1.0, "Cory 3": 1.0,
-        "Cory 6": 1.0, "Cory 5": 1.0, "Cory 1": 1.0
-      }
-    };
+        function updateTotalMCF() {
+          let total = 0;
+          const mcfInputs = document.querySelectorAll('[id^="mcf-"]');
+          mcfInputs.forEach(input => {
+            const val = parseFloat(input.value);
+            if (!isNaN(val)) total += val;
+          });
 
-    function populateWells() {
-      const field = document.getElementById("field").value;
-      const container = document.getElementById("wells-container");
-      container.innerHTML = "";
+          const target = parseFloat(document.getElementById("dailyTarget").value) || 0;
+          document.getElementById("totalMCF").textContent = total.toFixed(2);
+          const progress = document.getElementById("progress");
 
-      if (!orificeSizes[field]) return;
+          if (target === 0) {
+            progress.textContent = "N/A";
+            progress.className = "";
+          } else {
+            const percent = (total / target) * 100;
+            if (percent >= 100) {
+              progress.textContent = "On Track";
+              progress.className = "status-green";
+            } else if (percent >= 80) {
+              progress.textContent = "Slightly Below Target";
+              progress.className = "status-yellow";
+            } else {
+              progress.textContent = "Too Low";
+              progress.className = "status-red";
+            }
+          }
+        }
 
-      Object.keys(orificeSizes[field]).forEach(well => {
-        const orifice = orificeSizes[field][well];
-        const wellDiv = document.createElement("div");
-        wellDiv.className = "well-entry";
-
-        const today = new Date().toISOString().slice(0, 10);
-
-        wellDiv.innerHTML = `
-          <h4>${well}</h4>
-          <label>Date:</label><input type="date" value="${today}" /><br/>
-          <label>Upstream PSI:</label><input type="number" step="0.01" class="upstream" /><br/>
-          <label>Downstream PSI:</label><input type="number" step="0.01" class="downstream" /><br/>
-          <label>d/p H₂O:</label><input type="text" class="dp" readonly /><br/>
-          <label>MCF/hour:</label><input type="text" class="mcf" readonly /><br/>
-          <label>Notes:</label><input type="text" placeholder="Optional"/><br/>
-          <input type="hidden" class="orifice" value="${orifice}" />
-        `;
-        container.appendChild(wellDiv);
-      });
-
-      document.querySelectorAll(".upstream, .downstream").forEach(input => {
-        input.addEventListener("input", updateCalculations);
-      });
-    }
-
-    function updateCalculations() {
-      document.querySelectorAll(".well-entry").forEach(entry => {
-        const up = parseFloat(entry.querySelector(".upstream").value) || 0;
-        const down = parseFloat(entry.querySelector(".downstream").value) || 0;
-        const orifice = parseFloat(entry.querySelector(".orifice").value);
-        const dp = (up - down) * 27.7;
-        const mcf = 0.2628 * (orifice * orifice) * Math.sqrt(dp);
-
-        entry.querySelector(".dp").value = dp.toFixed(2);
-        entry.querySelector(".mcf").value = isNaN(mcf) ? "" : mcf.toFixed(2);
-      });
-    }
-  </script>
-</body>
+        function goHome() {
+          window.location.href = "index.html";
+        }
+      </script>
+    </body>
 </html>
+<div id="Simpson Chapel-wells" class="wells-section" style="display:none;">
+  <h2>Simpson Chapel Wells</h2>
+  <div class="well-entry">
+    <label>Blaker 1</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+  <div class="well-entry">
+    <label>Emery 2</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+  <div class="well-entry">
+    <label>Emery 1</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+  <!-- Continue this format for all Simpson Chapel wells (Crays 8, Crays 5, etc.) -->
+    <div class="well-entry">
+    <label>Crays 8</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+  <div class="well-entry">
+    <label>Crays 5</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+  <div class="well-entry">
+    <label>Crays 4</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+  <div class="well-entry">
+    <label>Crays 3</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+  <div class="well-entry">
+    <label>Crays 7</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+  <div class="well-entry">
+    <label>Crays 2</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+  <div class="well-entry">
+    <label>Crays 6</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+  <div class="well-entry">
+    <label>Royal 6</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+  <div class="well-entry">
+    <label>Royal 5</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+  <div class="well-entry">
+    <label>Royal 4</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+  <div class="well-entry">
+    <label>Royal 7</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+  <div class="well-entry">
+    <label>Royal 1</label>
+    <input type="date" class="date">
+    <input type="number" placeholder="Upstream PSI" class="upstream">
+    <input type="number" placeholder="Downstream PSI" class="downstream">
+    <input type="text" placeholder="Differential PSI" class="differential" readonly>
+    <input type="text" placeholder="MCF/Hour" class="mcf" readonly>
+  </div>
+</div>
