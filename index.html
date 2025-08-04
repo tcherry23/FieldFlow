@@ -3,125 +3,78 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FieldFlow</title>
+  <title>FieldFlow App</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f8fc;
       margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      padding: 20px;
+      background-color: #f2f2f2;
     }
 
-    header {
-      background-color: #004080;
-      color: white;
-      padding: 20px;
+    h1 {
       text-align: center;
-      font-size: 28px;
-      font-weight: bold;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 20px;
-      padding: 30px;
-      flex-grow: 1;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      max-width: 600px;
+      margin: 0 auto;
+      margin-top: 30px;
     }
 
-    .card {
-      background-color: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      text-align: center;
+    .button {
+      background-color: #007bff;
+      color: white;
+      border: none;
       padding: 20px;
-      transition: 0.2s;
-    }
-
-    .card:hover {
-      transform: scale(1.05);
-    }
-
-    .card img {
-      width: 50px;
-      height: 50px;
-      margin-bottom: 10px;
-    }
-
-    .card p {
-      font-size: 16px;
-      font-weight: 600;
-      color: #003366;
-    }
-
-    footer {
       text-align: center;
-      padding: 15px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .button:hover {
+      background-color: #0056b3;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
       font-size: 14px;
-      color: #777;
+      color: #666;
     }
 
-    .footer-links {
-      margin-top: 5px;
-    }
-
-    .footer-links a {
-      color: #004080;
+    .footer a {
+      color: #007bff;
       text-decoration: none;
       margin-left: 10px;
     }
 
-    .footer-links a:hover {
+    .footer a:hover {
       text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <header>FieldFlow</header>
-
+  <h1>FieldFlow</h1>
   <div class="grid">
-    <a class="card" href="daily-pressure.html">
-      <img src="pressure.png" alt="Daily Pressure" />
-      <p>Daily Pressure</p>
-    </a>
-    <a class="card" href="shut-in.html">
-      <img src="valve.png" alt="Shut-In Logs" />
-      <p>Shut-In Logs</p>
-    </a>
-    <a class="card" href="swd.html">
-      <img src="water.png" alt="SWD Logs" />
-      <p>SWD Log</p>
-    </a>
-    <a class="card" href="annual-inspection.html">
-      <img src="inspection.png" alt="Annual Inspection" />
-      <p>Annual Inspection</p>
-    </a>
-    <a class="card" href="view-annual-history.html">
-      <img src="history.png" alt="View Annuals" />
-      <p>View Annuals</p>
-    </a>
-    <a class="card" href="well-status.html">
-      <img src="well-status.png" alt="Well Tracker" />
-      <p>Well Tracker</p>
-    </a>
-    <a class="card" href="obs.html">
-      <img src="obs.png" alt="OBS Readings" />
-      <p>OBS Readings</p>
-    </a>
-    <a class="card" href="gps.html">
-      <img src="gps.png" alt="GPS Tracker" />
-      <p>GPS Tracker</p>
-    </a>
+    <button class="button" onclick="location.href='daily-pressure.html'">Daily Pressure</button>
+    <button class="button" onclick="location.href='shut-in.html'">Shut-In Logs</button>
+    <button class="button" onclick="location.href='swd.html'">SWD Logs</button>
+    <button class="button" onclick="location.href='annual.html'">Annual Inspections</button>
+    <button class="button" onclick="location.href='view-annual-history.html'">Past Annuals</button>
+    <button class="button" onclick="location.href='well-status.html'">Well Status Tracker</button>
+    <button class="button" onclick="location.href='obs-readings.html'">OBS Readings</button>
+    <button class="button" onclick="location.href='daily-activity.html'">Daily Activity Log</button>
   </div>
 
-  <footer>
+  <div class="footer">
     © 2025 FieldFlow | Underground Gas Storage
-    <div class="footer-links">
-      <a href="terms.html">Terms of Use</a>
-    </div>
-  </footer>
+    <a href="terms.html">Terms of Use</a>
+  </div>
 </body>
 </html>
