@@ -7,35 +7,32 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f4f4f4;
+      background: #eef2f3;
       padding: 20px;
     }
-    h1, h2 {
+    h1 {
       text-align: center;
     }
-    select, input, button, label {
+    select, input, button {
       display: block;
       margin: 10px auto;
+      padding: 8px;
       font-size: 16px;
     }
-    .well-section {
+    .well-box {
       background: #fff;
       padding: 15px;
-      margin: 20px 0;
+      margin: 15px 0;
       border-radius: 8px;
       box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
-    .leak-options {
-      display: none;
-      text-align: center;
-    }
-    .form-group {
-      margin: 10px 0;
-      text-align: center;
-    }
-    .home-button {
-      margin-top: 20px;
+    .well-box label {
       display: block;
+      margin: 8px 0 4px;
+    }
+    .home-link {
+      display: block;
+      margin: 20px auto;
       text-align: center;
     }
   </style>
@@ -51,13 +48,11 @@
     <option value="Mineral City">Mineral City</option>
   </select>
 
-  <div id="wellsContainer"></div>
+  <div id="wellContainer"></div>
 
-  <div style="text-align:center">
-    <button onclick="submitForm()">Submit Inspection</button>
-  </div>
+  <button onclick="submitInspection()">Submit</button>
 
-  <div class="home-button">
+  <div class="home-link">
     <a href="index.html">← Back to Home</a>
   </div>
 
@@ -70,77 +65,50 @@
 
     function loadWells() {
       const field = document.getElementById("field").value;
-      const container = document.getElementById("wellsContainer");
+      const container = document.getElementById("wellContainer");
       container.innerHTML = "";
-      if (field && fieldWells[field]) {
+
+      if (fieldWells[field]) {
         fieldWells[field].forEach(well => {
-          const section = document.createElement("div");
-          section.className = "well-section";
-          section.innerHTML = `
-            <h2>${well}</h2>
-
-            <div class="form-group">
-              <label>Valve Check:</label>
-              <select class="valve" name="${well}-valve">
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Leak Detected:</label>
-              <select class="leak" name="${well}-leak" onchange="toggleLeakOptions(this)">
-                <option value="No">No</option>
-                <option value="Yes">Yes</option>
-              </select>
-            </div>
-
-            <div class="form-group leak-options">
-              <label>Leak Location:</label>
-              <select class="leak-detail" name="${well}-leak-detail">
-                <option value="Internal">Internal</option>
-                <option value="External">External</option>
-                <option value="Both">Both</option>
-              </select>
-            </div>
+          const box = document.createElement("div");
+          box.className = "well-box";
+          box.innerHTML = `
+            <h3>${well}</h3>
+            <label>Valve Check:</label>
+            <select name="valve-${well}">
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+            <label>Leak Check:</label>
+            <select name="leak-${well}">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
           `;
-          container.appendChild(section);
+          container.appendChild(box);
         });
       }
     }
 
-    function toggleLeakOptions(selectElement) {
-      const leakOptions = selectElement.parentElement.nextElementSibling;
-      if (selectElement.value === "Yes") {
-        leakOptions.style.display = "block";
-      } else {
-        leakOptions.style.display = "none";
-      }
-    }
-
-    function submitForm() {
+    function submitInspection() {
       const field = document.getElementById("field").value;
-      const sections = document.querySelectorAll(".well-section");
+      const boxes = document.querySelectorAll(".well-box");
       const results = [];
 
-      sections.forEach(section => {
-        const wellName = section.querySelector("h2").innerText;
-        const valve = section.querySelector(".valve").value;
-        const leak = section.querySelector(".leak").value;
-        const leakDetailDropdown = section.querySelector(".leak-detail");
-        const leakDetail = leak === "Yes" ? leakDetailDropdown.value : "None";
-
+      boxes.forEach(box => {
+        const wellName = box.querySelector("h3").innerText;
+        const valve = box.querySelector(`select[name="valve-${wellName}"]`).value;
+        const leak = box.querySelector(`select[name="leak-${wellName}"]`).value;
         results.push({
           field,
           well: wellName,
           valveCheck: valve,
-          leakDetected: leak,
-          leakLocation: leakDetail
+          leakCheck: leak
         });
       });
 
-      console.log("Inspection Results:", results);
-      alert("Annual Inspection Submitted!");
+      console.log("Annual Inspection Submitted:", results);
+      alert("Inspection Submitted Successfully!");
     }
   </script>
 </body>
