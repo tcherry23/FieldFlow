@@ -7,109 +7,121 @@
   <style>
     body {
       font-family: Arial, sans-serif;
+      background-color: #f4f8fc;
       margin: 0;
       padding: 0;
-      background: #f0f2f5;
-    }
-    header {
-      background: #003366;
-      color: white;
-      padding: 1em;
-      text-align: center;
-    }
-    h1 {
-      margin: 0;
-      font-size: 1.8em;
-    }
-    .grid {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 2em;
-      gap: 1.5em;
+      flex-direction: column;
+      min-height: 100vh;
     }
-    .icon-box {
-      background: white;
-      border-radius: 10px;
-      width: 140px;
-      height: 140px;
+
+    header {
+      background-color: #004080;
+      color: white;
+      padding: 20px;
       text-align: center;
-      padding: 1em;
-      text-decoration: none;
-      color: #003366;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      transition: 0.2s ease;
+      font-size: 28px;
+      font-weight: bold;
     }
-    .icon-box:hover {
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 20px;
+      padding: 30px;
+      flex-grow: 1;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      text-align: center;
+      padding: 20px;
+      transition: 0.2s;
+    }
+
+    .card:hover {
       transform: scale(1.05);
     }
-    .icon-box img {
+
+    .card img {
       width: 50px;
       height: 50px;
-      margin-bottom: 0.5em;
+      margin-bottom: 10px;
     }
+
+    .card p {
+      font-size: 16px;
+      font-weight: 600;
+      color: #003366;
+    }
+
     footer {
       text-align: center;
-      font-size: 0.9em;
-      color: #666;
-      padding: 1em 0;
+      padding: 15px;
+      font-size: 14px;
+      color: #777;
     }
-    .footer-link {
-      display: block;
-      margin-top: 0.5em;
-      font-size: 0.9em;
-      color: #003366;
+
+    .footer-links {
+      margin-top: 5px;
+    }
+
+    .footer-links a {
+      color: #004080;
+      text-decoration: none;
+      margin-left: 10px;
+    }
+
+    .footer-links a:hover {
       text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>FieldFlow</h1>
-  </header>
+  <header>FieldFlow</header>
 
   <div class="grid">
-    <a class="icon-box" href="daily-pressure.html">
-      <img src="icons/pressure.png" alt="Daily Pressure">
-      <div>Daily Pressure</div>
+    <a class="card" href="daily-pressure.html">
+      <img src="pressure.png" alt="Daily Pressure" />
+      <p>Daily Pressure</p>
     </a>
-    <a class="icon-box" href="shut-in.html">
-      <img src="icons/valve.png" alt="Shut-In Logs">
-      <div>Shut-In Logs</div>
+    <a class="card" href="shut-in.html">
+      <img src="valve.png" alt="Shut-In Logs" />
+      <p>Shut-In Logs</p>
     </a>
-    <a class="icon-box" href="swd.html">
-      <img src="icons/water.png" alt="SWD Logs">
-      <div>SWD Logs</div>
+    <a class="card" href="swd.html">
+      <img src="water.png" alt="SWD Logs" />
+      <p>SWD Log</p>
     </a>
-    <a class="icon-box" href="annual-inspections.html">
-      <img src="icons/inspection.png" alt="Annual Inspection">
-      <div>Annual Inspection</div>
+    <a class="card" href="annual-inspection.html">
+      <img src="inspection.png" alt="Annual Inspection" />
+      <p>Annual Inspection</p>
     </a>
-    <a class="icon-box" href="view-annual-history.html">
-      <img src="icons/history.png" alt="Past Annuals">
-      <div>Past Annuals</div>
+    <a class="card" href="view-annual-history.html">
+      <img src="history.png" alt="View Annuals" />
+      <p>View Annuals</p>
     </a>
-    <a class="icon-box" href="well-status.html">
-      <img src="icons/well-status.png" alt="Well Status">
-      <div>Well Status</div>
+    <a class="card" href="well-status.html">
+      <img src="well-status.png" alt="Well Tracker" />
+      <p>Well Tracker</p>
     </a>
-    <a class="icon-box" href="obs-readings.html">
-      <img src="icons/obs.png" alt="OBS Readings">
-      <div>OBS Readings</div>
+    <a class="card" href="obs.html">
+      <img src="obs.png" alt="OBS Readings" />
+      <p>OBS Readings</p>
     </a>
-    <a class="icon-box" href="export.html">
-      <img src="icons/export.png" alt="Export">
-      <div>Export</div>
-    </a>
-    <a class="icon-box" href="gps.html">
-      <img src="icons/gps.png" alt="GPS Route">
-      <div>GPS Route</div>
+    <a class="card" href="gps.html">
+      <img src="gps.png" alt="GPS Tracker" />
+      <p>GPS Tracker</p>
     </a>
   </div>
 
   <footer>
     © 2025 FieldFlow | Underground Gas Storage
-    <a class="footer-link" href="terms.html">Terms of Use</a>
+    <div class="footer-links">
+      <a href="terms.html">Terms of Use</a>
+    </div>
   </footer>
 </body>
 </html>
