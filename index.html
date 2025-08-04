@@ -3,95 +3,113 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FieldFlow</title>
+  <title>FieldFlow Homepage</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f2f3f5;
+      background-color: #f0f4f8;
       margin: 0;
-      padding: 0;
-    }
-
-    header {
-      background-color: #00557f;
-      color: white;
+      padding: 20px;
       text-align: center;
-      padding: 15px 0;
-      font-size: 24px;
     }
 
-    .container {
+    h1 {
+      color: #004080;
+      margin-bottom: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .icon-button {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
       padding: 20px;
-      gap: 30px;
-    }
-
-    .icon-box {
-      width: 120px;
-      text-align: center;
+      background-color: #ffffff;
+      border: 2px solid #004080;
+      border-radius: 10px;
       text-decoration: none;
-      color: black;
+      color: #004080;
+      font-weight: bold;
+      transition: 0.3s;
     }
 
-    .icon-box img {
-      width: 60px;
-      height: 60px;
-      margin-bottom: 8px;
+    .icon-button:hover {
+      background-color: #e6f0ff;
     }
 
-    .icon-label {
+    .icon-button img {
+      width: 40px;
+      height: 40px;
+      margin-bottom: 10px;
+    }
+
+    .footer-link {
+      margin-top: 40px;
       font-size: 14px;
     }
 
-    .icon-box:hover {
-      opacity: 0.8;
+    .footer-link a {
+      color: #004080;
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <header>FieldFlow</header>
-  <div class="container">
-    <a class="icon-box" href="annual-inspection.html">
-      <img src="https://img.icons8.com/ios-filled/100/000000/inspection.png" alt="Annual Inspection"/>
-      <div class="icon-label">Annual Inspection</div>
-    </a>
+  <h1>FieldFlow</h1>
 
-    <a class="icon-box" href="view-annual-history.html">
-      <img src="https://img.icons8.com/ios-filled/100/000000/opened-folder.png" alt="View History"/>
-      <div class="icon-label">View Inspections</div>
+  <div class="grid">
+    <a href="daily-pressure.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/004080/gas.png" alt="Daily Pressure" />
+      Daily Pressure
     </a>
+    <a href="shut-in.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/004080/valve.png" alt="Shut-In Logs" />
+      Shut-In Logs
+    </a>
+    <a href="annual-inspection.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/004080/inspection.png" alt="Annual Inspection" />
+      Annual Inspection
+    </a>
+    <a href="view-annual-history.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/004080/documents.png" alt="Annual History" />
+      View Annual History
+    </a>
+    <a href="well-status.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/004080/well.png" alt="Well Status" />
+      Well Status
+    </a>
+    <a href="swd.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/004080/water.png" alt="SWD Logs" />
+      SWD Logs
+    </a>
+    <a href="gps.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/004080/marker.png" alt="GPS Route" />
+      GPS Route
+    </a>
+    <a href="export.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/004080/export.png" alt="Export Data" />
+      Export Data
+    </a>
+    <a href="obs.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/004080/pressure-gauge.png" alt="OBS Readings" />
+      OBS Readings
+    </a>
+    <a href="terms.html" class="icon-button">
+      <img src="https://img.icons8.com/ios-filled/50/004080/contract.png" alt="Terms" />
+      Terms of Use
+    </a>
+  </div>
 
-    <a class="icon-box" href="shut-in.html">
-      <img src="https://img.icons8.com/ios-filled/100/000000/valve.png" alt="Shut-In"/>
-      <div class="icon-label">Shut-In Log</div>
-    </a>
-
-    <a class="icon-box" href="daily-pressure.html">
-      <img src="https://img.icons8.com/ios-filled/100/000000/clock.png" alt="Daily Pressure"/>
-      <div class="icon-label">Daily Pressure</div>
-    </a>
-
-    <a class="icon-box" href="swd.html">
-      <img src="https://img.icons8.com/ios-filled/100/000000/water.png" alt="SWD"/>
-      <div class="icon-label">SWD Log</div>
-    </a>
-
-    <a class="icon-box" href="gps.html">
-      <img src="https://img.icons8.com/ios-filled/100/000000/route.png" alt="GPS"/>
-      <div class="icon-label">GPS Tracker</div>
-    </a>
-
-    <a class="icon-box" href="export.html">
-      <img src="https://img.icons8.com/ios-filled/100/000000/export.png" alt="Export"/>
-      <div class="icon-label">Export</div>
-    </a>
-
-    <a class="icon-box" href="well-status.html">
-      <img src="https://img.icons8.com/ios-filled/100/000000/tools.png" alt="Well Status"/>
-      <div class="icon-label">Well Status</div>
-    </a>
+  <div class="footer-link">
+    <a href="terms.html">View Terms of Use</a>
   </div>
 </body>
 </html>
