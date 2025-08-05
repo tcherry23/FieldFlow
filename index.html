@@ -3,78 +3,118 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FieldFlow App</title>
+  <title>FieldFlow - Home</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
       background-color: #f2f2f2;
+      margin: 0;
+      padding: 0;
     }
-
-    h1 {
-      text-align: center;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      max-width: 600px;
-      margin: 0 auto;
-      margin-top: 30px;
-    }
-
-    .button {
-      background-color: #007bff;
+    header {
+      background-color: #004080;
       color: white;
-      border: none;
-      padding: 20px;
+      padding: 1rem;
       text-align: center;
-      font-size: 18px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
     }
-
-    .button:hover {
-      background-color: #0056b3;
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 2rem;
+      gap: 1rem;
     }
-
-    .footer {
+    .icon-button {
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      width: 140px;
+      height: 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       text-align: center;
-      margin-top: 40px;
-      font-size: 14px;
-      color: #666;
-    }
-
-    .footer a {
-      color: #007bff;
       text-decoration: none;
-      margin-left: 10px;
+      color: black;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+      transition: all 0.2s;
     }
-
-    .footer a:hover {
-      text-decoration: underline;
+    .icon-button:hover {
+      transform: scale(1.05);
+      background-color: #e6f0ff;
+    }
+    .icon {
+      font-size: 40px;
+      margin-bottom: 0.5rem;
+    }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      background-color: #fff;
+      font-size: 0.9rem;
+      margin-top: 1rem;
+      border-top: 1px solid #ccc;
+    }
+    footer a {
+      color: #004080;
+      text-decoration: none;
+      margin-left: 1rem;
     }
   </style>
 </head>
 <body>
-  <h1>FieldFlow</h1>
-  <div class="grid">
-    <button class="button" onclick="location.href='daily-pressure.html'">Daily Pressure</button>
-    <button class="button" onclick="location.href='shut-in.html'">Shut-In Logs</button>
-    <button class="button" onclick="location.href='swd.html'">SWD Logs</button>
-    <button class="button" onclick="location.href='annual-inspection.html'">Annual Inspections</button>
-    <button class="button" onclick="location.href='files.html'">Files</button>
-    <button class="button" onclick="location.href='well-status.html'">Well Status Tracker</button>
-    <button class="button" onclick="location.href='obs.html'">OBS Readings</button>
-    <button class="button" onclick="location.href='daily-activity.html'">Daily Activity Log</button>
+  <header>
+    <h1>FieldFlow</h1>
+    <p>Underground Gas Storage</p>
+  </header>
+
+  <div class="container">
+    <a href="daily-pressure.html" class="icon-button">
+      <div class="icon">📊</div>
+      <div>Daily Pressure</div>
+    </a>
+    <a href="shut-in.html" class="icon-button">
+      <div class="icon">🧭</div>
+      <div>Shut-In Logs</div>
+    </a>
+    <a href="annual-inspections.html" class="icon-button">
+      <div class="icon">📋</div>
+      <div>Annual Inspections</div>
+    </a>
+    <a href="obs-readings.html" class="icon-button">
+      <div class="icon">🔎</div>
+      <div>OBS Readings</div>
+    </a>
+    <a href="well-status.html" class="icon-button">
+      <div class="icon">🔁</div>
+      <div>Well Status</div>
+    </a>
+    <a href="swd.html" class="icon-button">
+      <div class="icon">💧</div>
+      <div>SWD Logs</div>
+    </a>
+    <a href="daily-activity.html" class="icon-button">
+      <div class="icon">🗓️</div>
+      <div>Daily Activity</div>
+    </a>
+    <a href="files.html" class="icon-button">
+      <div class="icon">📁</div>
+      <div>Files</div>
+    </a>
+    <a href="export.html" class="icon-button">
+      <div class="icon">📤</div>
+      <div>Export</div>
+    </a>
+    <a href="gps.html" class="icon-button">
+      <div class="icon">🗺️</div>
+      <div>GPS</div>
+    </a>
   </div>
 
-  <div class="footer">
+  <footer>
     © 2025 FieldFlow | Underground Gas Storage
     <a href="terms.html">Terms of Use</a>
-  </div>
+  </footer>
 </body>
 </html>
