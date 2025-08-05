@@ -1,69 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Daily Pressure Log</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f8f9fc;
-      margin: 0;
       padding: 20px;
+      background: #f4f4f4;
     }
-    h1 {
-      text-align: center;
-      color: #003366;
-    }
-    .form-section {
-      background: white;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    label {
-      font-weight: bold;
-    }
-    input, select {
-      margin-bottom: 10px;
-      width: 100%;
-      padding: 8px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-    .status-green {
-      color: green;
-      font-weight: bold;
-    }
-    .status-yellow {
-      color: orange;
-      font-weight: bold;
-    }
-    .status-red {
-      color: red;
-      font-weight: bold;
-    }
-    .summary-box {
-      text-align: center;
-      margin-top: 10px;
-      font-size: 1.1em;
-    }
-    .button-bar {
-      text-align: center;
+    h2, h3 {
       margin-top: 20px;
     }
-    .button-bar button {
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #003366;
-      color: white;
-      border: none;
+    select, input[type="number"], input[type="text"], input[type="date"] {
+      padding: 5px;
+      margin: 5px 0;
+      width: 100%;
+    }
+    .well-entry {
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 15px;
+    }
+    .status {
+      font-weight: bold;
+      padding: 5px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-top: 5px;
+    }
+    .green { background: #c8e6c9; }
+    .yellow { background: #fff9c4; }
+    .red { background: #ffcdd2; }
+    .total-section {
+      margin-top: 20px;
+      padding: 10px;
+      background: #e0e0e0;
       border-radius: 5px;
     }
   </style>
 </head>
 <body>
-  <h1>Daily Pressure Log</h1>
+  <h2>Daily Pressure Log</h2>
 
   <label for="attendant">Attendant:</label>
   <select id="attendant">
@@ -71,100 +51,136 @@
     <option value="T. Ressler">T. Ressler</option>
   </select>
 
-  <label for="field">Select Field:</label>
-  <select id="field" onchange="renderWells()">
+  <label for="fieldSelect">Select Field:</label>
+  <select id="fieldSelect" onchange="renderWells()">
     <option value="Dixon">Dixon</option>
-    <option value="Mineral City">Mineral City</option>
     <option value="Simpson Chapel">Simpson Chapel</option>
+    <option value="Mineral City">Mineral City</option>
   </select>
 
   <label for="dailyTarget">Daily MCF Target:</label>
-  <input type="number" id="dailyTarget" placeholder="Enter target">
+  <input type="number" id="dailyTarget" placeholder="Enter MCF Target" oninput="updateTotals()">
 
-  <div class="summary-box">
-    <strong>Total MCF:</strong> <span id="totalMCF">0</span><br>
-    <span id="progress" class="status-green">On Track</span>
+  <div class="total-section">
+    <p><strong>Total MCF/hour:</strong> <span id="totalMCF">0</span></p>
+    <p><strong>Status:</strong> <span id="status" class="status">N/A</span></p>
   </div>
 
-  <div id="wellContainer">
-    </div> <!-- Close wellContainer -->
-
-  <div class="button-bar">
-    <button onclick="goHome()">Back to Home</button>
-  </div>
+  <div id="wellsContainer"></div>
 
   <script>
-    const fields = {
-      "Dixon": ["Evans 10", "Evans 5", "Evan 4-H", "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6", "Cory 5", "Cory 1"],
-      "Mineral City": ["Rollison 4", "Rollison 1", "Rollison 2", "G. Axe 6", "Haines 4", "Haines 1", "Haines 2", "Haines 3", "G. Axe 1", "Allen 1", "G. Axe 2", "G. Axe 4", "G. Axe 5", "G. Axe 3", "J. Axe 1"],
-      "Simpson Chapel": ["Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 5", "Crays 4", "Crays 3", "Crays 7", "Crays 2", "Crays 6", "Royal 6", "Royal 5", "Royal 4", "Royal 7", "Royal 1"]
-    };
-
     const orificeSizes = {
-      "Rollison 4": 0.75, "Rollison 1": 0.75, "Rollison 2": 0.75,
-      "G. Axe 6": 1.0, "Haines 4": 0.375, "Haines 1": 1.0, "Haines 2": 1.0, "Haines 3": 1.0,
-      "G. Axe 1": 1.0, "Allen 1": 1.0, "G. Axe 2": 0.75, "G. Axe 4": 0.75, "G. Axe 5": 1.0, "G. Axe 3": 0.5, "J. Axe 1": 1.0,
-      "Blaker 1": 1.0, "Emery 2": 1.0, "Emery 1": 1.0, "Crays 8": 1.0, "Crays 5": 1.0, "Crays 4": 1.0, "Crays 3": 1.0,
-      "Crays 7": 1.0, "Crays 2": 1.0, "Crays 6": 1.0, "Royal 6": 1.0, "Royal 5": 1.0, "Royal 4": 1.0, "Royal 7": 1.0, "Royal 1": 1.0,
-      "Evans 10": 1.0, "Evans 5": 1.0, "Evan 4-H": 1.0, "Cory 8": 1.0, "Cory 4": 1.0, "Cory 2": 1.0, "Cory 7": 1.0,
-      "Cory 3": 1.0, "Cory 6": 1.0, "Cory 5": 1.0, "Cory 1": 1.0
+      // Dixon Wells
+      "Evans 7": 1.0000, "Evans 8": 1.0000, "Evans 3": 1.0000,
+      "Evans 10": 1.0000, "Evans 5": 1.2500, "Evans 4-H": 1.0000,
+      "Evans 6": 1.0000, "Cory 8": 1.0000, "Cory 4": 1.0000,
+      "Cory 2": 1.0000, "Cory 7": 1.0000, "Cory 3": 1.0000,
+      "Cory 6": 1.0000, "Cory 5": 1.0000, "Cory 1": 1.0000,
+
+      // Simpson Chapel Wells
+      "Blaker 1": 0.5000, "Emery 2": 0.7500, "Emery 1": 0.7500,
+      "Crays 8": 1.0000, "Crays 1": 0.5000, "Crays 5": 0.7500,
+      "Crays 4": 0.2500, "Crays 3": 0.7500, "Crays 7": 1.0000,
+      "Crays 2": 1.0000, "Crays 6": 1.0000, "Royal 6": 0.6250,
+      "Royal 5": 0.5000, "Royal 4": 0.5000, "Royal 7": 1.0000, "Royal 1": 0.5000,
+
+      // Mineral City Wells
+      "Rollison 4": 0.7500, "Rollison 1": 0.7500, "Rollison 2": 0.7500,
+      "G. Axe 6": 1.0000, "Haines 4": 0.3750, "Haines 1": 1.0000,
+      "Haines 2": 1.0000, "Haines 3": 1.0000, "G. Axe 1": 1.0000,
+      "Allen 1": 1.0000, "G. Axe 2": 0.7500, "G. Axe 4": 0.7500,
+      "G. Axe 5": 1.0000, "G. Axe 3": 0.5000, "J. Axe 1": 1.0000
     };
 
-    function renderWells() {
-      const field = document.getElementById('field').value;
-      const container = document.getElementById('wellContainer');
-      container.innerHTML = '';
+    const fieldWells = {
+      "Dixon": ["Evans 7", "Evans 8", "Evans 3", "Evans 10", "Evans 5", "Evans 4-H", "Evans 6", "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6", "Cory 5", "Cory 1"],
+      "Simpson Chapel": ["Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 1", "Crays 5", "Crays 4", "Crays 3", "Crays 7", "Crays 2", "Crays 6", "Royal 6", "Royal 5", "Royal 4", "Royal 7", "Royal 1"],
+      "Mineral City": ["Rollison 4", "Rollison 1", "Rollison 2", "G. Axe 6", "Haines 4", "Haines 1", "Haines 2", "Haines 3", "G. Axe 1", "Allen 1", "G. Axe 2", "G. Axe 4", "G. Axe 5", "G. Axe 3", "J. Axe 1"]
+    };
+        function renderWells() {
+      const field = document.getElementById("fieldSelect").value;
+      const container = document.getElementById("wellsContainer");
+      container.innerHTML = "";
 
-      fields[field].forEach(well => {
-        const orifice = orificeSizes[well] ?? 1.0;
-        const id = well.replace(/\s+/g, '');
-        container.innerHTML += `
-        <div class="form-section">
-          <strong>${well}</strong><br>
-          Date: <input type="text" value="${new Date().toLocaleDateString()}" readonly><br>
-          Orifice Size: <input id="orifice-${id}" value="${orifice.toFixed(4)}" readonly><br>
-          Upstream PSI: <input id="up-${id}" oninput="calculate('${id}', '${field}')"><br>
-          Downstream PSI: <input id="down-${id}" oninput="calculate('${id}', '${field}')"><br>
-          Differential (Up - Down): <input id="diff-${id}" readonly><br>
-          d/p H₂O: <input id="dp-${id}" readonly><br>
-          MCF/Hour: <input id="mcf-${id}" readonly><br>
-          <span id="status-${id}" class="status-green">On Target</span><br>
-          Notes: <input><br>
-        </div>
+      fieldWells[field].forEach(well => {
+        const date = new Date().toISOString().split("T")[0];
+        const orifice = orificeSizes[well];
+
+        const wellDiv = document.createElement("div");
+        wellDiv.className = "well-entry";
+        wellDiv.innerHTML = `
+          <h3>${well}</h3>
+          <label>Date:</label>
+          <input type="date" value="${date}" />
+          <label>Orifice Size:</label>
+          <input type="text" value="${orifice.toFixed(4)}" readonly />
+          <label>Upstream PSI:</label>
+          <input type="number" class="upstream" oninput="calculate('${well}', this)" />
+          <label>Downstream PSI:</label>
+          <input type="number" class="downstream" oninput="calculate('${well}', this)" />
+          <label>Differential PSI:</label>
+          <input type="text" class="differential" readonly />
+          <label>d/p H₂O:</label>
+          <input type="text" class="dph2o" readonly />
+          <label>MCF/hour:</label>
+          <input type="text" class="mcf" readonly />
+          <div class="status" id="${well.replace(/\s/g, '')}-status">N/A</div>
         `;
+        container.appendChild(wellDiv);
       });
     }
-     function calculate(id, field) {
-      const up = parseFloat(document.getElementById(`up-${id}`).value) || 0;
-      const down = parseFloat(document.getElementById(`down-${id}`).value) || 0;
-      const diff = (up - down).toFixed(2);
-      document.getElementById(`diff-${id}`).value = diff;
 
-      const dpH2O = (diff * 27.7).toFixed(2);
-      document.getElementById(`dp-${id}`).value = dpH2O;
+    function calculate(well, el) {
+      const parent = el.closest(".well-entry");
+      const upstream = parseFloat(parent.querySelector(".upstream").value) || 0;
+      const downstream = parseFloat(parent.querySelector(".downstream").value) || 0;
+      const differential = upstream - downstream;
+      const dph2o = differential * 27.7;
+      const orifice = orificeSizes[well] || 1;
+      const fieldPressure = 100; // Placeholder or fixed field pressure
 
-      const orifice = parseFloat(document.getElementById(`orifice-${id}`).value) || 1;
-      const mcf = (0.2628 * (orifice ** 2) * Math.sqrt((up + down) / 2 * dpH2O)).toFixed(2);
-      document.getElementById(`mcf-${id}`).value = mcf;
+      const mcf = 0.2628 * (orifice ** 2) * Math.sqrt(fieldPressure * dph2o);
+      const mcfRounded = isNaN(mcf) ? 0 : mcf.toFixed(2);
 
-      // Status color based on MCF/hour (adjust ranges as needed)
-      const status = document.getElementById(`status-${id}`);
-      if (mcf >= 10) {
-        status.className = 'status-green';
-        status.textContent = 'On Target';
-      } else if (mcf >= 5) {
-        status.className = 'status-yellow';
-        status.textContent = 'Slightly Low';
+      parent.querySelector(".differential").value = differential.toFixed(2);
+      parent.querySelector(".dph2o").value = dph2o.toFixed(2);
+      parent.querySelector(".mcf").value = mcfRounded;
+
+      updateTotals();
+    }
+
+    function updateTotals() {
+      const mcfInputs = document.querySelectorAll(".mcf");
+      let total = 0;
+      mcfInputs.forEach(input => {
+        const val = parseFloat(input.value);
+        if (!isNaN(val)) total += val;
+      });
+
+      document.getElementById("totalMCF").textContent = total.toFixed(2);
+
+      const target = parseFloat(document.getElementById("dailyTarget").value);
+      const status = document.getElementById("status");
+
+      if (isNaN(target)) {
+        status.textContent = "N/A";
+        status.className = "status";
+        return;
+      }
+
+      if (total >= target) {
+        status.textContent = "On Track";
+        status.className = "status green";
+      } else if (total >= target * 0.75) {
+        status.textContent = "Below Target";
+        status.className = "status yellow";
       } else {
-        status.className = 'status-red';
-        status.textContent = 'Too Low';
+        status.textContent = "Too Low";
+        status.className = "status red";
       }
     }
 
-    function goHome() {
-      window.location.href = 'index.html';
-    }
+    window.onload = renderWells;
   </script>
-
 </body>
 </html>
