@@ -1,153 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Files Archive</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-    h2 { text-align: center; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f1f1;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .filters {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
     select, input[type="date"] {
-      margin: 5px;
       padding: 5px;
     }
     .entry {
       background: #fff;
-      margin: 10px 0;
-      padding: 10px;
-      border: 1px solid #ccc;
+      padding: 15px;
       border-radius: 5px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .entry-header {
-      font-weight: bold;
-      cursor: pointer;
+    .entry h3 {
+      margin-top: 0;
     }
-    .entry-content {
-      display: none;
+    .buttons {
       margin-top: 10px;
     }
-    .label {
-      font-weight: bold;
+    .buttons button {
+      margin-right: 10px;
+      padding: 6px 12px;
+    }
+    .timestamp {
+      font-size: 0.8em;
+      color: gray;
     }
   </style>
 </head>
 <body>
-  <h2>Files Archive</h2>
 
-  <div style="text-align:center;">
-    <select id="filterType">
-      <option value="All">All Types</option>
-      <option value="Daily Activity Log">Daily Activity</option>
+  <h1>Files Archive</h1>
+
+  <div class="filters">
+    <select id="typeFilter">
+      <option value="">All Types</option>
+      <option value="Daily Activity Log">Daily Activity Log</option>
       <option value="Annual Inspection">Annual Inspection</option>
+      <option value="Shut-In Log">Shut-In Log</option>
       <option value="OBS Reading">OBS Reading</option>
-      <option value="Shut-In Log">Shut-In</option>
       <option value="Well Status">Well Status</option>
-      <option value="SWD Log">SWD</option>
-      <option value="Daily Pressure Log">Daily Pressure</option>
+      <option value="SWD Log">SWD Log</option>
     </select>
-    <select id="filterField"></select>
-    <select id="filterWell"></select>
-    <select id="filterAttendant">
-      <option value="All">All Attendants</option>
+
+    <select id="fieldFilter">
+      <option value="">All Fields</option>
+      <option value="Dixon">Dixon</option>
+      <option value="Simpson Chapel">Simpson Chapel</option>
+      <option value="Mineral City">Mineral City</option>
+    </select>
+
+    <select id="wellFilter">
+      <option value="">All Wells</option>
+    </select>
+
+    <select id="attendantFilter">
+      <option value="">All Attendants</option>
       <option value="T. Cherry">T. Cherry</option>
       <option value="T. Ressler">T. Ressler</option>
     </select>
-    <input type="date" id="filterDate">
+
+    <input type="date" id="dateFilter" />
   </div>
 
-  <div id="logContainer"></div>
+  <div id="entriesContainer"></div>
 
   <script>
-    const fields = {
-      Dixon: ["Evans 7", "Evans 8", "Evans 3", "Evans 10", "Evans 5", "Evans 4-H", "Evans 6", "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6", "Cory 5", "Cory 1"],
-      "Simpson Chapel": ["Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 5", "Crays 4", "Crays 3", "Crays 7", "Crays 2", "Crays 6", "Royal 6", "Royal 5", "Royal 4", "Royal 7", "Royal 1"],
-      "Mineral City": ["Rollison 4", "Rollison 1", "Rollison 2", "G. Axe 6", "Haines 4", "Haines 1", "Haines 2", "Haines 3", "G. Axe 1", "Allen 1", "G. Axe 2", "G. Axe 4", "G. Axe 5", "G. Axe 3", "J. Axe 1"]
+    const entriesContainer = document.getElementById("entriesContainer");
+
+    const filters = {
+      type: document.getElementById("typeFilter"),
+      field: document.getElementById("fieldFilter"),
+      well: document.getElementById("wellFilter"),
+      attendant: document.getElementById("attendantFilter"),
+      date: document.getElementById("dateFilter"),
     };
 
-    const filterType = document.getElementById('filterType');
-    const filterField = document.getElementById('filterField');
-    const filterWell = document.getElementById('filterWell');
-    const filterAttendant = document.getElementById('filterAttendant');
-    const filterDate = document.getElementById('filterDate');
-    const logContainer = document.getElementById('logContainer');
+    const updateEntries = () => {
+      entriesContainer.innerHTML = "";
+      const savedLogs = JSON.parse(localStorage.getItem("fieldflowLogs") || "[]");
 
-    function populateFieldOptions() {
-      filterField.innerHTML = '<option value="All">All Fields</option>';
-      for (let field in fields) {
-        filterField.innerHTML += `<option value="${field}">${field}</option>`;
-      }
-    }
+      const filtered = savedLogs.filter(log => {
+        return (!filters.type.value || log.type === filters.type.value) &&
+               (!filters.field.value || log.field === filters.field.value) &&
+               (!filters.well.value || log.well === filters.well.value) &&
+               (!filters.attendant.value || log.attendant === filters.attendant.value) &&
+               (!filters.date.value || log.date === filters.date.value);
+      });
 
-    function populateWellOptions(field) {
-      filterWell.innerHTML = '<option value="All">All Wells</option>';
-      if (field !== "All" && fields[field]) {
-        fields[field].forEach(well => {
-          filterWell.innerHTML += `<option value="${well}">${well}</option>`;
-        });
-      }
-    }
+      filtered.forEach((log, index) => {
+        const entryDiv = document.createElement("div");
+        entryDiv.className = "entry";
 
-    function matchesFilter(entry) {
-      if (filterType.value !== "All" && entry.type !== filterType.value) return false;
-      if (filterAttendant.value !== "All" && entry.attendant !== filterAttendant.value) return false;
-      if (filterDate.value && entry.date !== filterDate.value) return false;
-      if (filterField.value !== "All" && entry.field !== filterField.value) return false;
-      if (filterWell.value !== "All" && entry.well !== filterWell.value) return false;
-      return true;
-    }
+        const title = `${log.type} – ${log.date} – ${log.attendant || ''}`;
+        entryDiv.innerHTML = `<h3>${title}</h3>`;
 
-    function renderLogs() {
-      logContainer.innerHTML = '';
-      const logs = JSON.parse(localStorage.getItem("fieldflow_logs")) || [];
-      const filteredLogs = logs.filter(matchesFilter);
+        const content = document.createElement("pre");
+        let formatted = "";
+        for (let key in log) {
+          if (key !== "timestamp") {
+            formatted += `${key}: ${log[key]}\n`;
+          }
+        }
+        formatted += `\ntimestamp: ${log.timestamp}`;
+        content.textContent = formatted;
+        entryDiv.appendChild(content);
 
-      if (filteredLogs.length === 0) {
-        logContainer.innerHTML = "<p style='text-align:center;'>No logs found for selected filters.</p>";
-        return;
-      }
+        const buttons = document.createElement("div");
+        buttons.className = "buttons";
 
-      filteredLogs.forEach((log, index) => {
-        const div = document.createElement("div");
-        div.className = "entry";
-
-        const header = document.createElement("div");
-        header.className = "entry-header";
-        header.textContent = `${log.type} – ${log.date || "No Date"} – ${log.attendant || ""}`;
-        header.onclick = () => {
-          const content = div.querySelector(".entry-content");
-          content.style.display = content.style.display === "none" ? "block" : "none";
+        const exportBtn = document.createElement("button");
+        exportBtn.textContent = "Export";
+        exportBtn.onclick = () => {
+          const blob = new Blob([formatted], { type: "text/plain" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = `${log.type.replace(/\s+/g, '_')}_${log.date}.txt`;
+          link.click();
         };
 
-        const content = document.createElement("div");
-        content.className = "entry-content";
-        content.style.display = "none";
+        const emailBtn = document.createElement("button");
+        emailBtn.textContent = "Email";
+        emailBtn.onclick = () => {
+          const subject = "Underground Storage Field Reports";
+          const body = encodeURIComponent(formatted);
+          window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        };
 
-        Object.entries(log).forEach(([key, value]) => {
-          if (key === "type") return;
-          const line = document.createElement("div");
-          line.innerHTML = `<span class="label">${key}:</span> ${typeof value === 'object' ? JSON.stringify(value) : value}`;
-          content.appendChild(line);
-        });
+        buttons.appendChild(exportBtn);
+        buttons.appendChild(emailBtn);
+        entryDiv.appendChild(buttons);
 
-        div.appendChild(header);
-        div.appendChild(content);
-        logContainer.appendChild(div);
+        entriesContainer.appendChild(entryDiv);
       });
+    };
+
+    for (let key in filters) {
+      filters[key].addEventListener("change", updateEntries);
     }
 
-    // Initial setup
-    populateFieldOptions();
-    populateWellOptions("All");
-    renderLogs();
-
-    filterType.onchange = renderLogs;
-    filterAttendant.onchange = renderLogs;
-    filterDate.onchange = renderLogs;
-    filterField.onchange = () => {
-      populateWellOptions(filterField.value);
-      renderLogs();
-    };
-    filterWell.onchange = renderLogs;
+    window.onload = updateEntries;
   </script>
 </body>
 </html>
