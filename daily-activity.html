@@ -7,126 +7,105 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      padding: 20px;
+      background: #f8f9fa;
     }
-    h1 {
+    h2 {
       text-align: center;
     }
-    form {
-      max-width: 800px;
-      margin: auto;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    textarea, select, input[type="text"], input[type="date"] {
+    select, input[type="text"], textarea {
       width: 100%;
       padding: 8px;
-      margin-top: 5px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+    label {
+      font-weight: bold;
     }
     button {
-      margin-top: 15px;
       padding: 10px 20px;
-      font-size: 16px;
+      margin-top: 10px;
+      cursor: pointer;
     }
     .time-block {
-      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
     }
-    .back-home {
-      display: block;
-      text-align: center;
-      margin-top: 20px;
+    .time-block input {
+      flex: 1;
     }
   </style>
 </head>
 <body>
-  <h1>Daily Activity Log</h1>
+  <h2>Daily Activity Log</h2>
+
   <form id="activityForm">
-    <label for="attendant">Attendant:</label>
-    <select id="attendant" name="attendant" required>
-      <option value="">Select Attendant</option>
+    <label>Date:</label>
+    <input type="text" id="date" readonly />
+
+    <label>Attendant:</label>
+    <select id="attendant">
       <option value="T. Cherry">T. Cherry</option>
       <option value="T. Ressler">T. Ressler</option>
     </select>
 
-    <label for="activityDate">Date:</label>
-    <input type="date" id="activityDate" name="activityDate" required>
+    <label>Activities (7:00 AM – 3:00 PM):</label>
 
-    <div class="time-block">
-      <label for="job7">7:00 AM Job Description & Location:</label>
-      <textarea id="job7" name="job7" rows="2"></textarea>
-    </div>
-    <div class="time-block">
-      <label for="job8">8:00 AM Job Description & Location:</label>
-      <textarea id="job8" name="job8" rows="2"></textarea>
-    </div>
-    <div class="time-block">
-      <label for="job9">9:00 AM Job Description & Location:</label>
-      <textarea id="job9" name="job9" rows="2"></textarea>
-    </div>
-    <div class="time-block">
-      <label for="job10">10:00 AM Job Description & Location:</label>
-      <textarea id="job10" name="job10" rows="2"></textarea>
-    </div>
-    <div class="time-block">
-      <label for="job11">11:00 AM Job Description & Location:</label>
-      <textarea id="job11" name="job11" rows="2"></textarea>
-    </div>
-    <div class="time-block">
-      <label for="job12">12:00 PM Job Description & Location:</label>
-      <textarea id="job12" name="job12" rows="2"></textarea>
-    </div>
-    <div class="time-block">
-      <label for="job1">1:00 PM Job Description & Location:</label>
-      <textarea id="job1" name="job1" rows="2"></textarea>
-    </div>
-    <div class="time-block">
-      <label for="job2">2:00 PM Job Description & Location:</label>
-      <textarea id="job2" name="job2" rows="2"></textarea>
-    </div>
-    <label for="remarks">Remarks:</label>
-    <textarea id="remarks" name="remarks" rows="3"></textarea>
+    <div class="time-block"><input type="text" placeholder="7:00 AM" class="log-input" /></div>
+    <div class="time-block"><input type="text" placeholder="8:00 AM" class="log-input" /></div>
+    <div class="time-block"><input type="text" placeholder="9:00 AM" class="log-input" /></div>
+    <div class="time-block"><input type="text" placeholder="10:00 AM" class="log-input" /></div>
+    <div class="time-block"><input type="text" placeholder="11:00 AM" class="log-input" /></div>
+    <div class="time-block"><input type="text" placeholder="12:00 PM" class="log-input" /></div>
+    <div class="time-block"><input type="text" placeholder="1:00 PM" class="log-input" /></div>
+    <div class="time-block"><input type="text" placeholder="2:00 PM" class="log-input" /></div>
+    <div class="time-block"><input type="text" placeholder="3:00 PM" class="log-input" /></div>
 
-    <button type="submit">Submit Log</button>
+    <label>Remarks:</label>
+    <textarea id="remarks" rows="3" placeholder="Additional notes..."></textarea>
+
+    <label>Signature:</label>
+    <input type="text" id="signature" placeholder="Enter name" />
+
+    <button type="submit">Submit</button>
+    <button type="button" onclick="goHome()">Home</button>
   </form>
 
-  <div class="back-home">
-    <a href="index.html">🏠 Back to Home</a>
-  </div>
-
   <script>
-    // Auto-fill today's date
-    document.getElementById("activityDate").valueAsDate = new Date();
+    document.getElementById("date").value = new Date().toLocaleDateString();
+
+    function goHome() {
+      window.location.href = "index.html";
+    }
 
     document.getElementById("activityForm").addEventListener("submit", function (e) {
       e.preventDefault();
+      const date = document.getElementById("date").value;
+      const attendant = document.getElementById("attendant").value;
+      const remarks = document.getElementById("remarks").value;
+      const signature = document.getElementById("signature").value;
 
-      const data = {
+      const times = ["7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM"];
+      const entries = Array.from(document.querySelectorAll(".log-input")).map((el, i) => {
+        return `${times[i]}: ${el.value}`;
+      }).join("\n");
+
+      const log = {
         type: "Daily Activity Log",
-        attendant: document.getElementById("attendant").value,
-        date: document.getElementById("activityDate").value,
-        job7: document.getElementById("job7").value,
-        job8: document.getElementById("job8").value,
-        job9: document.getElementById("job9").value,
-        job10: document.getElementById("job10").value,
-        job11: document.getElementById("job11").value,
-        job12: document.getElementById("job12").value,
-        job1: document.getElementById("job1").value,
-        job2: document.getElementById("job2").value,
-        remarks: document.getElementById("remarks").value,
-        timestamp: new Date().toISOString()
+        date,
+        attendant,
+        remarks,
+        signature,
+        entries
       };
 
-      // Save to localStorage
-      const logs = JSON.parse(localStorage.getItem("fieldflow_logs") || "[]");
-      logs.push(data);
+      let logs = JSON.parse(localStorage.getItem("fieldflow_logs") || "[]");
+      logs.push(log);
       localStorage.setItem("fieldflow_logs", JSON.stringify(logs));
-
       alert("Log submitted successfully!");
       document.getElementById("activityForm").reset();
-      document.getElementById("activityDate").valueAsDate = new Date();
+      document.getElementById("date").value = new Date().toLocaleDateString();
     });
   </script>
 </body>
