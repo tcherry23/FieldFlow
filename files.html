@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Files | FieldFlow</title>
+  <meta charset="UTF-8">
+  <title>FieldFlow | Files</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
+      background: #f2f2f2;
       padding: 20px;
     }
     h1 {
@@ -17,174 +16,141 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      justify-content: center;
       margin-bottom: 20px;
+      justify-content: center;
     }
-    .filters select, .filters input {
-      padding: 8px;
+    select {
+      padding: 6px;
       font-size: 16px;
     }
     .accordion {
-      background-color: #fff;
-      color: #333;
+      background-color: #ffffff;
+      color: #000;
       cursor: pointer;
-      padding: 18px;
+      padding: 15px;
       width: 100%;
+      border: 1px solid #ccc;
       text-align: left;
-      border: none;
-      border-bottom: 1px solid #ccc;
       outline: none;
-      font-size: 18px;
+      font-size: 16px;
       transition: 0.3s;
+      margin-bottom: 10px;
     }
-    .accordion:hover {
-      background-color: #eaeaea;
-    }
-    .active, .accordion.active {
-      background-color: #ddd;
+    .accordion.active, .accordion:hover {
+      background-color: #e6f2ff;
     }
     .panel {
-      padding: 0 18px;
+      padding: 0 15px;
+      background-color: white;
       display: none;
-      background-color: #fff;
       overflow: hidden;
-      border-bottom: 1px solid #ccc;
+      border: 1px solid #ccc;
+      border-top: none;
     }
-    .entry-content {
-      padding: 15px 0;
-    }
-    .print-button {
-      margin-top: 10px;
-    }
-    .home-button {
-      display: block;
-      text-align: center;
-      margin-top: 30px;
-    }
-    .home-button a {
-      text-decoration: none;
-      background-color: #007bff;
-      color: white;
-      padding: 12px 25px;
-      border-radius: 6px;
+    .panel pre {
+      white-space: pre-wrap;
+      font-size: 15px;
     }
   </style>
 </head>
 <body>
-  <h1>Files</h1>
+  <h1>Files Archive</h1>
 
   <div class="filters">
+    <select id="logTypeFilter">
+      <option value="">All Log Types</option>
+      <option value="Annual Inspection">Annual Inspection</option>
+      <option value="OBS Reading">OBS Reading</option>
+      <option value="Shut-In Log">Shut-In Log</option>
+      <option value="Daily Pressure">Daily Pressure</option>
+      <option value="Well Status">Well Status</option>
+      <option value="SWD Log">SWD Log</option>
+      <option value="Daily Activity">Daily Activity</option>
+    </select>
     <select id="fieldFilter">
       <option value="">All Fields</option>
       <option value="Dixon">Dixon</option>
       <option value="Simpson Chapel">Simpson Chapel</option>
       <option value="Mineral City">Mineral City</option>
     </select>
-
     <select id="wellFilter">
       <option value="">All Wells</option>
-      <!-- Dynamically populated -->
     </select>
-
-    <select id="typeFilter">
-      <option value="">All Log Types</option>
-      <option value="Annual Inspection">Annual Inspection</option>
-      <option value="OBS Reading">OBS Reading</option>
-      <option value="Daily Pressure">Daily Pressure</option>
-      <option value="Shut-In Log">Shut-In Log</option>
-      <option value="SWD Log">SWD Log</option>
-      <option value="Well Status">Well Status</option>
-      <option value="Daily Activity">Daily Activity</option>
+    <select id="attendantFilter">
+      <option value="">All Attendants</option>
+      <option value="T. Cherry">T. Cherry</option>
+      <option value="T. Ressler">T. Ressler</option>
     </select>
-
-    <input type="date" id="dateFilter" />
+    <input type="date" id="dateFilter">
   </div>
 
-  <div id="entriesContainer">
-    <!-- Entries will appear here -->
-  </div>
-
-  <div class="home-button">
-    <a href="index.html">← Home</a>
-  </div>
+  <div id="accordionContainer"></div>
 
   <script>
-    const entriesContainer = document.getElementById("entriesContainer");
+    const logs = JSON.parse(localStorage.getItem("fieldflow_logs") || "[]");
+
+    const logTypeFilter = document.getElementById("logTypeFilter");
     const fieldFilter = document.getElementById("fieldFilter");
     const wellFilter = document.getElementById("wellFilter");
-    const typeFilter = document.getElementById("typeFilter");
+    const attendantFilter = document.getElementById("attendantFilter");
     const dateFilter = document.getElementById("dateFilter");
+    const container = document.getElementById("accordionContainer");
 
-    // Load saved entries from localStorage
-    const allEntries = JSON.parse(localStorage.getItem("fieldflow_logs")) || [];
+    const updateWellFilterOptions = () => {
+      const selectedField = fieldFilter.value;
+      const wells = logs
+        .filter(log => !selectedField || log.field === selectedField)
+        .map(log => log.well)
+        .filter((v, i, a) => v && a.indexOf(v) === i)
+        .sort();
+      wellFilter.innerHTML = '<option value="">All Wells</option>' +
+        wells.map(w => `<option value="${w}">${w}</option>`).join('');
+    };
 
-    // Extract well names for filter dropdown
-    const uniqueWells = [...new Set(allEntries.map(entry => entry.well))];
-    uniqueWells.sort().forEach(well => {
-      const opt = document.createElement("option");
-      opt.value = well;
-      opt.textContent = well;
-      wellFilter.appendChild(opt);
-    });
+    const renderAccordion = () => {
+      container.innerHTML = "";
+      const filtered = logs.filter(log =>
+        (!logTypeFilter.value || log.type === logTypeFilter.value) &&
+        (!fieldFilter.value || log.field === fieldFilter.value) &&
+        (!wellFilter.value || log.well === wellFilter.value) &&
+        (!attendantFilter.value || log.attendant === attendantFilter.value) &&
+        (!dateFilter.value || log.date === dateFilter.value)
+      );
 
-    function renderEntries() {
-      entriesContainer.innerHTML = "";
-      let filtered = allEntries.filter(entry => {
-        return (
-          (!fieldFilter.value || entry.field === fieldFilter.value) &&
-          (!wellFilter.value || entry.well === wellFilter.value) &&
-          (!typeFilter.value || entry.type === typeFilter.value) &&
-          (!dateFilter.value || entry.date === dateFilter.value)
-        );
-      });
-
-      if (filtered.length === 0) {
-        entriesContainer.innerHTML = "<p>No matching entries found.</p>";
-        return;
-      }
-
-      filtered.forEach((entry, index) => {
-        const button = document.createElement("button");
-        button.className = "accordion";
-        button.innerHTML = `${entry.type} – ${entry.field} – ${entry.well} – ${entry.date}`;
-        button.onclick = function () {
-          this.classList.toggle("active");
-          const panel = this.nextElementSibling;
-          panel.style.display = panel.style.display === "block" ? "none" : "block";
-        };
+      filtered.forEach((log, index) => {
+        const btn = document.createElement("button");
+        btn.className = "accordion";
+        btn.textContent = `${log.date} — ${log.type} — ${log.field} — ${log.well}`;
 
         const panel = document.createElement("div");
         panel.className = "panel";
 
-        const content = document.createElement("div");
-        content.className = "entry-content";
-        content.innerHTML = Object.entries(entry)
-          .map(([key, value]) => `<strong>${key}</strong>: ${value}`)
-          .join("<br>");
+        let content = "";
+        for (const [key, value] of Object.entries(log)) {
+          content += `${key}: ${value}\n`;
+        }
 
-        const printBtn = document.createElement("button");
-        printBtn.className = "print-button";
-        printBtn.textContent = "Print Entry";
-        printBtn.onclick = () => {
-          const newWin = window.open("", "", "width=800,height=600");
-          newWin.document.write(`<pre>${content.innerHTML}</pre>`);
-          newWin.document.close();
-          newWin.print();
-        };
+        panel.innerHTML = `<pre>${content}</pre>`;
 
-        panel.appendChild(content);
-        panel.appendChild(printBtn);
-        entriesContainer.appendChild(button);
-        entriesContainer.appendChild(panel);
+        btn.addEventListener("click", () => {
+          btn.classList.toggle("active");
+          panel.style.display = panel.style.display === "block" ? "none" : "block";
+        });
+
+        container.appendChild(btn);
+        container.appendChild(panel);
       });
-    }
+    };
 
-    fieldFilter.addEventListener("change", renderEntries);
-    wellFilter.addEventListener("change", renderEntries);
-    typeFilter.addEventListener("change", renderEntries);
-    dateFilter.addEventListener("change", renderEntries);
+    [logTypeFilter, fieldFilter, wellFilter, attendantFilter, dateFilter].forEach(el => {
+      el.addEventListener("change", () => {
+        updateWellFilterOptions();
+        renderAccordion();
+      });
+    });
 
-    renderEntries();
+    updateWellFilterOptions();
+    renderAccordion();
   </script>
 </body>
 </html>
