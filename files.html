@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Files | FieldFlow</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .filters select, .filters input {
+      padding: 8px;
+      font-size: 16px;
+    }
+    .accordion {
+      background-color: #fff;
+      color: #333;
+      cursor: pointer;
+      padding: 18px;
+      width: 100%;
+      text-align: left;
+      border: none;
+      border-bottom: 1px solid #ccc;
+      outline: none;
+      font-size: 18px;
+      transition: 0.3s;
+    }
+    .accordion:hover {
+      background-color: #eaeaea;
+    }
+    .active, .accordion.active {
+      background-color: #ddd;
+    }
+    .panel {
+      padding: 0 18px;
+      display: none;
+      background-color: #fff;
+      overflow: hidden;
+      border-bottom: 1px solid #ccc;
+    }
+    .entry-content {
+      padding: 15px 0;
+    }
+    .print-button {
+      margin-top: 10px;
+    }
+    .home-button {
+      display: block;
+      text-align: center;
+      margin-top: 30px;
+    }
+    .home-button a {
+      text-decoration: none;
+      background-color: #007bff;
+      color: white;
+      padding: 12px 25px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Files</h1>
+
+  <div class="filters">
+    <select id="fieldFilter">
+      <option value="">All Fields</option>
+      <option value="Dixon">Dixon</option>
+      <option value="Simpson Chapel">Simpson Chapel</option>
+      <option value="Mineral City">Mineral City</option>
+    </select>
+
+    <select id="wellFilter">
+      <option value="">All Wells</option>
+      <!-- Dynamically populated -->
+    </select>
+
+    <select id="typeFilter">
+      <option value="">All Log Types</option>
+      <option value="Annual Inspection">Annual Inspection</option>
+      <option value="OBS Reading">OBS Reading</option>
+      <option value="Daily Pressure">Daily Pressure</option>
+      <option value="Shut-In Log">Shut-In Log</option>
+      <option value="SWD Log">SWD Log</option>
+      <option value="Well Status">Well Status</option>
+      <option value="Daily Activity">Daily Activity</option>
+    </select>
+
+    <input type="date" id="dateFilter" />
+  </div>
+
+  <div id="entriesContainer">
+    <!-- Entries will appear here -->
+  </div>
+
+  <div class="home-button">
+    <a href="index.html">← Home</a>
+  </div>
+
+  <script>
+    const entriesContainer = document.getElementById("entriesContainer");
+    const fieldFilter = document.getElementById("fieldFilter");
+    const wellFilter = document.getElementById("wellFilter");
+    const typeFilter = document.getElementById("typeFilter");
+    const dateFilter = document.getElementById("dateFilter");
+
+    // Load saved entries from localStorage
+    const allEntries = JSON.parse(localStorage.getItem("fieldflow_logs")) || [];
+
+    // Extract well names for filter dropdown
+    const uniqueWells = [...new Set(allEntries.map(entry => entry.well))];
+    uniqueWells.sort().forEach(well => {
+      const opt = document.createElement("option");
+      opt.value = well;
+      opt.textContent = well;
+      wellFilter.appendChild(opt);
+    });
+
+    function renderEntries() {
+      entriesContainer.innerHTML = "";
+      let filtered = allEntries.filter(entry => {
+        return (
+          (!fieldFilter.value || entry.field === fieldFilter.value) &&
+          (!wellFilter.value || entry.well === wellFilter.value) &&
+          (!typeFilter.value || entry.type === typeFilter.value) &&
+          (!dateFilter.value || entry.date === dateFilter.value)
+        );
+      });
+
+      if (filtered.length === 0) {
+        entriesContainer.innerHTML = "<p>No matching entries found.</p>";
+        return;
+      }
+
+      filtered.forEach((entry, index) => {
+        const button = document.createElement("button");
+        button.className = "accordion";
+        button.innerHTML = `${entry.type} – ${entry.field} – ${entry.well} – ${entry.date}`;
+        button.onclick = function () {
+          this.classList.toggle("active");
+          const panel = this.nextElementSibling;
+          panel.style.display = panel.style.display === "block" ? "none" : "block";
+        };
+
+        const panel = document.createElement("div");
+        panel.className = "panel";
+
+        const content = document.createElement("div");
+        content.className = "entry-content";
+        content.innerHTML = Object.entries(entry)
+          .map(([key, value]) => `<strong>${key}</strong>: ${value}`)
+          .join("<br>");
+
+        const printBtn = document.createElement("button");
+        printBtn.className = "print-button";
+        printBtn.textContent = "Print Entry";
+        printBtn.onclick = () => {
+          const newWin = window.open("", "", "width=800,height=600");
+          newWin.document.write(`<pre>${content.innerHTML}</pre>`);
+          newWin.document.close();
+          newWin.print();
+        };
+
+        panel.appendChild(content);
+        panel.appendChild(printBtn);
+        entriesContainer.appendChild(button);
+        entriesContainer.appendChild(panel);
+      });
+    }
+
+    fieldFilter.addEventListener("change", renderEntries);
+    wellFilter.addEventListener("change", renderEntries);
+    typeFilter.addEventListener("change", renderEntries);
+    dateFilter.addEventListener("change", renderEntries);
+
+    renderEntries();
+  </script>
+</body>
+</html>
