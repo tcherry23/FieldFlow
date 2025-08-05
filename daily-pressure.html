@@ -1,221 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Daily Pressure Log</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #f2f2f2;
+      padding: 20px;
     }
-    h1 {
-      text-align: center;
-    }
-    .field-select {
-      margin-bottom: 20px;
-    }
-    .well-entry {
-      background-color: #fff;
-      padding: 15px;
+    h2 {
       margin-bottom: 10px;
-      border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .well-entry h3 {
-      margin-top: 0;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-    input, select, textarea {
-      width: 100%;
+    select, input {
+      margin: 5px;
       padding: 5px;
-      margin-top: 3px;
     }
-    .section-divider {
-      margin: 40px 0 20px;
-      font-weight: bold;
-      border-bottom: 2px solid #444;
-      padding-bottom: 5px;
+    .well {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
     }
     .status {
-      margin-top: 10px;
       font-weight: bold;
+      margin-top: 5px;
     }
     .green { color: green; }
     .yellow { color: orange; }
     .red { color: red; }
-    .total-mcf {
-      font-size: 18px;
-      font-weight: bold;
-      margin: 20px 0;
-    }
   </style>
 </head>
 <body>
-  <h1>Daily Pressure Log</h1>
 
-  <div class="field-select">
-    <label for="field">Select Field:</label>
-    <select id="field" onchange="renderWells()">
-      <option value="">-- Choose a Field --</option>
-      <option value="Dixon">Dixon</option>
-      <option value="Simpson Chapel">Simpson Chapel</option>
-      <option value="Mineral City">Mineral City</option>
-    </select>
-  </div>
+  <h2>Daily Pressure Log</h2>
 
-  <div class="field-select">
-    <label for="attendant">Attendant:</label>
-    <select id="attendant">
-      <option value="T. Cherry">T. Cherry</option>
-      <option value="T. Ressler">T. Ressler</option>
-    </select>
-  </div>
+  <label for="attendant">Attendant:</label>
+  <select id="attendant">
+    <option value="T. Cherry">T. Cherry</option>
+    <option value="T. Ressler">T. Ressler</option>
+  </select>
 
-  <div class="total-mcf" id="totalMCF">Total MCF/hour: 0</div>
+  <br><br>
 
-  <div id="wellsContainer"></div>
+  <label for="targetMCF">Target MCF/Hour:</label>
+  <input type="number" id="targetMCF" value="0" onchange="updateAllMCF()">
+
+  <p><strong>Total MCF/Hour:</strong> <span id="totalMCF">0</span></p>
+
+  <label for="field">Select Field:</label>
+  <select id="field" onchange="renderWells()">
+    <option value="Dixon">Dixon</option>
+    <option value="Simpson Chapel">Simpson Chapel</option>
+    <option value="Mineral City">Mineral City</option>
+  </select>
+
+  <div id="wellContainer"></div>
 
   <script>
     const orificeSizes = {
-      "Dixon": {
-        "Evans 7": 1.0000,
-        "Evans 8": 1.0000,
-        "Evans 3": 1.0000,
-        "Evans 10": 1.0000,
-        "Evans 5": 1.2500,
-        "Evans 4-H": 1.0000,
-        "Evans 6": 1.0000,
-        "Cory 8": 1.0000,
-        "Cory 4": 1.0000,
-        "Cory 2": 1.0000,
-        "Cory 7": 1.0000,
-        "Cory 3": 1.0000,
-        "Cory 6": 1.0000,
-        "Cory 5": 1.0000,
-        "Cory 1": 1.0000
-      },
-      "Simpson Chapel": {
-        "Blaker 1": 0.5000,
-        "Emery 2": 0.7500,
-        "Emery 1": 0.7500,
-        "Crays 8": 1.0000,
-        "Crays 1": 0.5000,
-        "Crays 5": 0.7500,
-        "Crays 4": 0.2500,
-        "Crays 3": 0.7500,
-        "Crays 7": 1.0000,
-        "Crays 2": 1.0000,
-        "Crays 6": 1.0000,
-        "Royal 6": 0.6250,
-        "Royal 5": 0.5000,
-        "Royal 4": 0.5000,
-        "Royal 7": 1.0000,
-        "Royal 1": 0.5000
-      },
-      "Mineral City": {
-        "Rollison 4": 0.7500,
-        "Rollison 1": 0.7500,
-        "Rollison 2": 0.7500,
-        "G. Axe 6": 1.0000,
-        "Haines 4": 0.3750,
-        "Haines 1": 1.0000,
-        "Haines 2": 1.0000,
-        "Haines 3": 1.0000,
-        "G. Axe 1": 1.0000,
-        "Allen 1": 1.0000,
-        "G. Axe 2": 0.7500,
-        "G. Axe 4": 0.7500,
-        "G. Axe 5": 1.0000,
-        "G. Axe 3": 0.5000,
-        "J. Axe 1": 1.0000
-      }
+      // Dixon
+      "Evans 7": 1.0000, "Evans 8": 1.0000, "Evans 3": 1.0000, "Evans 10": 1.0000,
+      "Evans 5": 1.2500, "Evans 4-H": 1.0000, "Evans 6": 1.0000,
+      "Cory 8": 1.0000, "Cory 4": 1.0000, "Cory 2": 1.0000, "Cory 7": 1.0000,
+      "Cory 3": 1.0000, "Cory 6": 1.0000, "Cory 5": 1.0000, "Cory 1": 1.0000,
+
+      // Simpson Chapel
+      "Blaker 1": 0.5, "Emery 2": 0.75, "Emery 1": 0.75, "Crays 8": 1.0,
+      "Crays 1": 0.5, "Crays 5": 0.75, "Crays 4": 0.25, "Crays 3": 0.75,
+      "Crays 7": 1.0, "Crays 2": 1.0, "Crays 6": 1.0, "Royal 6": 0.625,
+      "Royal 5": 0.5, "Royal 4": 0.5, "Royal 7": 1.0, "Royal 1": 0.5,
+
+      // Mineral City
+      "Rollison 4": 0.75, "Rollison 1": 0.75, "Rollison 2": 0.75, "G. Axe 6": 1.0,
+      "Haines 4": 0.375, "Haines 1": 1.0, "Haines 2": 1.0, "Haines 3": 1.0,
+      "G. Axe 1": 1.0, "Allen 1": 1.0, "G. Axe 2": 0.75, "G. Axe 4": 0.75,
+      "G. Axe 5": 1.0, "G. Axe 3": 0.5, "J. Axe 1": 1.0
     };
 
-    const wellOrder = {
-      "Dixon": ["Evans 7", "Evans 8", "Evans 3", "Evans 10", "Evans 5", "Evans 4-H", "Evans 6", "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6", "Cory 5", "Cory 1"],
-      "Simpson Chapel": ["Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 1", "Crays 5", "Crays 4", "Crays 3", "Crays 7", "Crays 2", "Crays 6", "Royal 6", "Royal 5", "Royal 4", "Royal 7", "Royal 1"],
-      "Mineral City": ["Rollison 4", "Rollison 1", "Rollison 2", "G. Axe 6", "Haines 4", "Haines 1", "Haines 2", "Haines 3", "G. Axe 1", "Allen 1", "G. Axe 2", "G. Axe 4", "G. Axe 5", "G. Axe 3", "J. Axe 1"]
+    const fields = {
+      "Dixon": [
+        "Evans 7", "Evans 8", "Evans 3", "Evans 10", "Evans 5", "Evans 4-H",
+        "Evans 6", "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6",
+        "Cory 5", "Cory 1"
+      ],
+      "Simpson Chapel": [
+        "Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 1", "Crays 5",
+        "Crays 4", "Crays 3", "Crays 7", "Crays 2", "Crays 6", "Royal 6",
+        "Royal 5", "Royal 4", "Royal 7", "Royal 1"
+      ],
+      "Mineral City": [
+        "Rollison 4", "Rollison 1", "Rollison 2", "G. Axe 6", "Haines 4", "Haines 1",
+        "Haines 2", "Haines 3", "G. Axe 1", "Allen 1", "G. Axe 2", "G. Axe 4",
+        "G. Axe 5", "G. Axe 3", "J. Axe 1"
+      ]
     };
 
     function renderWells() {
-      const field = document.getElementById('field').value;
-      const container = document.getElementById('wellsContainer');
+      const selectedField = document.getElementById("field").value;
+      const wells = fields[selectedField];
+      const container = document.getElementById("wellContainer");
       container.innerHTML = '';
-
-      if (!field) return;
-
-      let totalMCF = 0;
-
-      wellOrder[field].forEach(well => {
-        const orifice = orificeSizes[field][well];
-        const div = document.createElement('div');
-        div.className = 'well-entry';
-
-        const today = new Date().toISOString().split('T')[0];
-
-        div.innerHTML = `
+      wells.forEach(well => {
+        const orifice = orificeSizes[well] || 1.0;
+        const wellDiv = document.createElement('div');
+        wellDiv.className = 'well';
+        wellDiv.innerHTML = `
           <h3>${well}</h3>
           <label>Date:</label>
-          <input type="date" value="${today}" readonly />
-
+          <input type="date" value="${new Date().toISOString().split('T')[0]}"><br>
           <label>Upstream PSI:</label>
-          <input type="number" id="${well}-up" oninput="calculate('${field}', '${well}')" />
-
+          <input type="number" step="0.01" class="up"><br>
           <label>Downstream PSI:</label>
-          <input type="number" id="${well}-down" oninput="calculate('${field}', '${well}')" />
-
-          <label>Differential (PSI):</label>
-          <input type="number" id="${well}-diff" readonly />
-
-          <label>d/p H2O:</label>
-          <input type="number" id="${well}-dph2o" readonly />
-
-          <label>MCF/hour:</label>
-          <input type="number" id="${well}-mcf" readonly />
-
+          <input type="number" step="0.01" class="down"><br>
+          <label>Differential PSI:</label>
+          <input type="number" step="0.01" class="diff" readonly><br>
+          <label>d/p H₂O:</label>
+          <input type="number" step="0.01" class="dp" readonly><br>
+          <label>MCF/Hour:</label>
+          <input type="number" step="0.01" class="mcf" readonly><br>
+          <div class="status" id="${well}-status"></div>
           <label>Notes:</label>
-          <textarea placeholder="Add any notes here..."></textarea>
+          <input type="text" placeholder="Optional notes"><br>
         `;
+        container.appendChild(wellDiv);
+      });
+      attachListeners();
+    }
 
-        container.appendChild(div);
+    function attachListeners() {
+      document.querySelectorAll('.well').forEach(wellDiv => {
+        const up = wellDiv.querySelector('.up');
+        const down = wellDiv.querySelector('.down');
+        up.addEventListener('input', () => calc(wellDiv));
+        down.addEventListener('input', () => calc(wellDiv));
       });
     }
 
-    function calculate(field, well) {
-      const up = parseFloat(document.getElementById(`${well}-up`).value) || 0;
-      const down = parseFloat(document.getElementById(`${well}-down`).value) || 0;
-      const orifice = orificeSizes[field][well];
-
+    function calc(wellDiv) {
+      const up = parseFloat(wellDiv.querySelector('.up').value) || 0;
+      const down = parseFloat(wellDiv.querySelector('.down').value) || 0;
       const diff = up - down;
-      const dph2o = diff * 27.7;
-      const fieldPressure = up;
+      const dpH2O = diff * 27.7;
+      wellDiv.querySelector('.diff').value = diff.toFixed(2);
+      wellDiv.querySelector('.dp').value = dpH2O.toFixed(2);
 
-      const mcf = 0.2628 * Math.pow(orifice, 2) * Math.sqrt(fieldPressure * dph2o);
+      const wellName = wellDiv.querySelector('h3').innerText;
+      const orifice = orificeSizes[wellName] || 1.0;
+      const mcf = 0.2628 * (orifice ** 2) * Math.sqrt((dpH2O * up) || 0);
+      wellDiv.querySelector('.mcf').value = mcf.toFixed(2);
 
-      document.getElementById(`${well}-diff`).value = diff.toFixed(2);
-      document.getElementById(`${well}-dph2o`).value = dph2o.toFixed(2);
-      document.getElementById(`${well}-mcf`).value = isNaN(mcf) ? '' : mcf.toFixed(2);
-
-      updateTotalMCF();
+      updateTotals();
     }
 
-    function updateTotalMCF() {
-      const field = document.getElementById('field').value;
+    function updateTotals() {
       let total = 0;
-      if (!field) return;
-
-      wellOrder[field].forEach(well => {
-        const mcf = parseFloat(document.getElementById(`${well}-mcf`)?.value) || 0;
-        total += mcf;
+      document.querySelectorAll('.mcf').forEach(input => {
+        total += parseFloat(input.value) || 0;
       });
+      document.getElementById('totalMCF').innerText = total.toFixed(2);
 
-      document.getElementById('totalMCF').textContent = `Total MCF/hour: ${total.toFixed(2)}`;
+      const goal = parseFloat(document.getElementById('targetMCF').value) || 0;
+      document.querySelectorAll('.well').forEach(wellDiv => {
+        const mcf = parseFloat(wellDiv.querySelector('.mcf').value) || 0;
+        const statusEl = wellDiv.querySelector('.status');
+        if (goal === 0) {
+          statusEl.innerText = '';
+        } else if (mcf >= goal) {
+          statusEl.innerText = "✅ On Target";
+          statusEl.className = "status green";
+        } else if (mcf >= goal * 0.75) {
+          statusEl.innerText = "⚠️ Below Target";
+          statusEl.className = "status yellow";
+        } else {
+          statusEl.innerText = "🔻 Way Below Target";
+          statusEl.className = "status red";
+        }
+      });
     }
+
+    // Initial render
+    renderWells();
   </script>
+
 </body>
 </html>
