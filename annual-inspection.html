@@ -1,132 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Annual Inspections</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4; }
-    h1 { text-align: center; }
-    select, button, input[type="date"] {
-      margin: 5px 0;
-      padding: 6px;
-      font-size: 16px;
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h2, h3 {
+      margin-top: 30px;
+    }
+    label {
+      font-weight: bold;
     }
     .well-section {
       border: 1px solid #ccc;
-      background: #fff;
-      padding: 10px;
-      margin-top: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
     }
-    .checkbox-group label {
-      margin-right: 15px;
+    textarea {
+      width: 100%;
+      height: 60px;
     }
-    .leak-detail {
-      margin-top: 5px;
-      margin-left: 20px;
-      display: none;
+    select, input[type="number"] {
+      margin-bottom: 10px;
     }
-    .submit-btn {
+    .field-group {
+      margin-bottom: 10px;
+    }
+    .home-btn {
       margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
     }
   </style>
 </head>
 <body>
-
-  <h1>Annual Inspections</h1>
-
-  <label for="field">Select Field:</label>
-  <select id="field" onchange="populateWells()">
-    <option value="">-- Choose Field --</option>
-    <option value="Dixon">Dixon</option>
-    <option value="Simpson Chapel">Simpson Chapel</option>
-    <option value="Mineral City">Mineral City</option>
+  <h2>Annual Inspections</h2>
+  <label for="wellType">Well Type:</label>
+  <select id="wellType" onchange="renderWells()">
+    <option value="production">Production Wells</option>
+    <option value="obs">OBS Wells</option>
   </select>
 
-  <label for="attendant">Attendant:</label>
-  <select id="attendant">
-    <option value="">-- Select Attendant --</option>
-    <option value="T. Cherry">T. Cherry</option>
-    <option value="T. Ressler">T. Ressler</option>
-  </select>
+  <div id="formArea"></div>
 
-  <div id="wellsContainer"></div>
-
-  <button class="submit-btn" onclick="submitInspections()">Submit</button>
-  <button class="submit-btn" onclick="location.href='index.html'">Home</button>
+  <button class="home-btn" onclick="location.href='index.html'">🏠 Home</button>
 
   <script>
-    const wellsByField = {
-      "Dixon": [
-        "Evans 7", "Evans 8", "Evans 3", "Evans 10", "Evans 5", "Evans 4-H", "Evans 6",
-        "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6", "Cory 5", "Cory 1"
-      ],
-      "Simpson Chapel": [
-        "Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 1", "Crays 5", "Crays 4", "Crays 3",
-        "Crays 7", "Crays 2", "Crays 6", "Royal 6", "Royal 5", "Royal 4", "Royal 7", "Royal 1"
-      ],
-      "Mineral City": [
-        "Rollison 4", "Rollison 1", "Rollison 2", "G. Axe 6", "Haines 4", "Haines 1", "Haines 2",
-        "Haines 3", "G. Axe 1", "Allen 1", "G. Axe 2", "G. Axe 4", "G. Axe 5", "G. Axe 3", "J. Axe 1"
-      ]
+    const dateToday = new Date().toISOString().split('T')[0];
+
+    const attendants = ['T. Cherry', 'T. Ressler'];
+
+    const wells = {
+      production: {
+        "Dixon": [
+          "Evans 7", "Evans 8", "Evans 3", "Evans 10", "Evans 5", "Evans 4-H", "Evans 6",
+          "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6", "Cory 5", "Cory 1"
+        ],
+        "Simpson Chapel": [
+          "Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 1", "Crays 5", "Crays 4", "Crays 3", "Crays 7",
+          "Crays 2", "Crays 6", "Royal 6", "Royal 5", "Royal 4", "Royal 7", "Royal 1"
+        ],
+        "Mineral City": [
+          "Rollison 4", "Rollison 1", "Rollison 2", "G. Axe 6", "Haines 4", "Haines 1", "Haines 2", "Haines 3",
+          "G. Axe 1", "Allen 1", "G. Axe 2", "G. Axe 4", "G. Axe 5", "G. Axe 3", "J. Axe 1"
+        ]
+      },
+      obs: {
+        "Dixon": [
+          "Evans 1", "Evans 2", "Evans 9", "Hendren 1", "Mount 1", "Dowden 1"
+        ],
+        "Mineral City": [
+          "Horning 1", "G Axe 7", "Boruff 1", "Floyd 1", "Rollison 5", "Foster 1"
+        ],
+        "Simpson Chapel": [
+          "Blackmore 3", "RH Stone 1", "Royal 2", "Royal 3", "Rollison 5", "Royal 9", "S Blackmore 1", "Blackmore 4", "Royal 8"
+        ]
+      }
     };
 
-    function populateWells() {
-      const field = document.getElementById('field').value;
-      const container = document.getElementById('wellsContainer');
-      container.innerHTML = '';
+    function renderWells() {
+      const type = document.getElementById("wellType").value;
+      const formArea = document.getElementById("formArea");
+      formArea.innerHTML = "";
 
-      if (!field) return;
+      Object.keys(wells[type]).forEach(field => {
+        const fieldHeader = document.createElement("h3");
+        fieldHeader.textContent = field;
+        formArea.appendChild(fieldHeader);
 
-      wellsByField[field].forEach(well => {
-        const section = document.createElement('div');
-        section.className = 'well-section';
-        section.innerHTML = `
-          <h3>${well}</h3>
-          <label>Date:</label>
-          <input type="date" value="${new Date().toISOString().split('T')[0]}"><br>
-
-          <div class="checkbox-group">
-            <label>Valve Check:</label>
-            <label><input type="radio" name="${well}-valve" value="Yes"> ✔️</label>
-            <label><input type="radio" name="${well}-valve" value="No"> ❌</label>
-          </div>
-
-          <div class="checkbox-group">
-            <label>Leak Check:</label>
-            <label><input type="radio" name="${well}-leak" value="Yes" onchange="toggleLeakDetail(this, '${well}')"> ✔️</label>
-            <label><input type="radio" name="${well}-leak" value="No" onchange="toggleLeakDetail(this, '${well}')"> ❌</label>
-          </div>
-
-          <div id="${well}-leak-detail" class="leak-detail">
-            <label>Leak Type:</label>
-            <select>
-              <option value="">-- Select Type --</option>
-              <option>Internal</option>
-              <option>External</option>
-              <option>Both</option>
-            </select>
-          </div>
-        `;
-        container.appendChild(section);
+        wells[type][field].forEach(well => {
+          const div = document.createElement("div");
+          div.className = "well-section";
+          div.innerHTML = `
+            <h4>${well}</h4>
+            <div class="field-group">
+              <label>Date:</label>
+              <input type="date" value="${dateToday}" />
+            </div>
+            <div class="field-group">
+              <label>Surface Pressure (PSI):</label>
+              <input type="number" />
+            </div>
+            <div class="field-group">
+              <label>Casing Pressure (PSI):</label>
+              <input type="number" />
+            </div>
+            <div class="field-group">
+              <label>Valve Functional Checks:</label><br/>
+              Master: <select><option>✔️</option><option>❌</option></select>
+              Tubing: <select><option>✔️</option><option>❌</option></select>
+              Annulus: <select><option>✔️</option><option>❌</option></select>
+              Crossover: <select><option>✔️</option><option>❌</option></select>
+              Tail: <select><option>✔️</option><option>❌</option></select>
+              Wing: <select><option>✔️</option><option>❌</option></select>
+            </div>
+            <div class="field-group">
+              <label>Leak Checks:</label><br/>
+              Master: <select><option>✔️</option><option>❌</option></select>
+              Tubing: <select><option>✔️</option><option>❌</option></select>
+              Annulus: <select><option>✔️</option><option>❌</option></select>
+              Crossover: <select><option>✔️</option><option>❌</option></select>
+              Tail: <select><option>✔️</option><option>❌</option></select>
+              Wing: <select><option>✔️</option><option>❌</option></select>
+            </div>
+            <div class="field-group">
+              <label>Attendant:</label>
+              <select>${attendants.map(a => `<option>${a}</option>`).join('')}</select>
+            </div>
+            <div class="field-group">
+              <label>Notes:</label>
+              <textarea></textarea>
+            </div>
+            <button>Submit Entry</button>
+          `;
+          formArea.appendChild(div);
+        });
       });
     }
 
-    function toggleLeakDetail(el, wellName) {
-      const detailBox = document.getElementById(`${wellName}-leak-detail`);
-      if (el.value === "Yes") {
-        detailBox.style.display = "block";
-      } else {
-        detailBox.style.display = "none";
-      }
-    }
-
-    function submitInspections() {
-      alert("Annual inspection data saved.");
-      // You can later connect this to localStorage or backend saving logic
-    }
+    // Render production wells by default
+    renderWells();
   </script>
-
 </body>
 </html>
