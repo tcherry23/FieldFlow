@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OBS Readings - FieldFlow</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
+    h2 { text-align: center; }
+    label { display: inline-block; width: 180px; margin-bottom: 6px; }
+    select, input[type="number"], input[type="text"], textarea {
+      padding: 5px; margin-bottom: 10px; width: 200px;
+    }
+    .well-entry {
+      border: 1px solid #ccc; background: #fff; padding: 15px; margin-bottom: 15px;
+    }
+    button { padding: 10px 20px; font-size: 16px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Observation Well Readings</h2>
+
+  <label for="field">Select Field:</label>
+  <select id="field" onchange="showWells()">
+    <option value="">-- Select --</option>
+    <option value="Dixon">Dixon</option>
+    <option value="Mineral City">Mineral City</option>
+    <option value="Simpson Chapel">Simpson Chapel</option>
+  </select>
+
+  <div id="wellContainer"></div>
+
+  <script>
+    const obsWells = {
+      "Dixon": ["Evans 1", "Evans 2", "Evans 9", "Hendren 1", "Mount 1", "Dowden 1"],
+      "Mineral City": ["Horning 1", "G Axe 7", "Boruff 1", "Floyd 1", "Rollison 5", "Foster 1"],
+      "Simpson Chapel": ["Blackmore 3", "RH Stone 1", "Royal 2", "Royal 3", "Rollison 5", "Royal 9", "S Blackmore 1", "Blackmore 4", "Royal 8"]
+    };
+
+    function showWells() {
+      const field = document.getElementById('field').value;
+      const container = document.getElementById('wellContainer');
+      container.innerHTML = '';
+
+      if (!field || !obsWells[field]) return;
+
+      obsWells[field].forEach(well => {
+        const date = new Date().toISOString().split('T')[0];
+
+        const div = document.createElement('div');
+        div.className = 'well-entry';
+        div.innerHTML = `
+          <h3>${well}</h3>
+          <label>Date:</label><input type="text" value="${date}" readonly><br>
+          <label>Attendant:</label>
+          <select>
+            <option value="T. Cherry">T. Cherry</option>
+            <option value="T. Ressler">T. Ressler</option>
+          </select><br>
+          <label>Annulus PSI:</label><input type="number"><br>
+          <label>Tubing PSI:</label><input type="number"><br>
+          <label>Surface Casing PSI:</label><input type="number"><br>
+          <label>Blow Down Time:</label><input type="text"><br>
+          <label>On Water:</label>
+          <select>
+            <option value="">-- Select --</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select><br>
+          <label>Remarks:</label><br><textarea rows="3" cols="40"></textarea>
+        `;
+        container.appendChild(div);
+      });
+
+      const submitBtn = document.createElement('button');
+      submitBtn.textContent = 'Submit';
+      container.appendChild(submitBtn);
+
+      const homeBtn = document.createElement('button');
+      homeBtn.textContent = 'Home';
+      homeBtn.style.marginLeft = '10px';
+      homeBtn.onclick = () => window.location.href = 'index.html';
+      container.appendChild(homeBtn);
+    }
+  </script>
+</body>
+</html>
