@@ -1,12 +1,387 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Coming Soon</title>
-  </head>
-  <body style="text-align:center; font-family:sans-serif; margin-top:100px;">
-    <h2>This feature is coming soon!</h2>
-    <a href="index.html" style="display:inline-block; margin-top:20px; text-decoration:none; font-size:18px;">
-      🏠 Home
-    </a>
-  </body>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Export – FieldFlow</title>
+<style>
+  :root { --brand:#004080; --bg:#f4f7fb; }
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f7f9fc;margin:0}
+  header{background:var(--brand);color:#fff;padding:16px 20px}
+  header h1{margin:0;font-size:1.25rem}
+  .wrap{max-width:1000px;margin:20px auto;padding:0 14px}
+  .panel{background:#fff;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.08);padding:16px}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+  label{font-size:.85rem;color:#334}
+  select,input{padding:10px;border:1px solid #ccd3e0;border-radius:8px;background:#fff}
+  .col{display:flex;flex-direction:column;gap:6px}
+  .col.w{min-width:180px}
+  .btn{background:var(--brand);color:#fff;border:0;border-radius:9px;padding:12px 16px;cursor:pointer}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .note{font-size:.9rem;color:#445;margin-top:10px}
+  .table{margin-top:16px;font-size:.9rem;color:#223}
+  .pill{display:inline-block;background:#eef3ff;color:#245;padding:4px 10px;border-radius:999px;margin-right:6px}
+  footer{color:#678;font-size:.85rem;margin:18px 2px}
+  .fine{font-size:.8rem;color:#789}
+</style>
+</head>
+<body>
+<header><h1>Export – FieldFlow</h1></header>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="row">
+      <div class="col w">
+        <label for="typeSel">Log Type</label>
+        <select id="typeSel">
+          <option value="Daily Activity Log">Daily Activity Log</option>
+          <option value="Daily Pressure">Daily Pressure</option>
+          <option value="Annual Inspection">Annual Inspection</option>
+          <option value="Shut-In Log">Shut-In Log</option>
+          <option value="SWD Log">SWD Log</option>
+          <option value="OBS Readings">OBS Readings</option>
+          <option value="All">All Types (mixed)</option>
+        </select>
+      </div>
+      <div class="col w">
+        <label for="fieldSel">Field</label>
+        <select id="fieldSel">
+          <option value="">All Fields</option>
+          <option value="Dixon">Dixon</option>
+          <option value="Mineral City">Mineral City</option>
+          <option value="Simpson Chapel">Simpson Chapel</option>
+        </select>
+      </div>
+      <div class="col w">
+        <label for="attSel">Attendant</label>
+        <select id="attSel">
+          <option value="">All Attendants</option>
+          <option value="T. Cherry">T. Cherry</option>
+          <option value="T. Ressler">T. Ressler</option>
+        </select>
+      </div>
+      <div class="col w">
+        <label for="fromSel">From (date)</label>
+        <input id="fromSel" type="date"/>
+      </div>
+      <div class="col w">
+        <label for="toSel">To (date)</label>
+        <input id="toSel" type="date"/>
+      </div>
+      <div class="col">
+        <button id="btnPreview" class="btn" type="button">Preview</button>
+      </div>
+      <div class="col">
+        <button id="btnExport" class="btn" type="button" disabled>Download CSV</button>
+      </div>
+    </div>
+
+    <div id="summary" class="table"></div>
+    <div id="hint" class="note fine">CSV will include IGS_ID automatically when Well Name matches <code>wells_master.csv</code>.</div>
+  </div>
+
+  <footer>
+    <a href="index.html">← Back to Home</a>
+  </footer>
+</div>
+
+<script>
+/* ---------- Utilities ---------- */
+const byId = id => document.getElementById(id);
+const fmtDate = iso => (iso ? (new Date(iso)).toISOString().slice(0,10) : "");
+
+/* ---------- Load master wells (IGS_ID map) ---------- */
+let WELL_MAP = new Map(); // well_name -> {igs_id, field, orifice_size}
+async function loadWellMap(){
+  try{
+    const res = await fetch('wells_master.csv', {cache:'no-store'});
+    if(!res.ok) throw new Error('wells_master.csv not found');
+    const text = await res.text();
+    WELL_MAP = parseCSVtoMap(text);
+  }catch(e){
+    console.warn('Well map load failed:', e);
+    WELL_MAP = new Map();
+  }
+}
+function parseCSVtoMap(csvText){
+  const lines = csvText.split(/\r?\n/).filter(Boolean);
+  const map = new Map();
+  if(lines.length === 0) return map;
+  const headers = lines[0].split(',').map(h=>h.trim().toLowerCase());
+  const idxName = headers.indexOf('well_name');
+  const idxId   = headers.indexOf('igs_id');
+  const idxFld  = headers.indexOf('field');
+  const idxOri  = headers.indexOf('orifice_size');
+  for(let i=1;i<lines.length;i++){
+    const cols = splitCSVLine(lines[i]);
+    const name = (cols[idxName]||"").trim();
+    if(!name) continue;
+    map.set(name, {
+      igs_id: (cols[idxId]||"").trim(),
+      field:  (cols[idxFld]||"").trim(),
+      orifice_size: (cols[idxOri]||"").trim()
+    });
+  }
+  return map;
+}
+function splitCSVLine(line){
+  // minimal CSV split (handles simple quoted commas)
+  const out=[], re=/(?:^|,)(?:"([^"]*)"|([^,]*))/g; let m;
+  while ((m=re.exec(line))) out.push(m[1]!==undefined ? m[1] : m[2]);
+  return out;
+}
+
+/* ---------- Load saved files ---------- */
+function loadFiles(){
+  // support either key we used earlier
+  const a = localStorage.getItem('filesArchive');
+  const b = localStorage.getItem('ff_files');
+  let arr = [];
+  try{ if(a) arr = JSON.parse(a) }catch(e){}
+  if(!Array.isArray(arr) || arr.length===0){
+    try{ if(b) arr = JSON.parse(b) }catch(e){}
+  }
+  // normalize a little
+  return (Array.isArray(arr) ? arr : []).map(x=>{
+    const t = x.type || x.logType || "";
+    return {
+      type: t,
+      field: x.field || "",
+      well: x.well || x.well_name || "",
+      date: x.date || x.logDate || (x.timestamp ? fmtDate(x.timestamp) : ""),
+      attendant: x.attendant || x.user || "",
+      payload: x.payload || x.data || x,   // keep original for type-specific columns
+      timestamp: x.timestamp || new Date().toISOString()
+    };
+  });
+}
+
+/* ---------- Filtering ---------- */
+function applyFilters(files){
+  const t = byId('typeSel').value;
+  const f = byId('fieldSel').value;
+  const a = byId('attSel').value;
+  const from = byId('fromSel').value ? new Date(byId('fromSel').value) : null;
+  const to   = byId('toSel').value ? new Date(byId('toSel').value+'T23:59:59') : null;
+
+  return files.filter(r=>{
+    if(t !== 'All' && r.type !== t) return false;
+    if(f && r.field !== f) return false;
+    if(a && r.attendant !== a) return false;
+    if(from || to){
+      const d = r.date ? new Date(r.date) : (r.timestamp ? new Date(r.timestamp) : null);
+      if(!d) return false;
+      if(from && d < from) return false;
+      if(to && d > to) return false;
+    }
+    return true;
+  });
+}
+
+/* ---------- CSV building per type ---------- */
+function mapIgsId(name){
+  if(!name) return "";
+  const hit = WELL_MAP.get(name);
+  return hit ? (hit.igs_id || "") : "";
+}
+
+function toCSV(rows){
+  return rows.map(r => r.map(v=>{
+    if(v===null || v===undefined) return "";
+    const s = String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+  }).join(',')).join('\n');
+}
+
+function buildCSV(filtered, type){
+  if(filtered.length===0) return {filename:'empty.csv', csv:'date,type\n'};
+
+  if(type==='Daily Pressure'){
+    const header = ['date','field','well','igs_id','orifice_size','upstream_psi','downstream_psi','differential_psi','dp_h2o','mcf_per_hr','notes','attendant','saved_at'];
+    const rows = [header];
+    filtered.forEach(r=>{
+      const p = r.payload || {};
+      rows.push([
+        r.date || fmtDate(r.timestamp),
+        r.field,
+        r.well,
+        mapIgsId(r.well),
+        p.orificeSize || p.orifice_size || '',
+        p.upstream || p.upstream_psi || '',
+        p.downstream || p.downstream_psi || '',
+        p.differential || p.diff || '',
+        p.dp_h2o || p.dpH2O || '',
+        p.mcf || p.mcf_hr || '',
+        p.notes || '',
+        r.attendant || '',
+        r.timestamp || ''
+      ]);
+    });
+    return {filename:`daily-pressure_${fmtDate(new Date())}.csv`, csv: toCSV(rows)};
+  }
+
+  if(type==='Annual Inspection'){
+    const header = ['date','field','well','igs_id','valves_pass','leak','leak_type','notes','attendant','saved_at'];
+    const rows = [header];
+    filtered.forEach(r=>{
+      const p=r.payload||{};
+      rows.push([
+        r.date || fmtDate(r.timestamp),
+        r.field,
+        r.well,
+        mapIgsId(r.well),
+        p.valve_ok ?? p.valves_pass ?? '',
+        p.leak ?? '',
+        p.leak_type ?? '',
+        p.notes || '',
+        r.attendant || '',
+        r.timestamp || ''
+      ]);
+    });
+    return {filename:`annual-inspections_${fmtDate(new Date())}.csv`, csv: toCSV(rows)};
+  }
+
+  if(type==='Shut-In Log'){
+    const header = ['date','field','well','igs_id','string','upstream_psi','downstream_psi','notes','attendant','saved_at'];
+    const rows=[header];
+    filtered.forEach(r=>{
+      const p=r.payload||{};
+      rows.push([
+        r.date || fmtDate(r.timestamp),
+        r.field,
+        r.well,
+        mapIgsId(r.well),
+        p.string || p.tubing_or_annulus || '',
+        p.upstream || '',
+        p.downstream || '',
+        p.notes || '',
+        r.attendant || '',
+        r.timestamp || ''
+      ]);
+    });
+    return {filename:`shut-in_${fmtDate(new Date())}.csv`, csv: toCSV(rows)};
+  }
+
+  if(type==='SWD Log'){
+    const header = ['date','site','injection_rate','pressure','notes','attendant','saved_at'];
+    const rows=[header];
+    filtered.forEach(r=>{
+      const p=r.payload||{};
+      rows.push([
+        r.date || fmtDate(r.timestamp),
+        r.field || p.site || '',
+        p.rate || p.injection_rate || '',
+        p.pressure || '',
+        p.notes || '',
+        r.attendant || '',
+        r.timestamp || ''
+      ]);
+    });
+    return {filename:`swd_${fmtDate(new Date())}.csv`, csv: toCSV(rows)};
+  }
+
+  if(type==='OBS Readings'){
+    const header = ['date','field','well','igs_id','tubing_psig','annulus_psig','surface_casing_psig','blowdown_time_min','on_water','remarks','attendant','saved_at'];
+    const rows=[header];
+    filtered.forEach(r=>{
+      const p=r.payload||{};
+      rows.push([
+        r.date || fmtDate(r.timestamp),
+        r.field,
+        r.well,
+        mapIgsId(r.well),
+        p.tubing || '',
+        p.annulus || '',
+        p.surface_casing || '',
+        p.blowdown_time || '',
+        p.on_water || '',
+        p.remarks || p.notes || '',
+        r.attendant || '',
+        r.timestamp || ''
+      ]);
+    });
+    return {filename:`obs_${fmtDate(new Date())}.csv`, csv: toCSV(rows)};
+  }
+
+  if(type==='Daily Activity Log'){
+    const header = ['date','attendant','entries','remarks','signature','saved_at'];
+    const rows=[header];
+    filtered.forEach(r=>{
+      const p=r.payload||{};
+      const entries = (p.entries || p.jobs || [])
+        .filter(Boolean).join(' | ');
+      rows.push([
+        r.date || fmtDate(r.timestamp),
+        r.attendant || '',
+        entries,
+        p.remarks || '',
+        p.signature || '',
+        r.timestamp || ''
+      ]);
+    });
+    return {filename:`daily-activity_${fmtDate(new Date())}.csv`, csv: toCSV(rows)};
+  }
+
+  // Mixed export (All)
+  const header = ['date','type','field','well','igs_id','attendant','saved_at','payload_json'];
+  const rows=[header];
+  filtered.forEach(r=>{
+    rows.push([
+      r.date || fmtDate(r.timestamp),
+      r.type,
+      r.field,
+      r.well,
+      mapIgsId(r.well),
+      r.attendant || '',
+      r.timestamp || '',
+      JSON.stringify(r.payload||{})
+    ]);
+  });
+  return {filename:`fieldflow_all_${fmtDate(new Date())}.csv`, csv: toCSV(rows)};
+}
+
+/* ---------- Download helper ---------- */
+function downloadCSV(filename, csv){
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  URL.revokeObjectURL(url); a.remove();
+}
+
+/* ---------- Wire up ---------- */
+let ALL_FILES = [];
+let LAST_PREVIEW = [];
+
+async function init(){
+  await loadWellMap();
+  ALL_FILES = loadFiles();
+  // pre-fill date range (today)
+  const today = fmtDate(new Date());
+  byId('fromSel').value = today;
+  byId('toSel').value = today;
+
+  byId('btnPreview').addEventListener('click', ()=>{
+    LAST_PREVIEW = applyFilters(ALL_FILES);
+    const t = byId('typeSel').value;
+    byId('summary').innerHTML =
+      `<span class="pill">${LAST_PREVIEW.length} matching record(s)</span>` +
+      `<span class="pill">${t}</span>` +
+      (byId('fieldSel').value? `<span class="pill">${byId('fieldSel').value}</span>`:'') +
+      (byId('attSel').value? `<span class="pill">${byId('attSel').value}</span>`:'');
+    byId('btnExport').disabled = LAST_PREVIEW.length===0;
+  });
+
+  byId('btnExport').addEventListener('click', ()=>{
+    if(LAST_PREVIEW.length===0) return;
+    const t = byId('typeSel').value;
+    const {filename, csv} = buildCSV(LAST_PREVIEW, t);
+    downloadCSV(filename, csv);
+  });
+}
+
+init();
+</script>
+</body>
 </html>
