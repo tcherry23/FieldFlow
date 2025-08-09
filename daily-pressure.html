@@ -1,185 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Daily Pressure Log</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daily Pressure</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
+    body { font-family: Arial, sans-serif; background:#f7f9fc; margin:0; }
+    header { background:#004080; color:#fff; padding:14px 16px; }
+    header h1 { margin:0; font-size:1.2rem; }
+    .wrap { max-width:900px; margin:20px auto; background:#fff; padding:16px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.08); }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+    label { font-weight:600; font-size:.9rem; color:#233; display:block; margin-bottom:6px; }
+    input[type="number"], input[type="date"], input[type="text"], select, textarea {
+      width:100%; padding:10px; border:1px solid #cfd7e3; border-radius:8px; box-sizing:border-box; background:#fff;
     }
-    h2 {
-      margin-bottom: 10px;
-    }
-    select, input {
-      margin: 5px;
-      padding: 5px;
-    }
-    .well {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-bottom: 10px;
-    }
-    .status {
-      font-weight: bold;
-      margin-top: 5px;
-    }
-    .green { color: green; }
-    .yellow { color: orange; }
-    .red { color: red; }
+    textarea { min-height:80px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+    .btn { background:#004080; color:#fff; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; }
+    .btn.secondary { background:#e9edf7; color:#123; }
+    .hint { font-size:.85rem; color:#667; margin-top:6px; }
   </style>
 </head>
 <body>
+  <header><h1>Daily Pressure</h1></header>
 
-  <h2>Daily Pressure Log</h2>
+  <div class="wrap">
+    <div class="grid">
+      <div>
+        <label for="field">Field</label>
+        <select id="field">
+          <option value="">Select Field</option>
+          <option value="Dixon">Dixon</option>
+          <option value="Mineral City">Mineral City</option>
+          <option value="Simpson Chapel">Simpson Chapel</option>
+        </select>
+      </div>
 
-  <label for="attendant">Attendant:</label>
-  <select id="attendant">
-    <option value="T. Cherry">T. Cherry</option>
-    <option value="T. Ressler">T. Ressler</option>
-  </select>
+      <div>
+        <label for="well">Well</label>
+        <select id="well" disabled>
+          <option value="">Select Well</option>
+        </select>
+        <div class="hint" id="wellMeta"></div>
+      </div>
 
-  <br><br>
+      <div>
+        <label for="attendant">Attendant</label>
+        <select id="attendant">
+          <option value="T. Cherry">T. Cherry</option>
+          <option value="T. Ressler">T. Ressler</option>
+        </select>
+      </div>
 
-  <label for="targetMCF">Target MCF/Hour:</label>
-  <input type="number" id="targetMCF" value="0" onchange="updateAllMCF()">
+      <div>
+        <label for="date">Date</label>
+        <input id="date" type="date"/>
+      </div>
 
-  <p><strong>Total MCF/Hour:</strong> <span id="totalMCF">0</span></p>
+      <div>
+        <label for="upstream">Upstream (PSI)</label>
+        <input id="upstream" type="number" step="0.01" inputmode="decimal" />
+      </div>
 
-  <label for="field">Select Field:</label>
-  <select id="field" onchange="renderWells()">
-    <option value="Dixon">Dixon</option>
-    <option value="Simpson Chapel">Simpson Chapel</option>
-    <option value="Mineral City">Mineral City</option>
-  </select>
+      <div>
+        <label for="downstream">Downstream (PSI)</label>
+        <input id="downstream" type="number" step="0.01" inputmode="decimal" />
+      </div>
 
-  <div id="wellContainer"></div>
+      <div>
+        <label for="differential">Differential (PSI)</label>
+        <input id="differential" type="number" step="0.01" inputmode="decimal" />
+        <div class="hint">Auto-calculates = Upstream − Downstream (editable)</div>
+      </div>
 
+      <div>
+        <label for="dpH2O">ΔP (in H₂O)</label>
+        <input id="dpH2O" type="number" step="0.01" inputmode="decimal" />
+      </div>
+
+      <div>
+        <label for="orifice">Orifice (in)</label>
+        <input id="orifice" type="number" step="0.0001" inputmode="decimal" />
+        <div class="hint">Auto-fills from master list; editable</div>
+      </div>
+
+      <div>
+        <label for="mcfhr">MCF / hr</label>
+        <input id="mcfhr" type="number" step="0.01" inputmode="decimal" />
+      </div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label for="notes">Notes</label>
+      <textarea id="notes" placeholder="Optional notes..."></textarea>
+    </div>
+
+    <div class="row">
+      <button class="btn" type="button" id="saveDaily">Save</button>
+      <button class="btn secondary" type="button" onclick="location.href='index.html'">Home</button>
+    </div>
+  </div>
+
+  <!-- Shared backend -->
+  <script src="app.js" defer></script>
   <script>
-    const orificeSizes = {
-      // Dixon
-      "Evans 7": 1.0000, "Evans 8": 1.0000, "Evans 3": 1.0000, "Evans 10": 1.0000,
-      "Evans 5": 1.2500, "Evans 4-H": 1.0000, "Evans 6": 1.0000,
-      "Cory 8": 1.0000, "Cory 4": 1.0000, "Cory 2": 1.0000, "Cory 7": 1.0000,
-      "Cory 3": 1.0000, "Cory 6": 1.0000, "Cory 5": 1.0000, "Cory 1": 1.0000,
+    // Wait a tick to ensure app.js loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set today's date
+      const dateEl = document.getElementById('date');
+      dateEl.value = new Date().toISOString().slice(0,10);
 
-      // Simpson Chapel
-      "Blaker 1": 0.5, "Emery 2": 0.75, "Emery 1": 0.75, "Crays 8": 1.0,
-      "Crays 1": 0.5, "Crays 5": 0.75, "Crays 4": 0.25, "Crays 3": 0.75,
-      "Crays 7": 1.0, "Crays 2": 1.0, "Crays 6": 1.0, "Royal 6": 0.625,
-      "Royal 5": 0.5, "Royal 4": 0.5, "Royal 7": 1.0, "Royal 1": 0.5,
+      const fieldEl = document.getElementById('field');
+      const wellEl  = document.getElementById('well');
+      const metaEl  = document.getElementById('wellMeta');
 
-      // Mineral City
-      "Rollison 4": 0.75, "Rollison 1": 0.75, "Rollison 2": 0.75, "G. Axe 6": 1.0,
-      "Haines 4": 0.375, "Haines 1": 1.0, "Haines 2": 1.0, "Haines 3": 1.0,
-      "G. Axe 1": 1.0, "Allen 1": 1.0, "G. Axe 2": 0.75, "G. Axe 4": 0.75,
-      "G. Axe 5": 1.0, "G. Axe 3": 0.5, "J. Axe 1": 1.0
-    };
+      function populateWells() {
+        const field = fieldEl.value;
+        wellEl.innerHTML = '<option value="">Select Well</option>';
+        wellEl.disabled = !field;
+        metaEl.textContent = '';
+        if (!field) return;
 
-    const fields = {
-      "Dixon": [
-        "Evans 7", "Evans 8", "Evans 3", "Evans 10", "Evans 5", "Evans 4-H",
-        "Evans 6", "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6",
-        "Cory 5", "Cory 1"
-      ],
-      "Simpson Chapel": [
-        "Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 1", "Crays 5",
-        "Crays 4", "Crays 3", "Crays 7", "Crays 2", "Crays 6", "Royal 6",
-        "Royal 5", "Royal 4", "Royal 7", "Royal 1"
-      ],
-      "Mineral City": [
-        "Rollison 4", "Rollison 1", "Rollison 2", "G. Axe 6", "Haines 4", "Haines 1",
-        "Haines 2", "Haines 3", "G. Axe 1", "Allen 1", "G. Axe 2", "G. Axe 4",
-        "G. Axe 5", "G. Axe 3", "J. Axe 1"
-      ]
-    };
-
-    function renderWells() {
-      const selectedField = document.getElementById("field").value;
-      const wells = fields[selectedField];
-      const container = document.getElementById("wellContainer");
-      container.innerHTML = '';
-      wells.forEach(well => {
-        const orifice = orificeSizes[well] || 1.0;
-        const wellDiv = document.createElement('div');
-        wellDiv.className = 'well';
-        wellDiv.innerHTML = `
-          <h3>${well}</h3>
-          <label>Date:</label>
-          <input type="date" value="${new Date().toISOString().split('T')[0]}"><br>
-          <label>Upstream PSI:</label>
-          <input type="number" step="0.01" class="up"><br>
-          <label>Downstream PSI:</label>
-          <input type="number" step="0.01" class="down"><br>
-          <label>Differential PSI:</label>
-          <input type="number" step="0.01" class="diff" readonly><br>
-          <label>d/p H₂O:</label>
-          <input type="number" step="0.01" class="dp" readonly><br>
-          <label>MCF/Hour:</label>
-          <input type="number" step="0.01" class="mcf" readonly><br>
-          <div class="status" id="${well}-status"></div>
-          <label>Notes:</label>
-          <input type="text" placeholder="Optional notes"><br>
-        `;
-        container.appendChild(wellDiv);
-      });
-      attachListeners();
-    }
-
-    function attachListeners() {
-      document.querySelectorAll('.well').forEach(wellDiv => {
-        const up = wellDiv.querySelector('.up');
-        const down = wellDiv.querySelector('.down');
-        up.addEventListener('input', () => calc(wellDiv));
-        down.addEventListener('input', () => calc(wellDiv));
-      });
-    }
-
-    function calc(wellDiv) {
-      const up = parseFloat(wellDiv.querySelector('.up').value) || 0;
-      const down = parseFloat(wellDiv.querySelector('.down').value) || 0;
-      const diff = up - down;
-      const dpH2O = diff * 27.7;
-      wellDiv.querySelector('.diff').value = diff.toFixed(2);
-      wellDiv.querySelector('.dp').value = dpH2O.toFixed(2);
-
-      const wellName = wellDiv.querySelector('h3').innerText;
-      const orifice = orificeSizes[wellName] || 1.0;
-      const mcf = 0.2628 * (orifice ** 2) * Math.sqrt((dpH2O * up) || 0);
-      wellDiv.querySelector('.mcf').value = mcf.toFixed(2);
-
-      updateTotals();
-    }
-
-    function updateTotals() {
-      let total = 0;
-      document.querySelectorAll('.mcf').forEach(input => {
-        total += parseFloat(input.value) || 0;
-      });
-      document.getElementById('totalMCF').innerText = total.toFixed(2);
-
-      const goal = parseFloat(document.getElementById('targetMCF').value) || 0;
-      document.querySelectorAll('.well').forEach(wellDiv => {
-        const mcf = parseFloat(wellDiv.querySelector('.mcf').value) || 0;
-        const statusEl = wellDiv.querySelector('.status');
-        if (goal === 0) {
-          statusEl.innerText = '';
-        } else if (mcf >= goal) {
-          statusEl.innerText = "✅ On Target";
-          statusEl.className = "status green";
-        } else if (mcf >= goal * 0.75) {
-          statusEl.innerText = "⚠️ Below Target";
-          statusEl.className = "status yellow";
-        } else {
-          statusEl.innerText = "🔻 Way Below Target";
-          statusEl.className = "status red";
+        // Ensure registry ready, then fill
+        if (window.FieldFlow && FieldFlow.wellsForField) {
+          const wells = FieldFlow.wellsForField(field);
+          wells.forEach(w => {
+            const opt = document.createElement('option');
+            opt.value = w; opt.textContent = w;
+            wellEl.appendChild(opt);
+          });
         }
+      }
+
+      fieldEl.addEventListener('change', () => {
+        populateWells();
       });
-    }
 
-    // Initial render
-    renderWells();
+      wellEl.addEventListener('change', () => {
+        const field = fieldEl.value;
+        const well  = wellEl.value;
+        if (!field || !well || !window.FieldFlow) return;
+        const id   = FieldFlow.resolveWellId(field, well);
+        const ori  = FieldFlow.resolveOrifice(field, well);
+        document.getElementById('orifice').value = ori ? Number(ori).toFixed(4) : '';
+        metaEl.textContent = id ? `Well # ${id}` : '';
+      });
+
+      // Differential auto-calc on change of upstream/downstream
+      function recalcDiff() {
+        const up = parseFloat(document.getElementById('upstream').value || '0');
+        const dn = parseFloat(document.getElementById('downstream').value || '0');
+        if (!isNaN(up) && !isNaN(dn)) {
+          document.getElementById('differential').value = (up - dn).toFixed(2);
+        }
+      }
+      document.getElementById('upstream').addEventListener('input', recalcDiff);
+      document.getElementById('downstream').addEventListener('input', recalcDiff);
+
+      // Save handler
+      document.getElementById('saveDaily').addEventListener('click', function () {
+        const get = id => document.getElementById(id);
+        const num = v => (v === '' || v == null) ? 0 : Number(v);
+
+        const payload = {
+          field:      get('field').value || '',
+          well:       get('well').value || '',
+          attendant:  get('attendant').value || '',
+          date:       get('date').value || new Date().toISOString().slice(0,10),
+          upstream:   num(get('upstream').value),
+          downstream: num(get('downstream').value),
+          differential: num(get('differential').value),
+          dpH2O:      num(get('dpH2O').value),
+          orifice:    num(get('orifice').value),
+          mcfhr:      num(get('mcfhr').value),
+          notes:      get('notes').value || ''
+        };
+
+        if (!payload.field) { alert('Select a Field.'); return; }
+        if (!payload.well)  { alert('Select a Well.'); return; }
+
+        if (!window.FieldFlow || !FieldFlow.saveDailyPressure) {
+          alert('Backend not loaded. Make sure app.js is included.'); return;
+        }
+
+        FieldFlow.saveDailyPressure(payload);
+        alert('Daily pressure saved.');
+
+        // Optional: clear numeric inputs after save
+        ['upstream','downstream','differential','dpH2O','mcfhr','notes'].forEach(id=>{
+          const el = get(id); if (el) el.value = '';
+        });
+        // keep date, field, well, attendant for faster next entry
+      });
+
+      // If app.js is still loading registry, populate after init
+      if (window.FieldFlow && FieldFlow.init) {
+        FieldFlow.init().then(() => {
+          // If user already picked field before init finished
+          if (fieldEl.value) populateWells();
+        });
+      }
+    });
   </script>
-
 </body>
 </html>
