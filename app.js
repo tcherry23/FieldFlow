@@ -282,3 +282,43 @@ const FieldFlow = {
 FieldFlow.init();
 window.FieldFlow = FieldFlow;
 </script>
+<script>
+// --- Add below your other FieldFlow methods ---
+
+// simple ISO date guard
+function FF_parseISO(d){ try { return d ? new Date(d) : null; } catch { return null; } }
+
+FieldFlow.exportAnnualCSVAll = function(){
+  return this.exportAnnualCSV(); // existing function exports all
+};
+
+FieldFlow.exportAnnualCSVRange = function(opts = {}){
+  const from = FF_parseISO(opts.from);
+  const to   = FF_parseISO(opts.to ? opts.to + 'T23:59:59' : null);
+  const fieldFilter = (opts.field || '').trim();
+
+  const data = this._get('ff_annual');
+  const rows = data.filter(r=>{
+    if (fieldFilter && r.field !== fieldFilter) return false;
+    const d = FF_parseISO(r.date) || FF_parseISO(r.ts);
+    if (from && (!d || d < from)) return false;
+    if (to   && (!d || d > to))   return false;
+    return true;
+  });
+
+  const header = ['date','field','well','well_id','attendant','valve_ok','leak','leak_type','notes','ts'].join(',');
+  const body = rows.map(r => [
+    r.date, r.field, r.well, r.well_id, r.attendant,
+    r.valve_ok, r.leak, r.leak_type, JSON.stringify(r.notes||''), r.ts
+  ].join(','));
+
+  const csv = [header].concat(body).join('\n');
+  const filename = `annuals_${(opts.from||'all')}_to_${(opts.to||'all')}.csv`;
+  // reuse downloader
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+};
+</script>
