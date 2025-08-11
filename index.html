@@ -1,120 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FieldFlow - Home</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f2f2f2;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background-color: #004080;
-      color: white;
-      padding: 1rem;
-      text-align: center;
-    }
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 2rem;
-      gap: 1rem;
-    }
-    .icon-button {
-      background-color: white;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      width: 140px;
-      height: 140px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      text-decoration: none;
-      color: black;
-      box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
-      transition: all 0.2s;
-    }
-    .icon-button:hover {
-      transform: scale(1.05);
-      background-color: #e6f0ff;
-    }
-    .icon {
-      font-size: 40px;
-      margin-bottom: 0.5rem;
-    }
-    footer {
-      text-align: center;
-      padding: 1rem;
-      background-color: #fff;
-      font-size: 0.9rem;
-      margin-top: 1rem;
-      border-top: 1px solid #ccc;
-    }
-    footer a {
-      color: #004080;
-      text-decoration: none;
-      margin-left: 1rem;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FieldFlow</title>
+<style>
+  :root {
+    --bg: #0f172a;        /* slate-900 */
+    --card: #111827;      /* gray-900 */
+    --ink: #e5e7eb;       /* gray-200 */
+    --muted: #94a3b8;     /* slate-400 */
+    --accent: #22c55e;    /* green-500 */
+    --accent-2: #38bdf8;  /* sky-400 */
+    --danger: #ef4444;    /* red-500 */
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    color: var(--ink);
+    background: radial-gradient(1200px 600px at 10% -10%, #1f2937 0%, #0b1222 50%, #0a0f1f 100%), var(--bg);
+  }
+  header {
+    padding: 28px 20px 8px;
+    text-align: center;
+  }
+  .logo {
+    font-weight: 800;
+    font-size: 28px;
+    letter-spacing: .5px;
+  }
+  .sub { color: var(--muted); font-size: 14px; margin-top: 6px; }
+  main { max-width: 960px; margin: 18px auto 40px; padding: 0 16px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    display: flex; align-items: center; gap: 14px;
+    text-decoration: none; color: var(--ink);
+    transition: transform .12s ease, border-color .12s ease, background .12s ease;
+  }
+  .card:hover { transform: translateY(-2px); border-color: rgba(56,189,248,.35); background: rgba(56,189,248,.06); }
+  .ico {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: grid; place-items: center; font-size: 22px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08);
+  }
+  .title { font-weight: 700; font-size: 16px; line-height: 1.15; }
+  .desc { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  footer { max-width: 960px; margin: 24px auto 40px; padding: 0 16px; color: var(--muted); }
+  .footrow { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .link { color: var(--accent-2); text-decoration: none; }
+  .link:hover { text-decoration: underline; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+  .pill { padding: 2px 8px; border-radius: 999px; font-size: 11px; border: 1px solid rgba(255,255,255,.12); color: var(--muted); }
+</style>
 </head>
 <body>
   <header>
-    <h1>FieldFlow</h1>
-    <p>Underground Gas Storage</p>
+    <div class="logo">FieldFlow</div>
+    <div class="sub">Underground Gas Storage • Fast logging • Smart checks</div>
   </header>
 
-  <div class="container">
-    <a href="daily-pressure.html" class="icon-button">
-      <div class="icon">📊</div>
-      <div>Daily Pressure</div>
-    </a>
-    <a href="shut-in.html" class="icon-button">
-      <div class="icon">🧭</div>
-      <div>Shut-In Logs</div>
-    </a>
-    <a href="annual-inspections.html" class="icon-button">
-      <div class="icon">📋</div>
-      <div>Annual Inspections</div>
-    </a>
-    <a href="obs-readings.html" class="icon-button">
-      <div class="icon">🔎</div>
-      <div>OBS Readings</div>
-    </a>
-    <a href="well-status.html" class="icon-button">
-      <div class="icon">🔁</div>
-      <div>Well Status</div>
-    </a>
-    <a href="swd.html" class="icon-button">
-      <div class="icon">💧</div>
-      <div>SWD Logs</div>
-    </a>
-    <a href="daily-activity.html" class="icon-button">
-      <div class="icon">🗓️</div>
-      <div>Daily Activity</div>
-    </a>
-    <a href="files.html" class="icon-button">
-      <div class="icon">📁</div>
-      <div>Files</div>
-    </a>
-    <a href="export.html" class="icon-button">
-      <div class="icon">📤</div>
-      <div>Export</div>
-    </a>
-    <a href="gps.html" class="icon-button">
-      <div class="icon">🗺️</div>
-      <div>GPS</div>
-    </a>
-  </div>
+  <main>
+    <div class="grid">
+
+      <a class="card" href="daily-pressure.html">
+        <div class="ico">📈</div>
+        <div>
+          <div class="title">Daily Pressure Log</div>
+          <div class="desc">All wells per field • MCF calc • Goal tracker</div>
+        </div>
+      </a>
+
+      <a class="card" href="annual-inspections.html">
+        <div class="ico">✅</div>
+        <div>
+          <div class="title">Annual Inspections</div>
+          <div class="desc">Prod + OBS • Valve/leak checks • Auto date • Save</div>
+        </div>
+      </a>
+
+      <a class="card" href="files.html">
+        <div class="ico">🗂️</div>
+        <div>
+          <div class="title">Files</div>
+          <div class="desc">Central archive • Filters • Printable accordion</div>
+        </div>
+      </a>
+
+      <a class="card" href="daily-activity.html">
+        <div class="ico">📝</div>
+        <div>
+          <div class="title">Daily Activity</div>
+          <div class="desc">Area 2402 • 7:00–3:00 timeline • Clean exports</div>
+        </div>
+      </a>
+
+      <a class="card" href="shut-in.html">
+        <div class="ico">🛠️</div>
+        <div>
+          <div class="title">Shut-In Logs</div>
+          <div class="desc">10-day series • Annulus/Tubing • Trends</div>
+          <span class="pill">Coming soon</span>
+        </div>
+      </a>
+
+      <a class="card" href="swd.html">
+        <div class="ico">🧪</div>
+        <div>
+          <div class="title">SWD Readings</div>
+          <div class="desc">Axe 8 • Crays 16 • Crays 14 • Monday 8am reminder</div>
+          <span class="pill">Coming soon</span>
+        </div>
+      </a>
+
+      <a class="card" href="obs-readings.html">
+        <div class="ico">🧭</div>
+        <div>
+          <div class="title">OBS Readings</div>
+          <div class="desc">On-Water dropdown • Auto time/date • Save</div>
+          <span class="pill">Coming soon</span>
+        </div>
+      </a>
+
+      <a class="card" href="well-status.html">
+        <div class="ico">🚦</div>
+        <div>
+          <div class="title">Well Status Tracker</div>
+          <div class="desc">Open/Closed • Color coded • Save & export</div>
+          <span class="pill">Coming soon</span>
+        </div>
+      </a>
+
+      <a class="card" href="gps.html">
+        <div class="ico">🗺️</div>
+        <div>
+          <div class="title">GPS Route</div>
+          <div class="desc">Track & optimize field route</div>
+          <span class="pill">Coming soon</span>
+        </div>
+      </a>
+
+      <a class="card" href="export.html">
+        <div class="ico">📤</div>
+        <div>
+          <div class="title">Export</div>
+          <div class="desc">Email / CSV / Save to device</div>
+          <span class="pill">Coming soon</span>
+        </div>
+      </a>
+
+    </div>
+  </main>
 
   <footer>
-    © 2025 FieldFlow | Underground Gas Storage
-    <a href="terms.html">Terms of Use</a>
+    <div class="footrow">
+      <div>© 2025 FieldFlow | Underground Gas Storage</div>
+      <div><a class="link" href="terms.html">Terms of Use</a></div>
+    </div>
   </footer>
 </body>
 </html>
