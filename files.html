@@ -159,7 +159,8 @@ function recordMeta(r){
   return parts.join(" • ");
 }
 
-/* ========= CSV FLATTENING HELPERS ========= */
+/* ========= CSV FLATTENING & ORDERING ========= */
+// Flatten nested objects (e.g., valves, leaks) into columns.
 function flattenEntry(entry){
   const out = {};
   Object.entries(entry || {}).forEach(([k,v])=>{
@@ -178,20 +179,29 @@ function flattenEntry(entry){
   });
   return out;
 }
+
+// Build header with this order: basics → all Valve (Master→Wing) → all Leak (Master→Wing) → rest A–Z
 function headerFromFlat(flatEntries){
-  const set = new Set();
-  flatEntries.forEach(e => Object.keys(e).forEach(k => set.add(k)));
-  const preferred = ["recordType","date","attendant","field","well","wellType",
-    "surfacePSI","casingPSI","upstreamPSI","downstreamPSI","differentialPSI","dpH2O",
-    "fieldPressure","mcfHour","status","type","reading","activity","hours","notes"];
-  const arr = Array.from(set);
-  arr.sort((a,b)=>{
-    const ai = preferred.indexOf(a), bi = preferred.indexOf(b);
-    if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-    return a.localeCompare(b);
-  });
-  return arr;
+  const present = new Set();
+  flatEntries.forEach(e => Object.keys(e).forEach(k => present.add(k)));
+
+  const BASICS = ["recordType","date","attendant","field","well","wellType",
+                  "surfacePSI","casingPSI","upstreamPSI","downstreamPSI",
+                  "differentialPSI","dpH2O","fieldPressure","mcfHour",
+                  "status","type","reading","activity","hours","notes"];
+  const ORDER = ["Master","Tubing","Annulus","Crossover","Tail","Wing"];
+
+  const header = [];
+  BASICS.forEach(k => { if (present.has(k)) header.push(k); });
+  ORDER.forEach(n => { const c = `${n} Valve`; if (present.has(c)) header.push(c); });
+  ORDER.forEach(n => { const c = `${n} Leak`;  if (present.has(c)) header.push(c); });
+
+  const already = new Set(header);
+  const rest = Array.from(present).filter(k => !already.has(k)).sort((a,b)=>a.localeCompare(b));
+  header.push(...rest);
+  return header;
 }
+
 const esc = v => `"${String(v??"").replace(/"/g,'""')}"`;
 function rowFromFlat(flatObj, header){ return header.map(k => esc(flatObj[k])).join(","); }
 function csvFromEntries(entries){
