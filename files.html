@@ -100,8 +100,8 @@ const KEYS = {
 };
 
 const LS = {
-  load(key){ return JSON.parse(localStorage.getItem(key) || "[]"); },
-  save(key, arr){ localStorage.setItem(key, JSON.stringify(arr)); }
+  load: (key) => JSON.parse(localStorage.getItem(key) || "[]"),
+  save: (key, arr) => localStorage.setItem(key, JSON.stringify(arr))
 };
 
 /* ========= Stable keys for deletion ========= */
@@ -143,14 +143,13 @@ let {records: allRecords, batches: allBatches} = loadAll();
 
 /* ========= UI helpers ========= */
 const unique = arr => Array.from(new Set(arr.filter(Boolean)));
-
 function recordTitle(r){
   const dt = r.date || (r.savedAt ? r.savedAt.slice(0,10) : "");
   const id = r.well ? `${r.field || 'Field'} / ${r.well}` : (r.field || 'Field');
   return `${r.recordType || 'Record'} — ${id} — ${dt}`;
 }
 function batchTitle(b){
-  return `${b.recordType} — ${b.field || ''} — ${b.count || 0} items — ${b.date || ''}`;
+  return `${b.recordType} — ${b.field || ''} — ${b.count || (b.entries?.length||0)} items — ${b.date || ''}`;
 }
 function recordMeta(r){
   const parts = [];
@@ -160,39 +159,52 @@ function recordMeta(r){
   return parts.join(" • ");
 }
 
-/* ========= Column definitions per type (for CSV) ========= */
-const COLS = {
-  "Annual Inspection": ["recordType","wellType","field","well","date","attendant","surfacePSI","casingPSI","valves","leaks","notes"],
-  "Daily Pressure": ["recordType","field","well","date","attendant","orifice","upstreamPSI","downstreamPSI","differentialPSI","dpH2O","fieldPressure","mcfHour","notes"],
-  "Shut-In": ["recordType","field","well","date","attendant","type","pressurePSI","notes"],
-  "OBS Reading": ["recordType","field","well","date","attendant","annulusPSI","tubingPSI","surfaceCasingPSI","blowdownTime","onWater","notes"],
-  "Well Status": ["recordType","field","well","date","attendant","status","notes"],
-  "SWD": ["recordType","field","well","date","attendant","reading","notes"],
-  "Daily Activity": ["recordType","date","attendant","entries","notes"]
-};
-
-function unionHeader(entries){
-  const set = new Set();
-  entries.forEach(e=>{
-    const base = COLS[e.recordType];
-    if (base) base.forEach(k=>set.add(k));
-    else Object.keys(e).forEach(k=>set.add(k));
+/* ========= CSV FLATTENING HELPERS ========= */
+function flattenEntry(entry){
+  const out = {};
+  Object.entries(entry || {}).forEach(([k,v])=>{
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      if (k === "valves" || k === "leaks"){
+        const suffix = k === "valves" ? "Valve" : "Leak";
+        Object.keys(v).sort().forEach(sub=>{
+          out[`${sub} ${suffix}`] = v[sub];
+        });
+      } else {
+        out[k] = JSON.stringify(v);
+      }
+    } else {
+      out[k] = v;
+    }
   });
+  return out;
+}
+function headerFromFlat(flatEntries){
+  const set = new Set();
+  flatEntries.forEach(e => Object.keys(e).forEach(k => set.add(k)));
+  const preferred = ["recordType","date","attendant","field","well","wellType",
+    "surfacePSI","casingPSI","upstreamPSI","downstreamPSI","differentialPSI","dpH2O",
+    "fieldPressure","mcfHour","status","type","reading","activity","hours","notes"];
   const arr = Array.from(set);
   arr.sort((a,b)=>{
-    if (a==="recordType") return -1;
-    if (b==="recordType") return 1;
+    const ai = preferred.indexOf(a), bi = preferred.indexOf(b);
+    if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
     return a.localeCompare(b);
   });
   return arr;
 }
-
 const esc = v => `"${String(v??"").replace(/"/g,'""')}"`;
-function toRow(obj, header){
-  return header.map(k=>{
-    const v = obj[k];
-    return (v && typeof v === "object") ? esc(JSON.stringify(v)) : esc(v);
-  }).join(",");
+function rowFromFlat(flatObj, header){ return header.map(k => esc(flatObj[k])).join(","); }
+function csvFromEntries(entries){
+  const flats = entries.map(e => flattenEntry(e));
+  const header = headerFromFlat(flats);
+  return [header.join(","), ...flats.map(e => rowFromFlat(e, header))].join("\n");
+}
+function downloadCSV(text, filename){
+  const blob = new Blob(["\ufeff"+text], {type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename.replace(/\s+/g,"_");
+  a.click(); URL.revokeObjectURL(url);
 }
 
 /* ========= Selection ========= */
@@ -211,10 +223,7 @@ function clearSel(){
 
 /* ========= Rendering ========= */
 function initFilters(){
-  const fields = unique([
-    ...allRecords.map(r=>r.field),
-    ...allBatches.map(b=>b.field)
-  ]);
+  const fields = unique([...allRecords.map(r=>r.field), ...allBatches.map(b=>b.field)]);
   const wells = unique(allRecords.map(r=>r.well));
   const fieldSel = document.getElementById("fieldFilter");
   const wellSel = document.getElementById("wellFilter");
@@ -222,7 +231,7 @@ function initFilters(){
   wells.forEach(w => wellSel.appendChild(new Option(w,w)));
 }
 
-function btn(label, fn, cls=""){ const b=document.createElement("button"); b.textContent=label; if(cls) b.className=cls; b.addEventListener("click", fn); return b; }
+function btn(label, onClick, cls=""){ const b=document.createElement("button"); b.textContent=label; if(cls) b.className=cls; b.addEventListener("click", e=>{e.stopPropagation(); onClick();}); return b; }
 
 function render(records, batches){
   const list = document.getElementById("list");
@@ -252,9 +261,8 @@ function render(records, batches){
 
     const btns = document.createElement("div"); btns.className="btns";
     const csvBtn = btn("Download CSV (Combined)", ()=>{
-      const header = unionHeader(b.entries);
-      const rows = [header.join(","), ...b.entries.map(e=>toRow(e, header))].join("\n");
-      downloadCSV(rows, `${batchTitle(b)}.csv`);
+      const csv = csvFromEntries(b.entries || []);
+      downloadCSV(csv, `${batchTitle(b)}.csv`);
     });
     const emailBtn = btn("Email (Combined)", ()=>{
       const summary = [
@@ -265,13 +273,12 @@ function render(records, batches){
         `Items: ${b.count||b.entries?.length||0}`,
         "",
         "Summary:",
-        ...(b.entries||[]).slice(0,30).map(e=>`- ${e.well||e.recordType||'Item'} (${e.field||''})`)
+        ...(b.entries||[]).slice(0,30).map(e=>`- ${e.well||e.recordType||'Item'}${e.field?` (${e.field})`:""}`)
       ].join("\n");
       window.location.href = `mailto:?subject=${encodeURIComponent('Underground Storage Field Reports — Combined')}&body=${encodeURIComponent(summary + "\n\n(Attach the CSV you downloaded.)")}`;
     });
     const delBtn = btn("Delete", ()=>{
       if (!confirm("Delete this batch? This cannot be undone.")) return;
-      // Remove from the correct bucket
       const keyMap = {
         "Annual Inspection":"annualInspectionBatches",
         "Daily Pressure":"dailyPressureBatches",
@@ -283,12 +290,11 @@ function render(records, batches){
       };
       const storageKey = keyMap[b.recordType];
       if (storageKey){
-        const arr = LS.load(storageKey).filter(x => batchKey(x) !== b.__key);
-        LS.save(storageKey, arr);
+        const kept = LS.load(storageKey).filter(x => batchKey(x) !== b.__key);
+        LS.save(storageKey, kept);
       }
-      // Update in-memory and UI
       allBatches = allBatches.filter(x => x.__key !== b.__key);
-      applyFilters(); // re-render
+      applyFilters();
     }, "danger");
 
     btns.appendChild(csvBtn); btns.appendChild(emailBtn); btns.appendChild(delBtn);
@@ -320,13 +326,13 @@ function render(records, batches){
 
     const btns = document.createElement("div"); btns.className="btns";
     const csvBtn = btn("Download CSV", ()=>{
-      const header = unionHeader([r]);
-      const csv = [header.join(","), toRow(r, header)].join("\n");
+      const csv = csvFromEntries([r]);
       downloadCSV(csv, `${recordTitle(r)}.csv`);
     });
     const emailBtn = btn("Email", ()=>{
-      const header = unionHeader([r]);
-      const lines = header.map(k=>`${k}: ${typeof r[k]==="object" ? JSON.stringify(r[k],null,2): (r[k]??"")}`);
+      const flat = flattenEntry(r);
+      const header = headerFromFlat([flat]);
+      const lines = header.map(k=>`${k}: ${typeof flat[k]==="object"? JSON.stringify(flat[k],null,2): (flat[k]??"")}`);
       window.location.href = `mailto:?subject=${encodeURIComponent('Underground Storage Field Reports')}&body=${encodeURIComponent(lines.join('\n'))}`;
     });
     const delBtn = btn("Delete", ()=>{
@@ -342,8 +348,8 @@ function render(records, batches){
       };
       const storageKey = keyMap[r.recordType];
       if (storageKey){
-        const arr = LS.load(storageKey).filter(x => recKey(x) !== r.__key);
-        LS.save(storageKey, arr);
+        const kept = LS.load(storageKey).filter(x => recKey(x) !== r.__key);
+        LS.save(storageKey, kept);
       }
       allRecords = allRecords.filter(x => x.__key !== r.__key);
       applyFilters();
@@ -356,7 +362,7 @@ function render(records, batches){
     list.appendChild(item);
   });
 
-  clearSel(); // reset selections after render
+  clearSel();
 }
 
 /* ========= Filters ========= */
@@ -386,12 +392,7 @@ function applyFilters(){
 
   render(records, batches);
 }
-
-function wireFilters(){
-  ["typeFilter","fieldFilter","wellFilter","dateFilter","attFilter"].forEach(id=>{
-    document.getElementById(id).addEventListener("change", applyFilters);
-  });
-}
+function wireFilters(){ ["typeFilter","fieldFilter","wellFilter","dateFilter","attFilter"].forEach(id=>document.getElementById(id).addEventListener("change", applyFilters)); }
 
 /* ========= Bulk actions ========= */
 function getSelected(){
@@ -407,29 +408,14 @@ function getSelected(){
   return chosen;
 }
 
-function downloadCSV(text, filename){
-  const blob = new Blob(["\ufeff"+text], {type:"text/csv"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename.replace(/\s+/g,"_");
-  a.click(); URL.revokeObjectURL(url);
-}
-
 function bulkCSV(){
   const {records, batches} = getSelected();
-  const rows = [];
-  const expanded = [
-    ...records,
-    ...batches.flatMap(b => b.entries || [])
-  ];
+  const expanded = [...records, ...batches.flatMap(b => b.entries || [])];
   if (!expanded.length){ alert("Select some entries first."); return; }
-  const header = unionHeader(expanded);
-  rows.push(header.join(","));
-  expanded.forEach(e => rows.push(toRow(e, header)));
+  const csv = csvFromEntries(expanded);
   const dt = new Date().toISOString().slice(0,10);
-  downloadCSV(rows.join("\n"), `FieldFlow_Combined_${dt}.csv`);
+  downloadCSV(csv, `FieldFlow_Combined_${dt}.csv`);
 }
-
 function bulkEmail(){
   const {records, batches} = getSelected();
   if (!records.length && !batches.length){ alert("Select some entries first."); return; }
@@ -447,13 +433,11 @@ function bulkEmail(){
   lines.push("(Attach the combined CSV you downloaded.)");
   window.location.href = `mailto:?subject=${encodeURIComponent('Underground Storage Field Reports — Combined')}&body=${encodeURIComponent(lines.join('\n'))}`;
 }
-
 function bulkDelete(){
   const {records, batches} = getSelected();
   if (!records.length && !batches.length){ alert("Select some entries first."); return; }
   if (!confirm(`Delete ${records.length+batches.length} selected item(s)? This cannot be undone.`)) return;
 
-  // Group deletions by storage key
   const recBuckets = {
     "Annual Inspection": KEYS.annualRecords,
     "Daily Pressure": KEYS.dpRecords,
@@ -473,7 +457,7 @@ function bulkDelete(){
     "Daily Activity": KEYS.actBatches
   };
 
-  // Delete records
+  // Delete records per type
   Object.entries(recBuckets).forEach(([type, key])=>{
     const victims = records.filter(r => r.recordType === type).map(r=>r.__key);
     if (!victims.length) return;
@@ -481,7 +465,7 @@ function bulkDelete(){
     LS.save(key, kept);
   });
 
-  // Delete batches
+  // Delete batches per type
   Object.entries(batBuckets).forEach(([type, key])=>{
     const victims = batches.filter(b => b.recordType === type).map(b=>b.__key);
     if (!victims.length) return;
@@ -489,11 +473,11 @@ function bulkDelete(){
     LS.save(key, kept);
   });
 
-  // Refresh in-memory data
   ({records: allRecords, batches: allBatches} = loadAll());
   applyFilters();
 }
 
+/* ========= Boot ========= */
 document.addEventListener("DOMContentLoaded", ()=>{
   initFilters();
   render(allRecords, allBatches);
