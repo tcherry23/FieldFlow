@@ -1,112 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Daily Activity Log</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f8f9fa;
-    }
-    h2 {
-      text-align: center;
-    }
-    select, input[type="text"], textarea {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 10px;
-      box-sizing: border-box;
-    }
-    label {
-      font-weight: bold;
-    }
-    button {
-      padding: 10px 20px;
-      margin-top: 10px;
-      cursor: pointer;
-    }
-    .time-block {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
-    .time-block input {
-      flex: 1;
-    }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>FieldFlow — Daily Activity</title>
+<style>
+  :root{--bg:#0f172a;--panel:#0b1222;--ink:#e5e7eb;--muted:#94a3b8;--line:rgba(255,255,255,.12);--accent:#38bdf8;--r:14px;--shadow:0 10px 30px rgba(0,0,0,.35)}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  header{padding:18px;text-align:center;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01))}
+  h1{margin:6px 0 2px;font-size:22px}.muted{color:var(--muted);font-size:13px}
+  main{max-width:1080px;margin:18px auto 80px;padding:0 14px}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);margin-bottom:12px}
+  label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+  select,input,textarea{background:#0a0f1f;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 10px;font-size:14px;width:100%}
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  @media(max-width:900px){.row{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.row{grid-template-columns:1fr}}
+  .table{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .thead,.trow{display:grid;grid-template-columns:160px 1fr 120px 1fr 60px}
+  .thead{background:rgba(255,255,255,.06);font-weight:700}
+  .tcell{border-bottom:1px solid var(--line);padding:8px}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  button{background:linear-gradient(180deg,rgba(56,189,248,.25),rgba(56,189,248,.12));border:1px solid rgba(56,189,248,.5);color:white;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700}
+  button.secondary{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  .home{position:fixed;right:16px;bottom:16px}
+</style>
 </head>
 <body>
-  <h2>Daily Activity Log</h2>
+<header>
+  <h1>Daily Activity</h1>
+  <div class="muted">Add multiple activity lines • Save as one combined file</div>
+</header>
 
-  <form id="activityForm">
-    <label>Date:</label>
-    <input type="text" id="date" readonly />
+<main>
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>Date</label>
+        <input id="dateInput" type="text" readonly/>
+      </div>
+      <div>
+        <label>Attendant</label>
+        <select id="attendant"><option>T. Cherry</option><option>T. Ressler</option></select>
+      </div>
+      <div>
+        <label>Add Row</label>
+        <button id="addRowBtn" type="button">+ Activity</button>
+      </div>
+      <div>
+        <label>Actions</label>
+        <div class="btns">
+          <button id="saveAllBtn" type="button">Save All (Combined)</button>
+          <button id="clearAllBtn" class="secondary" type="button">Clear All</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <label>Attendant:</label>
-    <select id="attendant">
-      <option value="T. Cherry">T. Cherry</option>
-      <option value="T. Ressler">T. Ressler</option>
-    </select>
+  <div class="table">
+    <div class="thead">
+      <div class="tcell">Field</div>
+      <div class="tcell">Activity</div>
+      <div class="tcell">Hours</div>
+      <div class="tcell">Notes</div>
+      <div class="tcell">—</div>
+    </div>
+    <div id="tbody"></div>
+  </div>
 
-    <label>Activities (7:00 AM – 3:00 PM):</label>
+  <a class="home" href="index.html"><button class="secondary">← Home</button></a>
+</main>
 
-    <div class="time-block"><input type="text" placeholder="7:00 AM" class="log-input" /></div>
-    <div class="time-block"><input type="text" placeholder="8:00 AM" class="log-input" /></div>
-    <div class="time-block"><input type="text" placeholder="9:00 AM" class="log-input" /></div>
-    <div class="time-block"><input type="text" placeholder="10:00 AM" class="log-input" /></div>
-    <div class="time-block"><input type="text" placeholder="11:00 AM" class="log-input" /></div>
-    <div class="time-block"><input type="text" placeholder="12:00 PM" class="log-input" /></div>
-    <div class="time-block"><input type="text" placeholder="1:00 PM" class="log-input" /></div>
-    <div class="time-block"><input type="text" placeholder="2:00 PM" class="log-input" /></div>
-    <div class="time-block"><input type="text" placeholder="3:00 PM" class="log-input" /></div>
+<script>
+const fields = ["Dixon","Simpson Chapel","Mineral City"];
+const $ = s => document.querySelector(s);
+const el = (t,a={},c=[])=>{const n=document.createElement(t);Object.entries(a).forEach(([k,v])=>k.startsWith("on")?n.addEventListener(k.slice(2),v):n.setAttribute(k,v));c.forEach(x=>n.appendChild(typeof x==="string"?document.createTextNode(x):x));return n;};
+const todayStr=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;};
+const uid=(p="DA")=>`${p}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
 
-    <label>Remarks:</label>
-    <textarea id="remarks" rows="3" placeholder="Additional notes..."></textarea>
+function init(){
+  $("#dateInput").value=todayStr();
+  $("#addRowBtn").addEventListener("click", addRow);
+  $("#saveAllBtn").addEventListener("click", saveBatch);
+  $("#clearAllBtn").addEventListener("click", ()=>{$("#tbody").innerHTML="";});
+  addRow(); // start with one row
+}
+function addRow(){
+  const rId = uid("ROW");
+  const row = el("div",{class:"trow",id:rId},[
+    cell(selectField()), cell(inputText("",`act-${rId}`)),
+    cell(inputNum("",`hrs-${rId}`)), cell(inputText("",`note-${rId}`)),
+    cell(removeBtn(rId))
+  ]);
+  $("#tbody").appendChild(row);
+}
+function selectField(){
+  const s=el("select",{}); fields.forEach(f=>s.appendChild(new Option(f,f))); return s;
+}
+function inputText(v,id){ return el("input",{type:"text",value:v,id:id||""}); }
+function inputNum(v,id){ return el("input",{type:"number",inputmode:"decimal",value:v,id:id||""}); }
+function removeBtn(rid){ return el("button",{type:"button",onClick:()=>document.getElementById(rid)?.remove()},["Remove"]); }
+function cell(child){ const d=el("div",{class:"tcell"}); d.appendChild(child); return d; }
 
-    <label>Signature:</label>
-    <input type="text" id="signature" placeholder="Enter name" />
+function gather(){
+  const rows=[...document.querySelectorAll(".trow")];
+  return rows.map(r=>{
+    const sel = r.querySelector("select");
+    const inputs = r.querySelectorAll("input");
+    return {
+      recordType:"Daily Activity",
+      field: sel.value,
+      activity: inputs[0].value,
+      hours: inputs[1].value,
+      notes: inputs[2].value
+    };
+  }).filter(e=>e.activity || e.notes || e.hours);
+}
 
-    <button type="submit">Submit</button>
-    <button type="button" onclick="goHome()">Home</button>
-  </form>
+function saveBatch(){
+  const entries = gather();
+  if (!entries.length){ alert("Add at least one activity."); return; }
+  const key="dailyActivityBatches";
+  const arr=JSON.parse(localStorage.getItem(key)||"[]");
+  arr.push({
+    recordType:"Daily Activity",
+    batch:true,
+    batchId: uid(),
+    date: $("#dateInput").value,
+    attendant: $("#attendant").value,
+    count: entries.length,
+    entries,
+    savedAt: new Date().toISOString()
+  });
+  localStorage.setItem(key, JSON.stringify(arr));
+  toast(`Saved ${entries.length} activities as one combined file`);
+}
 
-  <script>
-    document.getElementById("date").value = new Date().toLocaleDateString();
-
-    function goHome() {
-      window.location.href = "index.html";
-    }
-
-    document.getElementById("activityForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-      const date = document.getElementById("date").value;
-      const attendant = document.getElementById("attendant").value;
-      const remarks = document.getElementById("remarks").value;
-      const signature = document.getElementById("signature").value;
-
-      const times = ["7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM"];
-      const entries = Array.from(document.querySelectorAll(".log-input")).map((el, i) => {
-        return `${times[i]}: ${el.value}`;
-      }).join("\n");
-
-      const log = {
-        type: "Daily Activity Log",
-        date,
-        attendant,
-        remarks,
-        signature,
-        entries
-      };
-
-      let logs = JSON.parse(localStorage.getItem("fieldflow_logs") || "[]");
-      logs.push(log);
-      localStorage.setItem("fieldflow_logs", JSON.stringify(logs));
-      alert("Log submitted successfully!");
-      document.getElementById("activityForm").reset();
-      document.getElementById("date").value = new Date().toLocaleDateString();
-    });
-  </script>
+function toast(msg){
+  let t=document.getElementById("toast");
+  if(!t){t=el("div",{id:"toast",style:"position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.5);padding:10px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);font-weight:700;backdropFilter:"+"blur(6px);zIndex:9999"},[msg]);document.body.appendChild(t);}else t.textContent=msg;
+  t.style.opacity="1"; setTimeout(()=>{t.style.transition="opacity .6s"; t.style.opacity="0";},1200);
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
 </body>
 </html>
