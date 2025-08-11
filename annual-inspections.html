@@ -1,305 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>FieldFlow — Annual Inspections</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Annual Inspections</title>
 <style>
-  :root{
-    --bg:#0f172a;--panel:#0b1222;--ink:#e5e7eb;--muted:#94a3b8;
-    --line:rgba(255,255,255,.12);--accent:#38bdf8;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444;
-    --r:14px; --shadow:0 10px 30px rgba(0,0,0,.35)
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial}
-  header{padding:18px; text-align:center; border-bottom:1px solid var(--line); background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01))}
-  h1{margin:6px 0 2px; font-size:22px}
-  .muted{color:var(--muted); font-size:13px}
-  main{max-width:1080px;margin:18px auto 60px;padding:0 14px}
-  label{font-size:12px;color:var(--muted); display:block; margin-bottom:6px}
-  select, input[type="text"], input[type="number"], textarea{
-    background:#0a0f1f;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 10px;font-size:14px;width:100%
-  }
-  .row{display:grid;grid-template-columns:1fr 1fr; gap:10px}
-  @media (max-width: 800px){ .row{grid-template-columns:1fr} }
-  .card{
-    background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
-    border:1px solid var(--line); border-radius:var(--r); padding:14px; box-shadow:var(--shadow); margin-bottom:12px
-  }
-  .grid6{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  @media(max-width:900px){.grid6{grid-template-columns:repeat(2,1fr)}}
-  .buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-  button{
-    background:linear-gradient(180deg,rgba(56,189,248,.25),rgba(56,189,248,.12));
-    border:1px solid rgba(56,189,248,.5); color:white; border-radius:10px; padding:10px 14px; cursor:pointer; font-weight:700
-  }
-  button.secondary{background:transparent;border:1px solid var(--line);color:var(--ink)}
-  .accordion-item{border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:8px}
-  .acc-head{display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:rgba(255,255,255,.04); cursor:pointer}
-  .acc-body{display:none; padding:10px 12px; background:rgba(0,0,0,.25)}
-  .acc-open .acc-body{display:block}
-  .well-title{font-weight:800}
-  .small{font-size:12px;color:var(--muted)}
-  .tag{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--muted)}
-  .home{position:fixed;right:16px;bottom:16px}
+  body { font-family: Arial, sans-serif; background: #0f172a; color: #fff; margin: 0; padding: 0; }
+  header { background: #1e293b; padding: 10px; text-align: center; font-size: 20px; }
+  .container { padding: 15px; }
+  select, input, textarea { width: 100%; padding: 8px; margin: 5px 0; border-radius: 6px; border: 1px solid #475569; background: #1e293b; color: white; }
+  button { padding: 10px; border: none; border-radius: 6px; margin: 5px 2px; cursor: pointer; font-weight: bold; }
+  .save-btn { background: #38bdf8; color: black; }
+  .home-btn { background: #475569; color: white; }
+  .section { border: 1px solid #334155; padding: 10px; border-radius: 6px; margin-bottom: 10px; background: #1e293b; }
+  h3 { margin: 5px 0; }
+  label { display: block; margin-top: 5px; }
 </style>
 </head>
 <body>
-  <header>
-    <h1>Annual Inspections</h1>
-    <div class="muted">Production + OBS wells • Valve & leak checks • Combined save only</div>
-  </header>
 
-  <main>
-    <!-- Top Controls -->
-    <div class="card">
-      <div class="row">
-        <div>
-          <label>Well Type</label>
-          <select id="wellType">
-            <option value="production" selected>Production Wells</option>
-            <option value="obs">OBS Wells</option>
-          </select>
-        </div>
-        <div>
-          <label>Field</label>
-          <select id="fieldSelect"></select>
-        </div>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <div>
-          <label>Date</label>
-          <input id="dateInput" type="text" readonly />
-        </div>
-        <div>
-          <label>Attendant</label>
-          <select id="attendant">
-            <option>T. Cherry</option>
-            <option>T. Ressler</option>
-          </select>
-        </div>
-      </div>
-      <div class="buttons" style="margin-top:12px">
-        <button id="expandAllBtn" type="button">Expand All</button>
-        <button id="collapseAllBtn" type="button" class="secondary">Collapse All</button>
-        <button id="saveAllBtn" type="button">Save All Visible (Combined)</button>
-      </div>
-    </div>
+<header>
+  Annual Inspections
+</header>
 
-    <!-- Wells Container -->
-    <div id="wellsContainer"></div>
+<div class="container">
 
-    <a class="home" href="index.html"><button class="secondary">← Home</button></a>
-  </main>
+  <label for="attendant">Attendant</label>
+  <select id="attendant">
+    <option value="T. Cherry">T. Cherry</option>
+    <option value="T. Ressler">T. Ressler</option>
+  </select>
+
+  <label for="wellType">Well Type</label>
+  <select id="wellType" onchange="populateWells()">
+    <option value="Production">Production Wells</option>
+    <option value="OBS">OBS Wells</option>
+  </select>
+
+  <label for="field">Field</label>
+  <select id="field" onchange="populateWells()">
+    <option value="">Select Field</option>
+    <option value="Dixon">Dixon</option>
+    <option value="Simpson Chapel">Simpson Chapel</option>
+    <option value="Mineral City">Mineral City</option>
+  </select>
+
+  <div id="wellsContainer"></div>
+
+  <button class="save-btn" onclick="saveBatch()">Save All Visible (Combined)</button>
+  <button class="home-btn" onclick="window.location.href='index.html'">Home</button>
+</div>
 
 <script>
-/** ========= Config: Wells ========= **/
-const productionWells = {
-  "Dixon": [
-    "Evans 7","Evans 8","Evans 3","Evans 10","Evans 5","Evans 4-H","Evans 6",
-    "Cory 8","Cory 4","Cory 2","Cory 7","Cory 3","Cory 6","Cory 5","Cory 1"
-  ],
-  "Simpson Chapel": [
-    "Blaker 1","Emery 2","Emery 1","Crays 8","Crays 5","Crays 4","Crays 3",
-    "Crays 7","Crays 2","Crays 6","Royal 6","Royal 5","Royal 4","Royal 7","Royal 1"
-  ],
-  "Mineral City": [
-    "Rollison 4","Rollison 1","Rollison 2","G. Axe 6","Haines 4","Haines 1",
-    "Haines 2","Haines 3","G. Axe 1","Allen 1","G. Axe 2","G. Axe 4","G. Axe 5","G. Axe 3","J. Axe 1"
-  ]
+const wells = {
+  Production: {
+    "Dixon": ["Evans 7","Evans 8","Evans 3","Evans 10","Evans 5","Evans 4-H","Evans 6","Cory 8","Cory 4","Cory 2","Cory 7","Cory 3","Cory 6","Cory 5","Cory 1"],
+    "Simpson Chapel": ["Blaker 1","Emery 2","Emery 1","Crays 8","Crays 5","Crays 4","Crays 3","Crays 7","Crays 2","Crays 6","Royal 6","Royal 5","Royal 4","Royal 7","Royal 1"],
+    "Mineral City": ["Rollison 4","Rollison 1","Rollison 2","G. Axe 6","Haines 4","Haines 1","Haines 2","Haines 3","G. Axe 1","Allen 1","G. Axe 2","G. Axe 4","G. Axe 5","G. Axe 3","J. Axe 1"]
+  },
+  OBS: {
+    "Dixon": ["Evans 1","Evans 2","Evans 9","Hendren 1","Mount 1","Dowden 1"],
+    "Simpson Chapel": ["Blackmore 3","RH Stone 1","Royal 2","Royal 3","Rollison 5","Royal 9","S Blackmore 1","Blackmore 4","Royal 8"],
+    "Mineral City": ["Horning 1","G Axe 7","Boruff 1","Floyd 1","Rollison 5","Foster 1"]
+  }
 };
-const obsWells = {
-  "Dixon": ["Evans 1","Evans 2","Evans 9","Hendren 1","Mount 1","Dowden 1"],
-  "Mineral City": ["Horning 1","G Axe 7","Boruff 1","Floyd 1","Rollison 5","Foster 1"],
-  "Simpson Chapel": ["Blackmore 3","RH Stone 1","Royal 2","Royal 3","Rollison 5","Royal 9","S Blackmore 1","Blackmore 4","Royal 8"]
-};
-const valveLabels = ["Master","Tubing","Annulus","Crossover","Tail","Wing"];
 
-/** ========= Helpers ========= **/
-const $ = sel => document.querySelector(sel);
-const el = (tag, attrs={}, children=[]) => {
-  const node = document.createElement(tag);
-  Object.entries(attrs).forEach(([k,v]) => {
-    if (k === "class") node.className = v;
-    else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
-    else node.setAttribute(k,v);
-  });
-  children.forEach(c => node.appendChild(typeof c === "string" ? document.createTextNode(c) : c));
-  return node;
-};
-const todayStr = () => {
-  const d = new Date();
-  const pad = n => String(n).padStart(2,"0");
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-};
-const uid = (p="ANNUALS") => `${p}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-const slug = s => s.toLowerCase().replace(/\s+/g,'-');
+function populateWells() {
+  const type = document.getElementById('wellType').value;
+  const field = document.getElementById('field').value;
+  const container = document.getElementById('wellsContainer');
+  container.innerHTML = '';
 
-/** ========= State ========= **/
-let currentType = "production";
-let currentField = "Dixon";
+  if (!type || !field) return;
 
-/** ========= Init ========= **/
-function init() {
-  $("#dateInput").value = todayStr();
-  buildFieldSelect();
-  renderWells();
+  wells[type][field].forEach(well => {
+    container.innerHTML += `
+      <div class="section">
+        <h3>${well}</h3>
+        <label>Surface Pressure (PSI)</label>
+        <input type="number" id="${well}-surface" />
 
-  $("#wellType").addEventListener("change", e => {
-    currentType = e.target.value;
-    buildFieldSelect();
-    renderWells();
-  });
-  $("#fieldSelect").addEventListener("change", e => {
-    currentField = e.target.value;
-    renderWells();
-  });
-  $("#expandAllBtn").addEventListener("click", () => setAllAccordions(true));
-  $("#collapseAllBtn").addEventListener("click", () => setAllAccordions(false));
-  $("#saveAllBtn").addEventListener("click", saveAllVisibleBatchOnly);
-}
+        <label>Casing Pressure (PSI)</label>
+        <input type="number" id="${well}-casing" />
 
-function buildFieldSelect() {
-  const fields = currentType === "production" ? Object.keys(productionWells) : Object.keys(obsWells);
-  const fs = $("#fieldSelect");
-  fs.innerHTML = "";
-  fields.forEach((f, i) => {
-    const opt = el("option", {}, [f]);
-    if (i===0) currentField = f;
-    fs.appendChild(opt);
-  });
-  fs.value = currentField;
-}
+        <label>Valve Checks</label>
+        ${["Master","Tubing","Annulus","Crossover","Tail","Wing"].map(v => `
+          <label>${v} Valve</label>
+          <select id="${well}-valve-${v}">
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        `).join('')}
 
-/** ========= Render ========= **/
-function renderWells() {
-  const container = $("#wellsContainer");
-  container.innerHTML = "";
-  const list = currentType === "production" ? productionWells[currentField] : obsWells[currentField];
-  list.forEach((wellName) => container.appendChild(buildWellCard(currentField, wellName)));
-}
+        <label>Leak Checks (default No)</label>
+        ${["Master","Tubing","Annulus","Crossover","Tail","Wing"].map(v => `
+          <label>${v} Leak</label>
+          <select id="${well}-leak-${v}">
+            <option value="No" selected>No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        `).join('')}
 
-function buildWellCard(field, wellName) {
-  const idPrefix = `${currentType}-${field}-${wellName}`.replace(/\s+/g,"_");
-
-  const acc = el("div",{class:"accordion-item"});
-  const head = el("div",{class:"acc-head", onclick:()=>acc.classList.toggle("acc-open")},[
-    el("div",{},[
-      el("div",{class:"well-title"},[`${wellName}`]),
-      el("div",{class:"small"},[field," ", el("span",{class:"tag"},[currentType === "production" ? "Production" : "OBS"])])
-    ]),
-    el("div",{class:"small"},["Tap to expand"])
-  ]);
-  const body = el("div",{class:"acc-body"},[
-    // Pressures
-    el("div",{class:"row"},[
-      groupNumber(`${idPrefix}-surfacePSI`,"Surface Pressure (PSI)"),
-      groupNumber(`${idPrefix}-casingPSI`,"Casing Pressure (PSI)")
-    ]),
-    // Valves default YES
-    el("div",{class:"card"},[
-      el("label",{},["Valve Functional Checks"]),
-      el("div",{class:"grid6"}, valveLabels.map(v => groupYesDefault(`${idPrefix}-valve-${slug(v)}`, `${v}`)))
-    ]),
-    // Leaks default NO
-    el("div",{class:"card"},[
-      el("label",{},["Leak Checks (default No)"]),
-      el("div",{class:"grid6"}, valveLabels.map(v => groupNoDefault(`${idPrefix}-leak-${slug(v)}`, `${v}`)))
-    ]),
-    // Notes
-    el("div",{class:"row"},[
-      groupText(`${idPrefix}-notes`,"Notes (optional)")
-    ])
-  ]);
-
-  acc.appendChild(head); acc.appendChild(body);
-  return acc;
-}
-
-/** ========= Small UI groups ========= **/
-function groupNumber(id,labelText){return el("div",{class:"card"},[el("label",{},[labelText]),el("input",{id,type:"number",inputmode:"decimal",placeholder:"0"})]);}
-function groupText(id,labelText){return el("div",{class:"card"},[el("label",{},[labelText]),el("textarea",{id,rows:"3",placeholder:"Add notes..."})]);}
-function groupYesDefault(id,labelText){
-  return el("div",{},[
-    el("label",{},[labelText]),
-    el("select",{id},[ el("option",{},["Yes"]), el("option",{},["No"]) ])
-  ]);
-}
-function groupNoDefault(id,labelText){
-  return el("div",{},[
-    el("label",{},[labelText]),
-    el("select",{id},[ el("option",{},["No"]), el("option",{},["Yes"]) ])
-  ]);
-}
-function setAllAccordions(open){
-  document.querySelectorAll(".accordion-item").forEach(acc=>{
-    acc.classList.toggle("acc-open", open);
+        <label>Notes</label>
+        <textarea id="${well}-notes"></textarea>
+      </div>
+    `;
   });
 }
 
-/** ========= Collect & Save (Batch Only) ========= **/
-function collectEntry(field, wellName, idPrefix){
-  const get = id => document.getElementById(id)?.value ?? "";
-  return {
-    recordType: "Annual Inspection",
-    wellType: currentType === "production" ? "Production" : "OBS",
-    field,
-    well: wellName,
-    date: $("#dateInput").value,
-    attendant: $("#attendant").value,
-    surfacePSI: get(`${idPrefix}-surfacePSI`),
-    casingPSI: get(`${idPrefix}-casingPSI`),
-    valves: Object.fromEntries(valveLabels.map(v => [v, get(`${idPrefix}-valve-${slug(v)}`)])),
-    leaks: Object.fromEntries(valveLabels.map(v => [v, get(`${idPrefix}-leak-${slug(v)}`)])),
-    notes: get(`${idPrefix}-notes`),
-    savedAt: new Date().toISOString()
-  };
-}
-
-function saveAllVisibleBatchOnly(){
-  const container = $("#wellsContainer");
+function saveBatch() {
+  const type = document.getElementById('wellType').value;
+  const field = document.getElementById('field').value;
+  const attendant = document.getElementById('attendant').value;
+  const date = new Date().toISOString().split('T')[0];
   const entries = [];
-  container.querySelectorAll(".accordion-item").forEach(acc=>{
-    const wellName = acc.querySelector(".well-title")?.textContent?.trim() ?? "Unknown";
-    const idPrefix = `${currentType}-${currentField}-${wellName}`.replace(/\s+/g,"_");
-    entries.push(collectEntry(currentField, wellName, idPrefix));
-  });
-  if (!entries.length) return;
 
-  // Save a single combined batch ONLY (no individual saves)
-  const key = "annualInspectionBatches";
-  const arr = JSON.parse(localStorage.getItem(key) || "[]");
+  wells[type][field].forEach(well => {
+    const surface = document.getElementById(`${well}-surface`).value;
+    const casing = document.getElementById(`${well}-casing`).value;
+    const valves = {};
+    const leaks = {};
+
+    ["Master","Tubing","Annulus","Crossover","Tail","Wing"].forEach(v => {
+      valves[v] = document.getElementById(`${well}-valve-${v}`).value;
+      leaks[v] = document.getElementById(`${well}-leak-${v}`).value;
+    });
+
+    entries.push({
+      recordType: "Annual Inspection",
+      date,
+      attendant,
+      field,
+      well,
+      wellType: type,
+      surfacePSI: surface,
+      casingPSI: casing,
+      valves,
+      leaks,
+      notes: document.getElementById(`${well}-notes`).value
+    });
+  });
 
   const batch = {
     recordType: "Annual Inspection",
-    batch: true,
-    batchId: uid(),
-    wellType: entries[0]?.wellType || "",
-    field: entries[0]?.field || currentField,
-    date: $("#dateInput").value,
-    attendant: $("#attendant").value,
-    count: entries.length,
-    entries,
-    savedAt: new Date().toISOString()
+    date,
+    attendant,
+    field,
+    wellType: type,
+    entries
   };
-  arr.push(batch);
-  localStorage.setItem(key, JSON.stringify(arr));
 
-  toast(`Saved ${entries.length} wells as one combined file`);
+  let allBatches = JSON.parse(localStorage.getItem('annualInspectionBatches') || '[]');
+  allBatches.push(batch);
+  localStorage.setItem('annualInspectionBatches', JSON.stringify(allBatches));
+  alert("Annual inspection batch saved!");
 }
-
-/** ========= Toast ========= **/
-function toast(msg){
-  let t = document.getElementById("toast");
-  if (!t){
-    t = el("div",{id:"toast",style:"position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.5);padding:10px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);font-weight:700;backdrop-filter:blur(6px);z-index:9999"},[msg]);
-    document.body.appendChild(t);
-  } else t.textContent = msg;
-  t.style.opacity = "1";
-  setTimeout(()=>{ t.style.transition="opacity .6s"; t.style.opacity="0"; }, 1200);
-}
-
-document.addEventListener("DOMContentLoaded", init);
 </script>
+
 </body>
 </html>
