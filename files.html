@@ -1,164 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Files Archive</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f1f1f1;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-    }
-    .filters {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    select, input[type="date"] {
-      padding: 5px;
-    }
-    .entry {
-      background: #fff;
-      padding: 15px;
-      border-radius: 5px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .entry h3 {
-      margin-top: 0;
-    }
-    .buttons {
-      margin-top: 10px;
-    }
-    .buttons button {
-      margin-right: 10px;
-      padding: 6px 12px;
-    }
-    .timestamp {
-      font-size: 0.8em;
-      color: gray;
-    }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>FieldFlow — Files</title>
+<style>
+  :root{--bg:#0f172a;--ink:#e5e7eb;--muted:#94a3b8;--line:rgba(255,255,255,.12);--accent:#38bdf8;--r:14px;--shadow:0 10px 30px rgba(0,0,0,.35)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  header{padding:18px;text-align:center;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01))}
+  h1{margin:6px 0 2px;font-size:22px}
+  .muted{color:var(--muted);font-size:13px}
+  main{max-width:1080px;margin:18px auto 60px;padding:0 14px}
+  .filters{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  @media(max-width:1000px){.filters{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.filters{grid-template-columns:1fr}}
+  select, input{background:#0a0f1f;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 10px;font-size:14px;width:100%}
+  .list{margin-top:14px}
+  .item{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:10px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01)); box-shadow:var(--shadow)}
+  .head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(255,255,255,.04);cursor:pointer}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+  .body{display:none;padding:12px;background:rgba(0,0,0,.25)}
+  .open .body{display:block}
+  .btns{display:flex;gap:8px;flex-wrap:wrap}
+  button{background:linear-gradient(180deg,rgba(56,189,248,.25),rgba(56,189,248,.12));border:1px solid rgba(56,189,248,.5);color:white;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700}
+  button.secondary{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  .home{position:fixed;right:16px;bottom:16px}
+  .empty{padding:16px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);text-align:center;margin-top:14px}
+  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  pre{white-space:pre-wrap;word-wrap:break-word;background:#0a0f1f;border:1px solid var(--line);padding:10px;border-radius:10px}
+</style>
 </head>
 <body>
-
+<header>
   <h1>Files Archive</h1>
-
+  <div class="muted">Search & filter all saved logs • Printable accordion • Per-entry export</div>
+</header>
+<main>
   <div class="filters">
     <select id="typeFilter">
       <option value="">All Types</option>
-      <option value="Daily Activity Log">Daily Activity Log</option>
-      <option value="Annual Inspection">Annual Inspection</option>
-      <option value="Shut-In Log">Shut-In Log</option>
-      <option value="OBS Reading">OBS Reading</option>
-      <option value="Well Status">Well Status</option>
-      <option value="SWD Log">SWD Log</option>
+      <option>Annual Inspection</option>
+      <option>Daily Pressure</option>
+      <option>Shut-In</option>
+      <option>OBS Reading</option>
+      <option>Well Status</option>
+      <option>SWD</option>
+      <option>Daily Activity</option>
     </select>
-
-    <select id="fieldFilter">
-      <option value="">All Fields</option>
-      <option value="Dixon">Dixon</option>
-      <option value="Simpson Chapel">Simpson Chapel</option>
-      <option value="Mineral City">Mineral City</option>
-    </select>
-
-    <select id="wellFilter">
-      <option value="">All Wells</option>
-    </select>
-
-    <select id="attendantFilter">
-      <option value="">All Attendants</option>
-      <option value="T. Cherry">T. Cherry</option>
-      <option value="T. Ressler">T. Ressler</option>
-    </select>
-
-    <input type="date" id="dateFilter" />
+    <select id="fieldFilter"><option value="">All Fields</option></select>
+    <select id="wellFilter"><option value="">All Wells</option></select>
+    <input id="dateFilter" type="date" />
+    <select id="attFilter"><option value="">All Attendants</option><option>T. Cherry</option><option>T. Ressler</option></select>
   </div>
 
-  <div id="entriesContainer"></div>
+  <div class="list" id="list"></div>
+  <div class="empty" id="empty">No records yet. Save entries on each page (e.g., Annual Inspections) and they’ll appear here.</div>
 
-  <script>
-    const entriesContainer = document.getElementById("entriesContainer");
+  <a class="home" href="index.html"><button class="secondary">← Home</button></a>
+</main>
 
-    const filters = {
-      type: document.getElementById("typeFilter"),
-      field: document.getElementById("fieldFilter"),
-      well: document.getElementById("wellFilter"),
-      attendant: document.getElementById("attendantFilter"),
-      date: document.getElementById("dateFilter"),
-    };
+<script>
+/** ========= Load All Buckets from localStorage =========
+ * This scaffold reads:
+ *  - annualInspections [] (created by annual-inspections.html)
+ * Future pages should push arrays under their own keys (e.g., dailyPressure, obsReadings, shutInLogs, wellStatus, swdLogs, dailyActivity)
+ * and include at minimum: recordType, field, well, date, attendant (optional by type)
+**/
+function loadAll() {
+  const buckets = [];
+  const annual = JSON.parse(localStorage.getItem("annualInspections") || "[]");
+  buckets.push(...annual);
+  // Future: merge in others when those pages save:
+  // buckets.push(...JSON.parse(localStorage.getItem("dailyPressure")||"[]"));
+  // buckets.push(...JSON.parse(localStorage.getItem("obsReadings")||"[]"));
+  // ...
+  return buckets;
+}
 
-    const updateEntries = () => {
-      entriesContainer.innerHTML = "";
-      const savedLogs = JSON.parse(localStorage.getItem("fieldflowLogs") || "[]");
+const all = loadAll();
+const unique = (arr) => Array.from(new Set(arr.filter(Boolean)));
 
-      const filtered = savedLogs.filter(log => {
-        return (!filters.type.value || log.type === filters.type.value) &&
-               (!filters.field.value || log.field === filters.field.value) &&
-               (!filters.well.value || log.well === filters.well.value) &&
-               (!filters.attendant.value || log.attendant === filters.attendant.value) &&
-               (!filters.date.value || log.date === filters.date.value);
-      });
+function initFilters(records){
+  const fields = unique(records.map(r=>r.field));
+  const wells = unique(records.map(r=>r.well));
+  const fieldSel = document.getElementById("fieldFilter");
+  const wellSel = document.getElementById("wellFilter");
+  fields.forEach(f => fieldSel.appendChild(new Option(f,f)));
+  wells.forEach(w => wellSel.appendChild(new Option(w,w)));
+}
 
-      filtered.forEach((log, index) => {
-        const entryDiv = document.createElement("div");
-        entryDiv.className = "entry";
+function recordTitle(r){
+  const dt = r.date || (r.savedAt ? r.savedAt.slice(0,10) : "");
+  return `${r.recordType || 'Record'} — ${r.field || 'Field'} / ${r.well || 'Well'} — ${dt}`;
+}
 
-        const title = `${log.type} – ${log.date} – ${log.attendant || ''}`;
-        entryDiv.innerHTML = `<h3>${title}</h3>`;
+function recordMeta(r){
+  const parts = [];
+  if (r.wellType) parts.push(r.wellType);
+  if (r.attendant) parts.push(r.attendant);
+  if (r.date) parts.push(r.date);
+  return parts.join(" • ");
+}
 
-        const content = document.createElement("pre");
-        let formatted = "";
-        for (let key in log) {
-          if (key !== "timestamp") {
-            formatted += `${key}: ${log[key]}\n`;
-          }
-        }
-        formatted += `\ntimestamp: ${log.timestamp}`;
-        content.textContent = formatted;
-        entryDiv.appendChild(content);
+function toCSV(obj){
+  const keys = Object.keys(obj);
+  const esc = v => `"${String(v??"").replace(/"/g,'""')}"`;
+  const header = keys.map(esc).join(",");
+  const row = keys.map(k => esc(typeof obj[k]==="object" ? JSON.stringify(obj[k]) : obj[k])).join(",");
+  return header + "\n" + row;
+}
 
-        const buttons = document.createElement("div");
-        buttons.className = "buttons";
+function emailBody(obj){
+  const lines = [];
+  const pushKV = (k,v)=>lines.push(`${k}: ${typeof v==="object"? JSON.stringify(v,null,2): v}`);
+  Object.entries(obj).forEach(([k,v])=>pushKV(k,v));
+  return encodeURIComponent(lines.join("\n"));
+}
 
-        const exportBtn = document.createElement("button");
-        exportBtn.textContent = "Export";
-        exportBtn.onclick = () => {
-          const blob = new Blob([formatted], { type: "text/plain" });
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(blob);
-          link.download = `${log.type.replace(/\s+/g, '_')}_${log.date}.txt`;
-          link.click();
-        };
+function render(records){
+  const list = document.getElementById("list");
+  const empty = document.getElementById("empty");
+  list.innerHTML = "";
+  if (!records.length){ empty.style.display="block"; return; }
+  empty.style.display="none";
 
-        const emailBtn = document.createElement("button");
-        emailBtn.textContent = "Email";
-        emailBtn.onclick = () => {
-          const subject = "Underground Storage Field Reports";
-          const body = encodeURIComponent(formatted);
-          window.location.href = `mailto:?subject=${subject}&body=${body}`;
-        };
+  records.forEach((r, i) => {
+    const item = document.createElement("div");
+    item.className = "item";
+    const head = document.createElement("div");
+    head.className = "head";
+    head.innerHTML = `<div>${recordTitle(r)}</div><div class="meta">${recordMeta(r)}</div>`;
+    head.addEventListener("click", ()=> item.classList.toggle("open"));
 
-        buttons.appendChild(exportBtn);
-        buttons.appendChild(emailBtn);
-        entryDiv.appendChild(buttons);
+    const body = document.createElement("div");
+    body.className = "body";
+    // Pretty block
+    const grid = document.createElement("div");
+    grid.className = "grid2";
+    const pretty = document.createElement("pre");
+    pretty.textContent = JSON.stringify(r, null, 2);
+    grid.appendChild(pretty);
 
-        entriesContainer.appendChild(entryDiv);
-      });
-    };
+    // Buttons
+    const btns = document.createElement("div");
+    btns.className = "btns";
+    // CSV
+    const csvBtn = document.createElement("button");
+    csvBtn.textContent = "Download CSV";
+    csvBtn.addEventListener("click", ()=>{
+      const csv = toCSV(r);
+      const blob = new Blob([csv], {type:"text/csv"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = (recordTitle(r).replace(/\s+/g,"_") + ".csv");
+      a.click(); URL.revokeObjectURL(url);
+    });
+    // Email
+    const emailBtn = document.createElement("button");
+    emailBtn.textContent = "Email";
+    emailBtn.addEventListener("click", ()=>{
+      const subject = encodeURIComponent("Underground Storage Field Reports");
+      const body = emailBody(r);
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    });
+    // Print
+    const printBtn = document.createElement("button");
+    printBtn.textContent = "Print";
+    printBtn.addEventListener("click", ()=>{
+      const w = window.open("", "_blank");
+      const html = `
+        <html><head><title>${recordTitle(r)}</title>
+        <style>body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:16px} pre{white-space:pre-wrap}</style>
+        </head><body>
+        <h2>${recordTitle(r)}</h2>
+        <pre>${JSON.stringify(r,null,2)}</pre>
+        </body></html>`;
+      w.document.write(html); w.document.close(); w.focus(); w.print();
+    });
 
-    for (let key in filters) {
-      filters[key].addEventListener("change", updateEntries);
-    }
+    btns.appendChild(csvBtn);
+    btns.appendChild(emailBtn);
+    btns.appendChild(printBtn);
 
-    window.onload = updateEntries;
-  </script>
+    grid.appendChild(btns);
+    body.appendChild(grid);
+
+    item.appendChild(head);
+    item.appendChild(body);
+    list.appendChild(item);
+  });
+}
+
+function applyFilters(){
+  const t = document.getElementById("typeFilter").value;
+  const f = document.getElementById("fieldFilter").value;
+  const w = document.getElementById("wellFilter").value;
+  const d = document.getElementById("dateFilter").value;
+  const a = document.getElementById("attFilter").value;
+  const filtered = all.filter(r=>{
+    if (t && r.recordType !== t) return false;
+    if (f && r.field !== f) return false;
+    if (w && r.well !== w) return false;
+    if (d && (r.date || "").slice(0,10) !== d) return false;
+    if (a && r.attendant !== a) return false;
+    return true;
+  });
+  render(filtered);
+}
+
+function wireFilters(){
+  ["typeFilter","fieldFilter","wellFilter","dateFilter","attFilter"].forEach(id=>{
+    document.getElementById(id).addEventListener("change", applyFilters);
+  });
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  initFilters(all);
+  render(all);
+  wireFilters();
+});
+</script>
 </body>
 </html>
