@@ -52,7 +52,7 @@
 <body>
   <header>
     <h1>Annual Inspections</h1>
-    <div class="muted">Production + OBS wells • Valve & leak checks • Auto date • Saves to Files</div>
+    <div class="muted">Production + OBS wells • Valve & leak checks • Auto date • Saves to Files (combined)</div>
   </header>
 
   <main>
@@ -87,7 +87,7 @@
       <div class="buttons" style="margin-top:12px">
         <button id="expandAllBtn" type="button">Expand All</button>
         <button id="collapseAllBtn" type="button" class="secondary">Collapse All</button>
-        <button id="saveAllBtn" type="button">Save All Visible</button>
+        <button id="saveAllBtn" type="button">Save All Visible (Combined)</button>
       </div>
     </div>
 
@@ -99,7 +99,6 @@
 
 <script>
 /** ========= Config: Wells ========= **/
-// Confirmed ordered PRODUCTION wells
 const productionWells = {
   "Dixon": [
     "Evans 7","Evans 8","Evans 3","Evans 10","Evans 5","Evans 4-H","Evans 6",
@@ -114,15 +113,11 @@ const productionWells = {
     "Haines 2","Haines 3","G. Axe 1","Allen 1","G. Axe 2","G. Axe 4","G. Axe 5","G. Axe 3","J. Axe 1"
   ]
 };
-
-// OBS wells (grouped by field)
 const obsWells = {
   "Dixon": ["Evans 1","Evans 2","Evans 9","Hendren 1","Mount 1","Dowden 1"],
   "Mineral City": ["Horning 1","G Axe 7","Boruff 1","Floyd 1","Rollison 5","Foster 1"],
   "Simpson Chapel": ["Blackmore 3","RH Stone 1","Royal 2","Royal 3","Rollison 5","Royal 9","S Blackmore 1","Blackmore 4","Royal 8"]
 };
-
-// Valve/leak check labels
 const valveLabels = ["Master","Tubing","Annulus","Crossover","Tail","Wing"];
 
 /** ========= Helpers ========= **/
@@ -142,9 +137,10 @@ const todayStr = () => {
   const pad = n => String(n).padStart(2,"0");
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 };
+const uid = (p="BATCH") => `${p}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
 
 /** ========= State ========= **/
-let currentType = "production"; // 'production' | 'obs'
+let currentType = "production";
 let currentField = "Dixon";
 
 /** ========= Init ========= **/
@@ -152,7 +148,6 @@ function init() {
   $("#dateInput").value = todayStr();
   buildFieldSelect();
   renderWells();
-  // Events
   $("#wellType").addEventListener("change", e => {
     currentType = e.target.value;
     buildFieldSelect();
@@ -184,7 +179,6 @@ function renderWells() {
   const container = $("#wellsContainer");
   container.innerHTML = "";
   const list = currentType === "production" ? productionWells[currentField] : obsWells[currentField];
-
   list.forEach((wellName, idx) => {
     container.appendChild(buildWellCard(currentField, wellName, idx));
   });
@@ -192,8 +186,6 @@ function renderWells() {
 
 function buildWellCard(field, wellName, idx) {
   const idPrefix = `${currentType}-${field}-${wellName}`.replace(/\s+/g,"_");
-
-  // Accordion
   const acc = el("div",{class:"accordion-item"});
   const head = el("div",{class:"acc-head", onclick:()=>acc.classList.toggle("acc-open")},[
     el("div",{},[
@@ -202,7 +194,6 @@ function buildWellCard(field, wellName, idx) {
     ]),
     el("div",{class:"small"},["Tap to expand"])
   ]);
-
   const body = el("div",{class:"acc-body"},[
     el("div",{class:"grid2"},[
       groupNumber(`${idPrefix}-surfacePSI`,"Surface Pressure (PSI)"),
@@ -220,46 +211,20 @@ function buildWellCard(field, wellName, idx) {
       el("button",{type:"button", class:"secondary", onClick:()=>clearOne(idPrefix)},["Clear"])
     ])
   ]);
-
   acc.appendChild(head); acc.appendChild(body);
   return acc;
 }
 
 function slug(s){return s.toLowerCase().replace(/\s+/g,'-')}
-
-function groupNumber(id,labelText){
-  return el("div",{class:"card"},[
-    el("label",{},[labelText]),
-    el("input",{id,type:"number",inputmode:"decimal",placeholder:"0"})
-  ]);
-}
-function groupText(id,labelText){
-  return el("div",{class:"card"},[
-    el("label",{},[labelText]),
-    el("textarea",{id,rows:"3",placeholder:"Add notes..."} )
-  ]);
-}
-function groupYesNo(id,labelText){
-  const wrap = el("div",{class:"card"},[
-    el("label",{},[labelText]),
-    el("select",{id},[
-      el("option",{},["Yes"]),
-      el("option",{},["No"])
-    ])
-  ]);
-  return wrap;
-}
-
-function setAllAccordions(open){
-  document.querySelectorAll(".accordion-item").forEach(acc=>{
-    acc.classList.toggle("acc-open", open);
-  });
-}
+function groupNumber(id,labelText){return el("div",{class:"card"},[el("label",{},[labelText]),el("input",{id,type:"number",inputmode:"decimal",placeholder:"0"})]);}
+function groupText(id,labelText){return el("div",{class:"card"},[el("label",{},[labelText]),el("textarea",{id,rows:"3",placeholder:"Add notes..."})]);}
+function groupYesNo(id,labelText){return el("div",{class:"card"},[el("label",{},[labelText]),el("select",{id},[el("option",{},["Yes"]),el("option",{},["No"])])]);}
+function setAllAccordions(open){document.querySelectorAll(".accordion-item").forEach(acc=>acc.classList.toggle("acc-open", open));}
 
 /** ========= Save / Clear ========= **/
 function collectEntry(field, wellName, idPrefix){
   const get = id => document.getElementById(id)?.value ?? "";
-  const rec = {
+  return {
     recordType: "Annual Inspection",
     wellType: currentType === "production" ? "Production" : "OBS",
     field,
@@ -273,7 +238,6 @@ function collectEntry(field, wellName, idPrefix){
     notes: get(`${idPrefix}-notes`),
     savedAt: new Date().toISOString()
   };
-  return rec;
 }
 
 function saveOne(field, wellName, idPrefix){
@@ -299,22 +263,44 @@ function clearOne(idPrefix){
 function saveAllVisible(){
   const container = $("#wellsContainer");
   const entries = [];
-  // Find all visible accordions; build from DOM
   container.querySelectorAll(".accordion-item").forEach(acc=>{
-    const headTitle = acc.querySelector(".well-title")?.textContent?.trim() ?? "Unknown";
-    const field = currentField;
-    const idPrefix = `${currentType}-${field}-${headTitle}`.replace(/\s+/g,"_");
-    entries.push(collectEntry(field, headTitle, idPrefix));
+    const wellName = acc.querySelector(".well-title")?.textContent?.trim() ?? "Unknown";
+    const idPrefix = `${currentType}-${currentField}-${wellName}`.replace(/\s+/g,"_");
+    entries.push(collectEntry(currentField, wellName, idPrefix));
   });
   if (!entries.length) return;
+
+  // 1) Save individual entries (kept for detail/history if needed)
   entries.forEach(persistAnnual);
-  flashSaved(`${entries.length} entr${entries.length===1?'y':'ies'} saved`);
+  // 2) Save combined batch (the thing you'll export/email once)
+  persistAnnualBatch(entries);
+
+  flashSaved(`Saved ${entries.length} wells as one combined file`);
 }
 
 function persistAnnual(rec){
   const key = "annualInspections";
   const arr = JSON.parse(localStorage.getItem(key) || "[]");
   arr.push(rec);
+  localStorage.setItem(key, JSON.stringify(arr));
+}
+
+function persistAnnualBatch(entries){
+  const key = "annualInspectionBatches";
+  const arr = JSON.parse(localStorage.getItem(key) || "[]");
+  const batch = {
+    recordType: "Annual Inspection",
+    batch: true,
+    batchId: uid("ANNUALS"),
+    wellType: entries[0]?.wellType || "",
+    field: entries[0]?.field || currentField,
+    date: $("#dateInput").value,
+    attendant: $("#attendant").value,
+    count: entries.length,
+    entries,
+    savedAt: new Date().toISOString()
+  };
+  arr.push(batch);
   localStorage.setItem(key, JSON.stringify(arr));
 }
 
