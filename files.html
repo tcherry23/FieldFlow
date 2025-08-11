@@ -30,12 +30,13 @@
   .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
   @media(max-width:720px){.grid2{grid-template-columns:1fr}}
   pre{white-space:pre-wrap;word-wrap:break-word;background:#0a0f1f;border:1px solid var(--line);padding:10px;border-radius:10px}
+  .batchTag{font-size:11px;padding:2px 6px;border:1px solid var(--line);border-radius:999px}
 </style>
 </head>
 <body>
 <header>
   <h1>Files Archive</h1>
-  <div class="muted">Search & filter all saved logs • Printable accordion • Per-entry export</div>
+  <div class="muted">Section-wide combined files (one email/CSV per batch) + individual entries for detail</div>
 </header>
 <main>
   <div class="filters">
@@ -56,35 +57,35 @@
   </div>
 
   <div class="list" id="list"></div>
-  <div class="empty" id="empty">No records yet. Save entries on each page (e.g., Annual Inspections) and they’ll appear here.</div>
+  <div class="empty" id="empty">No records yet. Use “Save All Visible (Combined)” on each section page to create batch files here.</div>
 
   <a class="home" href="index.html"><button class="secondary">← Home</button></a>
 </main>
 
 <script>
-/** ========= Load All Buckets from localStorage =========
- * This scaffold reads:
- *  - annualInspections [] (created by annual-inspections.html)
- * Future pages should push arrays under their own keys (e.g., dailyPressure, obsReadings, shutInLogs, wellStatus, swdLogs, dailyActivity)
- * and include at minimum: recordType, field, well, date, attendant (optional by type)
-**/
+/** ========= Load from localStorage ========= **/
 function loadAll() {
-  const buckets = [];
+  const records = [];
+  const batches = [];
+
+  // Individual records (kept for detail searches)
   const annual = JSON.parse(localStorage.getItem("annualInspections") || "[]");
-  buckets.push(...annual);
-  // Future: merge in others when those pages save:
-  // buckets.push(...JSON.parse(localStorage.getItem("dailyPressure")||"[]"));
-  // buckets.push(...JSON.parse(localStorage.getItem("obsReadings")||"[]"));
-  // ...
-  return buckets;
+  records.push(...annual);
+
+  // Combined batches
+  const annualBatches = JSON.parse(localStorage.getItem("annualInspectionBatches") || "[]");
+  batches.push(...annualBatches);
+
+  // Future: add other sections (dailyPressure, shutInLogs, etc.)
+  return {records, batches};
 }
 
-const all = loadAll();
+const {records: allRecords, batches: allBatches} = loadAll();
 const unique = (arr) => Array.from(new Set(arr.filter(Boolean)));
 
-function initFilters(records){
-  const fields = unique(records.map(r=>r.field));
-  const wells = unique(records.map(r=>r.well));
+function initFilters(){
+  const fields = unique([...allRecords.map(r=>r.field), ...allBatches.map(b=>b.field)]);
+  const wells = unique(allRecords.map(r=>r.well));
   const fieldSel = document.getElementById("fieldFilter");
   const wellSel = document.getElementById("wellFilter");
   fields.forEach(f => fieldSel.appendChild(new Option(f,f)));
@@ -95,7 +96,9 @@ function recordTitle(r){
   const dt = r.date || (r.savedAt ? r.savedAt.slice(0,10) : "");
   return `${r.recordType || 'Record'} — ${r.field || 'Field'} / ${r.well || 'Well'} — ${dt}`;
 }
-
+function batchTitle(b){
+  return `${b.recordType} — ${b.field} — ${b.count} wells — ${b.date}`;
+}
 function recordMeta(r){
   const parts = [];
   if (r.wellType) parts.push(r.wellType);
@@ -103,30 +106,113 @@ function recordMeta(r){
   if (r.date) parts.push(r.date);
   return parts.join(" • ");
 }
-
-function toCSV(obj){
-  const keys = Object.keys(obj);
+function toCSVRow(obj, keys){
   const esc = v => `"${String(v??"").replace(/"/g,'""')}"`;
-  const header = keys.map(esc).join(",");
-  const row = keys.map(k => esc(typeof obj[k]==="object" ? JSON.stringify(obj[k]) : obj[k])).join(",");
-  return header + "\n" + row;
+  return keys.map(k => {
+    const v = obj[k];
+    if (typeof v === "object") return esc(JSON.stringify(v));
+    return esc(v);
+  }).join(",");
 }
-
+function batchToCSV(batch){
+  // Standardized columns for Annuals
+  const keys = ["recordType","wellType","field","well","date","attendant","surfacePSI","casingPSI","valves","leaks","notes"];
+  const header = keys.join(",");
+  const rows = batch.entries.map(e => toCSVRow(e, keys));
+  return [header, ...rows].join("\n");
+}
 function emailBody(obj){
   const lines = [];
   const pushKV = (k,v)=>lines.push(`${k}: ${typeof v==="object"? JSON.stringify(v,null,2): v}`);
   Object.entries(obj).forEach(([k,v])=>pushKV(k,v));
   return encodeURIComponent(lines.join("\n"));
 }
+function emailBodyForBatch(batch){
+  const head = `Section: ${batch.recordType}\nField: ${batch.field}\nDate: ${batch.date}\nAttendant: ${batch.attendant}\nWells: ${batch.count}\n\nSummary:\n`;
+  const lines = batch.entries.map(e => `- ${e.well}: Surf ${e.surfacePSI || 0} psi, Casing ${e.casingPSI || 0} psi`);
+  return encodeURIComponent(head + lines.join("\n") + "\n\n(Attach the CSV you downloaded.)");
+}
 
-function render(records){
+/** ========= Rendering ========= **/
+function render(records, batches){
   const list = document.getElementById("list");
   const empty = document.getElementById("empty");
   list.innerHTML = "";
-  if (!records.length){ empty.style.display="block"; return; }
-  empty.style.display="none";
 
-  records.forEach((r, i) => {
+  const hasAny = records.length || batches.length;
+  empty.style.display = hasAny ? "none" : "block";
+
+  // 1) Render batches first (these are the one-click emails you want)
+  batches.forEach(b => {
+    const item = document.createElement("div");
+    item.className = "item";
+    const head = document.createElement("div");
+    head.className = "head";
+    head.innerHTML = `<div>${batchTitle(b)} <span class="batchTag">Batch</span></div>
+                      <div class="meta">${[b.wellType, b.attendant, b.date].filter(Boolean).join(" • ")}</div>`;
+    head.addEventListener("click", ()=> item.classList.toggle("open"));
+
+    const body = document.createElement("div");
+    body.className = "body";
+    const grid = document.createElement("div");
+    grid.className = "grid2";
+
+    const pretty = document.createElement("pre");
+    pretty.textContent = JSON.stringify(b, null, 2);
+    grid.appendChild(pretty);
+
+    const btns = document.createElement("div");
+    btns.className = "btns";
+
+    // Download CSV (Combined)
+    const csvBtn = document.createElement("button");
+    csvBtn.textContent = "Download CSV (Combined)";
+    csvBtn.addEventListener("click", ()=>{
+      const csv = batchToCSV(b);
+      const blob = new Blob([csv], {type:"text/csv"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = (batchTitle(b).replace(/\s+/g,"_") + ".csv");
+      a.click(); URL.revokeObjectURL(url);
+    });
+
+    // Email (Combined)
+    const emailBtn = document.createElement("button");
+    emailBtn.textContent = "Email (Combined)";
+    emailBtn.addEventListener("click", ()=>{
+      const subject = encodeURIComponent("Underground Storage Field Reports — Annual Inspections (Combined)");
+      const body = emailBodyForBatch(b);
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      // Note: mailto can't auto-attach files; download CSV first, then attach in your email app.
+    });
+
+    // Print (Combined)
+    const printBtn = document.createElement("button");
+    printBtn.textContent = "Print (Combined)";
+    printBtn.addEventListener("click", ()=>{
+      const w = window.open("", "_blank");
+      const html = `
+        <html><head><title>${batchTitle(b)}</title>
+        <style>body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:16px} pre{white-space:pre-wrap}</style>
+        </head><body>
+        <h2>${batchTitle(b)}</h2>
+        <pre>${JSON.stringify(b,null,2)}</pre>
+        </body></html>`;
+      w.document.write(html); w.document.close(); w.focus(); w.print();
+    });
+
+    btns.appendChild(csvBtn);
+    btns.appendChild(emailBtn);
+    btns.appendChild(printBtn);
+    grid.appendChild(btns);
+    body.appendChild(grid);
+    item.appendChild(head);
+    item.appendChild(body);
+    list.appendChild(item);
+  });
+
+  // 2) Render individual records (still searchable if you need a single well later)
+  records.forEach(r => {
     const item = document.createElement("div");
     item.className = "item";
     const head = document.createElement("div");
@@ -136,28 +222,31 @@ function render(records){
 
     const body = document.createElement("div");
     body.className = "body";
-    // Pretty block
-    const grid = document.createElement("div");
-    grid.className = "grid2";
+    const grid = document.createElement("div"); grid.className = "grid2";
     const pretty = document.createElement("pre");
     pretty.textContent = JSON.stringify(r, null, 2);
     grid.appendChild(pretty);
 
-    // Buttons
     const btns = document.createElement("div");
     btns.className = "btns";
-    // CSV
+
     const csvBtn = document.createElement("button");
     csvBtn.textContent = "Download CSV";
     csvBtn.addEventListener("click", ()=>{
-      const csv = toCSV(r);
+      const keys = Object.keys(r);
+      const header = keys.join(",");
+      const row = (function(){
+        const esc = v => `"${String(v??"").replace(/"/g,'""')}"`;
+        return keys.map(k => typeof r[k]==="object" ? esc(JSON.stringify(r[k])) : esc(r[k])).join(",");
+      })();
+      const csv = header + "\n" + row;
       const blob = new Blob([csv], {type:"text/csv"});
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url; a.download = (recordTitle(r).replace(/\s+/g,"_") + ".csv");
       a.click(); URL.revokeObjectURL(url);
     });
-    // Email
+
     const emailBtn = document.createElement("button");
     emailBtn.textContent = "Email";
     emailBtn.addEventListener("click", ()=>{
@@ -165,7 +254,7 @@ function render(records){
       const body = emailBody(r);
       window.location.href = `mailto:?subject=${subject}&body=${body}`;
     });
-    // Print
+
     const printBtn = document.createElement("button");
     printBtn.textContent = "Print";
     printBtn.addEventListener("click", ()=>{
@@ -186,7 +275,6 @@ function render(records){
 
     grid.appendChild(btns);
     body.appendChild(grid);
-
     item.appendChild(head);
     item.appendChild(body);
     list.appendChild(item);
@@ -199,7 +287,18 @@ function applyFilters(){
   const w = document.getElementById("wellFilter").value;
   const d = document.getElementById("dateFilter").value;
   const a = document.getElementById("attFilter").value;
-  const filtered = all.filter(r=>{
+
+  // Filter batches
+  const batches = allBatches.filter(b=>{
+    if (t && b.recordType !== t) return false;
+    if (f && b.field !== f) return false;
+    if (d && (b.date || "").slice(0,10) !== d) return false;
+    if (a && b.attendant !== a) return false;
+    return true;
+  });
+
+  // Filter individual records
+  const records = allRecords.filter(r=>{
     if (t && r.recordType !== t) return false;
     if (f && r.field !== f) return false;
     if (w && r.well !== w) return false;
@@ -207,7 +306,8 @@ function applyFilters(){
     if (a && r.attendant !== a) return false;
     return true;
   });
-  render(filtered);
+
+  render(records, batches);
 }
 
 function wireFilters(){
@@ -217,8 +317,8 @@ function wireFilters(){
 }
 
 document.addEventListener("DOMContentLoaded", ()=>{
-  initFilters(all);
-  render(all);
+  initFilters();
+  render(allRecords, allBatches);
   wireFilters();
 });
 </script>
