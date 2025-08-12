@@ -100,6 +100,13 @@
       <label>Signature <input id="sign" placeholder="Type name for now"></label>
       <div></div><div></div>
     </div>
+    <div class="actions">
+      <!-- New: save/load snapshots -->
+      <button id="saveJson" class="secondary">Save Snapshot (.json)</button>
+      <label class="secondary" style="padding:9px 12px;border-radius:8px;cursor:pointer">
+        Load Snapshot<input type="file" id="loadJson" accept=".json" style="display:none">
+      </label>
+    </div>
   </div>
 </div>
 
@@ -111,9 +118,12 @@
 </footer>
 
 <script>
-const KEY='ff_daily_activity_week_v1';
+/* ===== per-week persistent storage + file snapshots ===== */
+const KEY_PREFIX='ff_daily_activity_week_v2:';
 const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday"];
 const $=id=>document.getElementById(id);
+
+function wkKey(){ return KEY_PREFIX + ( $('weekOf').value || 'unspecified' ); }
 
 function buildRows(){
   const tb=$('rows'); tb.innerHTML='';
@@ -130,19 +140,17 @@ function buildRows(){
 function mondayOf(dateStr){
   if(!dateStr) return null;
   const dt=new Date(dateStr+'T00:00:00');
-  const dow=dt.getDay();            // 0=Sun ... 6=Sat
-  const offset = (dow+6)%7;         // days since Monday
+  const dow=dt.getDay();  // 0 Sun ... 6 Sat
+  const offset=(dow+6)%7; // days since Monday
   return new Date(dt.getTime()-offset*86400000);
 }
-
 function fillMonToFri(){
-  const mondayStr = $('weekOf').value;
-  const m = mondayOf(mondayStr);
+  const mondayStr=$('weekOf').value; const m=mondayOf(mondayStr);
   if(!m) return;
   for(let i=0;i<DAYS.length;i++){
     const di=new Date(m.getTime()+i*86400000);
     const iso=di.toISOString().slice(0,10);
-    sel(`[data-day="${i}"][data-field="date"]`).value = iso;
+    sel(`[data-day="${i}"][data-field="date"]`).value=iso;
   }
   save();
 }
@@ -150,10 +158,9 @@ function fillMonToFri(){
 function init(){
   buildRows();
   // default Week Of = today rounded down to Monday
-  const today=new Date();
-  const dow=today.getDay(); // 0..6 Sun..Sat
+  const today=new Date(); const dow=today.getDay();
   const monday=new Date(today.getTime()-((dow+6)%7)*86400000);
-  $('weekOf').value = monday.toISOString().slice(0,10);
+  $('weekOf').value=monday.toISOString().slice(0,10);
   fillMonToFri();
 
   // listeners
@@ -165,12 +172,20 @@ function init(){
   $('exportCsv').addEventListener('click', exportCSV);
   $('importCsv').addEventListener('change', importCSV);
   $('printBtn').addEventListener('click', ()=>window.print());
+  $('weekOf').addEventListener('change', ()=>{ fillMonToFri(); restore(); });
+
+  // snapshot file save/load
+  $('saveJson').addEventListener('click', saveSnapshot);
+  $('loadJson').addEventListener('change', loadSnapshot);
+
+  // extra autosave on tab hide/close
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState!=='visible') save(); });
 
   restore();
 }
 init();
 
-/* Autosave */
+/* collect / fill */
 function collect(){
   return {
     employee:$('employee').value,
@@ -182,35 +197,44 @@ function collect(){
       desc: val(`[data-day="${i}"][data-field="desc"]`)
     })),
     remarks:$('remarks').value,
-    sign:$('sign').value
+    sign:$('sign').value,
+    _savedAt: new Date().toISOString()
   };
 }
 function fill(d){
-  $('employee').value = d.employee || 'T. Cherry';
-  $('weekOf').value = d.weekOf || $('weekOf').value;
-  $('clock').value = d.clock || '';
-  $('weekNote').value = d.weekNote || '';
+  $('employee').value=d.employee||'T. Cherry';
+  $('weekOf').value=d.weekOf||$('weekOf').value;
+  $('clock').value=d.clock||'';
+  $('weekNote').value=d.weekNote||'';
   (d.days||[]).forEach((r,i)=>{
-    const dateEl = sel(`[data-day="${i}"][data-field="date"]`);
-    const descEl = sel(`[data-day="${i}"][data-field="desc"]`);
-    if(dateEl) dateEl.value = r.date || dateEl.value;
-    if(descEl) descEl.value = r.desc || '';
+    const dateEl=sel(`[data-day="${i}"][data-field="date"]`);
+    const descEl=sel(`[data-day="${i}"][data-field="desc"]`);
+    if(dateEl) dateEl.value=r?.date||dateEl.value;
+    if(descEl) descEl.value=r?.desc||'';
   });
-  $('remarks').value = d.remarks || '';
-  $('sign').value = d.sign || '';
-}
-function save(){ localStorage.setItem(KEY, JSON.stringify(collect())); }
-function restore(){ try{ const raw=localStorage.getItem(KEY); if(raw){ fill(JSON.parse(raw)); } }catch{} }
-function resetWeek(confirmFlag){
-  if(confirmFlag && !confirm('Clear all entries and autosave for this week?')) return;
-  localStorage.removeItem(KEY); buildRows(); init();
+  $('remarks').value=d.remarks||'';
+  $('sign').value=d.sign||'';
 }
 
-/* CSV */
+/* autosave per week */
+function save(){ localStorage.setItem(wkKey(), JSON.stringify(collect())); }
+function restore(){
+  try{
+    const raw=localStorage.getItem(wkKey());
+    if(raw){ fill(JSON.parse(raw)); }
+  }catch(e){ /* ignore */ }
+}
+function resetWeek(confirmFlag){
+  if(confirmFlag && !confirm('Clear this week’s entries?')) return;
+  localStorage.removeItem(wkKey());
+  buildRows(); init();
+}
+
+/* CSV export/import (still handy) */
 function exportCSV(){
   const d=collect();
   const headers=["Week Of (Mon)","Attendant","Clock","Week Note","Day","Date","Job Description","End‑of‑Week Remarks","Signature"];
-  const rows = [];
+  const rows=[];
   DAYS.forEach((name,i)=>{
     rows.push([d.weekOf,d.employee,d.clock,d.weekNote,name,d.days[i]?.date||'',d.days[i]?.desc||'',d.remarks,d.sign]);
   });
@@ -225,21 +249,44 @@ function importCSV(evt){
     const first=parse(lines[1]);
     const data={weekOf:first[0],employee:first[1],clock:first[2],weekNote:first[3],days:Array(5).fill(null).map(()=>({date:'',desc:''})),remarks:'',sign:''};
     for(let i=1;i<lines.length && i<=5;i++){
-      const c=parse(lines[i]); // [weekOf, emp, clock, weekNote, Day, Date, Desc, Remarks, Sign]
-      const idx = i-1;
-      data.days[idx] = {date:c[5]||'', desc:c[6]||''};
-      data.remarks = c[7]||data.remarks;
-      data.sign = c[8]||data.sign;
+      const c=parse(lines[i]);
+      const idx=i-1;
+      data.days[idx]={date:c[5]||'',desc:c[6]||''};
+      data.remarks=c[7]||data.remarks;
+      data.sign=c[8]||data.sign;
     }
-    fill(data); save(); evt.target.value=''; alert('Imported.');
+    // Load into current week or switch weekOf to match file?
+    $('weekOf').value = data.weekOf || $('weekOf').value;
+    buildRows(); fillMonToFri(); fill(data); save(); evt.target.value=''; alert('Imported.');
   }catch(e){ alert('Could not import CSV.'); } };
+  r.readAsText(f);
+}
+
+/* JSON snapshot save/load */
+function saveSnapshot(){
+  const d=collect();
+  const name = `Daily_Activity_Week_${d.weekOf||'week'}.json`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));
+  a.download=name; a.click();
+}
+function loadSnapshot(evt){
+  const f=evt.target.files?.[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+    const d=JSON.parse(r.result);
+    // set weekOf to file’s week (so per-week key lines up) then fill
+    if(d.weekOf){ $('weekOf').value=d.weekOf; fillMonToFri(); }
+    buildRows(); fill(d); save();
+    evt.target.value=''; alert('Snapshot loaded.');
+  }catch(e){ alert('Could not read snapshot.'); } };
   r.readAsText(f);
 }
 
 /* helpers */
 function val(q){const el=document.querySelector(q); return el?el.value:'';}
 function sel(q){return document.querySelector(q);}
-function download(text,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'})); a.download=name; a.click(); }
+function download(text,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'})); a.download=name; a.click(); }
 </script>
 </body>
 </html>
