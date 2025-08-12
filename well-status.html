@@ -1,184 +1,295 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>FieldFlow — Well Status</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FieldFlow – Well Status</title>
 <style>
-  :root{--bg:#0f172a;--panel:#0b1222;--ink:#e5e7eb;--muted:#94a3b8;--line:rgba(255,255,255,.12);--accent:#38bdf8;--r:14px;--shadow:0 10px 30px rgba(0,0,0,.35)}
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial}
-  header{padding:18px;text-align:center;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01))}
-  h1{margin:6px 0 2px;font-size:22px}.muted{color:var(--muted);font-size:13px}
-  main{max-width:1080px;margin:18px auto 80px;padding:0 14px}
-  .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);margin-bottom:12px}
-  label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
-  select,input,textarea{background:#0a0f1f;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 10px;font-size:14px;width:100%}
-  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-  @media(max-width:900px){.row{grid-template-columns:1fr 1fr}}
-  @media(max-width:560px){.row{grid-template-columns:1fr}}
-  .acc{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));box-shadow:var(--shadow);margin-bottom:8px}
-  .acc-h{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(255,255,255,.04);cursor:pointer}
-  .acc-b{display:none;padding:12px;background:rgba(0,0,0,.25)}
-  .open .acc-b{display:block}
-  .buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-  button{background:linear-gradient(180deg,rgba(56,189,248,.25),rgba(56,189,248,.12));border:1px solid rgba(56,189,248,.5);color:white;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:700}
-  button.secondary{background:transparent;border:1px solid var(--line);color:var(--ink)}
-  .home{position:fixed;right:16px;bottom:16px}
-  .muter{color:var(--muted);font-size:12px}
+  :root{--ink:#e5e7eb;--muted:#9ca3af;--pri:#0B5FFF}
+  html,body{margin:0;background:#0b1220;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  header{padding:18px 16px;background:linear-gradient(180deg,#0B5FFF22,#0000)}
+  .brand{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  h1{margin:0;font-size:20px}
+  .tag{color:#9ca3af;margin-top:6px}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 14px 28px}
+  .card{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:14px;margin-top:14px}
+  .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+  input,select{background:#0b1220;border:1px solid #1f2937;color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px;outline:none}
+  input:focus,select:focus{border-color:var(--pri)}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  button{background:#0B5FFF;border:none;color:white;padding:10px 14px;border-radius:8px;cursor:pointer}
+  button.secondary{background:#0b1220;border:1px solid #1f2937}
+  button.warn{background:#b91c1c}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid #1f2937;padding:8px 6px;font-size:12px;text-align:left;vertical-align:middle}
+  th{color:#9fb2ff;position:sticky;top:0;background:#111827}
+  .status-open{color:#10b981;font-weight:600}
+  .status-closed{color:#ef4444;font-weight:600}
+  footer{border-top:1px solid #1f2937;padding:18px 16px;color:#9ca3af;font-size:12px}
+  footer .footwrap{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
+  a.link{color:#9fb2ff;text-decoration:none}
 </style>
 </head>
 <body>
 <header>
-  <h1>Well Status</h1>
-  <div class="muted">Set status for each well • Save as one combined file</div>
+  <div class="brand">
+    <div>
+      <h1>FieldFlow</h1>
+      <div class="tag">Well Status • Production wells only</div>
+    </div>
+    <div>
+      <button class="secondary" onclick="resetRows(true)">Reset Autosave</button>
+    </div>
+  </div>
 </header>
 
-<main>
+<div class="wrap">
   <div class="card">
-    <div class="row">
-      <div>
-        <label>Well Type</label>
-        <select id="wellType"><option value="production" selected>Production</option><option value="obs">OBS</option></select>
-      </div>
-      <div>
-        <label>Field</label>
-        <select id="fieldSel"></select>
-      </div>
-      <div>
-        <label>Date</label>
-        <input id="dateInput" type="text" readonly/>
-      </div>
-      <div>
-        <label>Attendant</label>
-        <select id="attendant"><option>T. Cherry</option><option>T. Ressler</option></select>
-      </div>
+    <div class="grid">
+      <label>Attendant
+        <select id="attendant"><option value="T. Cherry">T. Cherry</option><option value="T. Ressler">T. Ressler</option><option>Operator A</option><option>Operator B</option></select>
+      </label>
+      <label>Date <input type="date" id="date"></label>
+      <label>Time <input type="time" id="time"></label>
+      <div></div>
+
+      <label>Field
+        <select id="field"></select>
+      </label>
+      <label>Well (production only)
+        <select id="well"></select>
+      </label>
+      <label>IGS ID (auto)
+        <input id="igs" type="text" readonly placeholder="auto">
+      </label>
+      <label>Status
+        <select id="statusSel">
+          <option value="Open" selected>Open</option>
+          <option value="Closed">Closed</option>
+        </select>
+      </label>
     </div>
-    <div class="buttons" style="margin-top:10px">
-      <button id="expandAll" type="button">Expand All</button>
-      <button id="collapseAll" class="secondary" type="button">Collapse All</button>
-      <button id="saveAll" type="button">Save All Visible (Combined)</button>
+
+    <div class="actions">
+      <button id="add">Add Entry</button>
+      <button class="secondary" id="export">Export CSV</button>
+      <label class="secondary" style="padding:8px 12px;border-radius:8px;cursor:pointer">
+        Import CSV<input type="file" id="import" accept=".csv" style="display:none">
+      </label>
+      <button class="warn" id="clear">Clear Table</button>
     </div>
   </div>
 
-  <div id="wellsContainer"></div>
+  <div class="card" style="overflow:auto;max-height:60vh">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th><th>Time</th><th>Attendant</th>
+          <th>Field</th><th>Well</th><th>IGS_ID</th><th>Status</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</div>
 
-  <a class="home" href="index.html"><button class="secondary">← Home</button></a>
-</main>
+<footer>
+  <div class="footwrap">
+    <div>© 2025 FieldFlow | Underground Gas Storage</div>
+    <a class="link" href="terms.html">Terms of Use</a>
+  </div>
+</footer>
 
 <script>
-/* Wells (same lists as Annuals) */
-const productionWells = {
-  "Dixon": ["Evans 7","Evans 8","Evans 3","Evans 10","Evans 5","Evans 4-H","Evans 6","Cory 8","Cory 4","Cory 2","Cory 7","Cory 3","Cory 6","Cory 5","Cory 1"],
-  "Simpson Chapel": ["Blaker 1","Emery 2","Emery 1","Crays 8","Crays 5","Crays 4","Crays 3","Crays 7","Crays 2","Crays 6","Royal 6","Royal 5","Royal 4","Royal 7","Royal 1"],
-  "Mineral City": ["Rollison 4","Rollison 1","Rollison 2","G. Axe 6","Haines 4","Haines 1","Haines 2","Haines 3","G. Axe 1","Allen 1","G. Axe 2","G. Axe 4","G. Axe 5","G. Axe 3","J. Axe 1"]
-};
-const obsWells = {
-  "Dixon": ["Evans 1","Evans 2","Evans 9","Hendren 1","Mount 1","Dowden 1"],
-  "Mineral City": ["Horning 1","G Axe 7","Boruff 1","Floyd 1","Rollison 5","Foster 1"],
-  "Simpson Chapel": ["Blackmore 3","RH Stone 1","Royal 2","Royal 3","Rollison 5","Royal 9","S Blackmore 1","Blackmore 4","Royal 8"]
-};
-const STATUS_OPTS = ["OK","Monitor","Leak","Repair","Shut In","Down"];
+/* ============ Production wells (same order as your other pages) ============ */
+const PROD_WELLS = [
+  // DIXON
+  { field:"Dixon", name:"Evans 7",  number:"118537", order:101 },
+  { field:"Dixon", name:"Evans 8",  number:"118538", order:102 },
+  { field:"Dixon", name:"Evans 3",  number:"118508", order:103 },
+  { field:"Dixon", name:"Evans 10", number:"118507", order:104 },
+  { field:"Dixon", name:"Evans 5",  number:"118536", order:105 },
+  { field:"Dixon", name:"Evans 4-H",number:"118540", order:106 },
+  { field:"Dixon", name:"Evans 6",  number:"118541", order:107 },
+  { field:"Dixon", name:"Cory 8",   number:"118527", order:108 },
+  { field:"Dixon", name:"Cory 4",   number:"118526", order:109 },
+  { field:"Dixon", name:"Cory 2",   number:"118571", order:110 },
+  { field:"Dixon", name:"Cory 7",   number:"118574", order:111 },
+  { field:"Dixon", name:"Cory 3",   number:"118572", order:112 },
+  { field:"Dixon", name:"Cory 6",   number:"118573", order:113 },
+  { field:"Dixon", name:"Cory 5",   number:"118506", order:114 },
+  { field:"Dixon", name:"Cory 1",   number:"118505", order:115 },
 
-const $ = s => document.querySelector(s);
-const el=(t,a={},c=[])=>{const n=document.createElement(t);Object.entries(a).forEach(([k,v])=>k.startsWith("on")?n.addEventListener(k.slice(2),v):n.setAttribute(k,v));c.forEach(x=>n.appendChild(typeof x==="string"?document.createTextNode(x):x));return n;};
-const todayStr=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;};
-const uid=(p="WS")=>`${p}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+  // MINERAL CITY
+  { field:"Mineral City", name:"Rollison 4", number:"118002", order:201 },
+  { field:"Mineral City", name:"Rollison 1", number:"118016", order:202 },
+  { field:"Mineral City", name:"Rollison 2", number:"118017", order:203 },
+  { field:"Mineral City", name:"G. Axe 6",   number:"118005", order:204 },
+  { field:"Mineral City", name:"Haines 4",   number:"117997", order:205 },
+  { field:"Mineral City", name:"Haines 1",   number:"117994", order:206 },
+  { field:"Mineral City", name:"Haines 2",   number:"117995", order:207 },
+  { field:"Mineral City", name:"Haines 3",   number:"117996", order:208 },
+  { field:"Mineral City", name:"G. Axe 1",   number:"118004", order:209 },
+  { field:"Mineral City", name:"WS Allen 1", number:"117981", order:210 },
+  { field:"Mineral City", name:"G. Axe 2",   number:"118088", order:211 },
+  { field:"Mineral City", name:"G. Axe 4",   number:"118090", order:212 },
+  { field:"Mineral City", name:"G. Axe 5",   number:"118091", order:213 },
+  { field:"Mineral City", name:"G. Axe 3",   number:"118089", order:214 },
+  { field:"Mineral City", name:"J. Axe 1",   number:"118093", order:215 },
 
-let currentType="production", currentField="Dixon";
+  // SIMPSON CHAPEL
+  { field:"Simpson Chapel", name:"Blaker 1", number:"118023", order:301 },
+  { field:"Simpson Chapel", name:"Emery 2",  number:"118027", order:302 },
+  { field:"Simpson Chapel", name:"Emery 1",  number:"118028", order:303 },
+  { field:"Simpson Chapel", name:"Crays 8",  number:"118025", order:304 },
+  { field:"Simpson Chapel", name:"Crays 1",  number:"118024", order:305 },
+  { field:"Simpson Chapel", name:"Crays 5",  number:"118136", order:306 },
+  { field:"Simpson Chapel", name:"Crays 4",  number:"118135", order:307 },
+  { field:"Simpson Chapel", name:"Crays 3",  number:"118134", order:308 },
+  { field:"Simpson Chapel", name:"Crays 7",  number:"118138", order:309 },
+  { field:"Simpson Chapel", name:"Crays 2",  number:"118133", order:310 },
+  { field:"Simpson Chapel", name:"Crays 6",  number:"118137", order:311 },
+  { field:"Simpson Chapel", name:"Royal 6",  number:"118143", order:312 },
+  { field:"Simpson Chapel", name:"Royal 5",  number:"118142", order:313 },
+  { field:"Simpson Chapel", name:"Royal 4",  number:"118030", order:314 },
+  { field:"Simpson Chapel", name:"Royal 7",  number:"118031", order:315 },
+  { field:"Simpson Chapel", name:"Royal 1",  number:"118029", order:316 }
+];
 
-function init(){
-  $("#dateInput").value=todayStr();
-  buildFieldSelect(); renderWells();
-  $("#wellType").addEventListener("change", e=>{ currentType=e.target.value; buildFieldSelect(); renderWells(); });
-  $("#fieldSel").addEventListener("change", e=>{ currentField=e.target.value; renderWells(); });
-  $("#expandAll").addEventListener("click", ()=>setAll(true));
-  $("#collapseAll").addEventListener("click", ()=>setAll(false));
-  $("#saveAll").addEventListener("click", saveBatch);
-}
+/* ============ State / Elements ============ */
+const AUTOSAVE_KEY='ff_wellstatus_autosave_v1';
+const FIELDS=[...new Set(PROD_WELLS.map(w=>w.field))];
 
-function buildFieldSelect(){
-  const fs=$("#fieldSel"); fs.innerHTML="";
-  const list = currentType==="production" ? Object.keys(productionWells) : Object.keys(obsWells);
-  list.forEach((f,i)=>{ fs.appendChild(new Option(f,f)); if(i===0) currentField=f; });
-  fs.value=currentField;
-}
+const state={rows:[]};
+const $=id=>document.getElementById(id);
+const rowsTbody=$('rows');
 
-function renderWells(){
-  const cont=$("#wellsContainer"); cont.innerHTML="";
-  const wells = (currentType==="production"? productionWells: obsWells)[currentField] || [];
-  wells.forEach(well=>{
-    cont.appendChild(buildWellAcc(currentField, well));
+const attendantEl=$('attendant'), dateEl=$('date'), timeEl=$('time'),
+fieldSel=$('field'), wellSel=$('well'), igsEl=$('igs'), statusSel=$('statusSel');
+
+FIELDS.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;fieldSel.appendChild(o);});
+(function initDT(){
+  const n=new Date();
+  dateEl.value=n.toISOString().slice(0,10);
+  timeEl.value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  refreshWellDropdown(); loadState(); renderRows();
+})();
+fieldSel.addEventListener('change', ()=>{refreshWellDropdown(); syncWellMeta(); saveState();});
+wellSel.addEventListener('change', ()=>{syncWellMeta(); saveState();});
+['input','change'].forEach(ev=>{
+  [attendantEl,dateEl,timeEl,statusSel].forEach(el=>el.addEventListener(ev, saveState));
+});
+
+$('add').addEventListener('click', addSelectedRow);
+$('export').addEventListener('click', ()=>exportCSV(state.rows, `Well_Status_${today()}.csv`));
+$('import').addEventListener('change', importCSV);
+$('clear').addEventListener('click', ()=>resetRows(true));
+window.addEventListener('beforeunload', (e)=>{
+  if (state.rows && state.rows.length){ saveState(); e.preventDefault(); e.returnValue=''; }
+});
+
+/* ============ Dropdown helpers ============ */
+function wellsForField(f){ return PROD_WELLS.filter(w=>w.field===f).sort((a,b)=>(a.order??0)-(b.order??0)); }
+function refreshWellDropdown(){
+  wellSel.innerHTML='';
+  wellsForField(fieldSel.value).forEach(w=>{
+    const opt=document.createElement('option');
+    opt.value=w.number; opt.textContent=w.name; opt.dataset.name=w.name; opt.dataset.field=w.field;
+    wellSel.appendChild(opt);
   });
 }
-
-function buildWellAcc(field, well){
-  const id=`${currentType}-${field}-${well}`.replace(/\s+/g,"_");
-  const acc=el("div",{class:"acc"});
-  const head=el("div",{class:"acc-h",onClick:()=>acc.classList.toggle("open")},[
-    el("div",{},[el("strong",{},[well])," ",el("span",{class:"muter"},[`(${field})`])]),
-    el("span",{class:"muter"},["Status: ", el("span",{id:`statusTxt-${id}`},["OK"])])
-  ]);
-  const body=el("div",{class:"acc-b"},[
-    groupSelect(`status-${id}`,"Status", STATUS_OPTS, "OK", ()=>{$(`#statusTxt-${id}`).textContent=$(`#status-${id}`).value;}),
-    groupText(`notes-${id}`,"Notes (optional)")
-  ]);
-  acc.appendChild(head); acc.appendChild(body);
-  return acc;
+function syncWellMeta(){
+  const opt=wellSel.options[wellSel.selectedIndex];
+  igsEl.value = opt ? opt.value : '';
 }
 
-function groupSelect(id,label,opts,def,onchange){
-  const s=el("select",{id,onchange},opts.map(o=>el("option",{selected:o===def?true:undefined},[o])));
-  return el("div",{},[el("label",{},[label]), s]);
-}
-function groupText(id,label){ return el("div",{},[el("label",{},[label]), el("textarea",{id,rows:"3"})]); }
-function setAll(open){ document.querySelectorAll(".acc").forEach(a=>a.classList.toggle("open", open)); }
-
-function collectOne(field, well, id){
+/* ============ Row ops ============ */
+function mkRow(field,name,igs){
   return {
-    recordType:"Well Status",
-    wellType: currentType==="production" ? "Production" : "OBS",
-    field, well,
-    date: $("#dateInput").value,
-    attendant: $("#attendant").value,
-    status: $("#status-"+id).value,
-    notes: $("#notes-"+id).value,
-    savedAt: new Date().toISOString()
+    date:dateEl.value,time:timeEl.value,attendant:attendantEl.value,
+    field,well:name,igs:igs||'',status:statusSel.value
   };
 }
-
-function saveBatch(){
-  const cont=$("#wellsContainer");
-  const entries=[];
-  cont.querySelectorAll(".acc").forEach(acc=>{
-    const well = acc.querySelector("strong")?.textContent?.trim() || "Unknown";
-    const id = `${currentType}-${currentField}-${well}`.replace(/\s+/g,"_");
-    entries.push(collectOne(currentField, well, id));
+function addSelectedRow(){
+  const opt=wellSel.options[wellSel.selectedIndex];
+  if(!opt){ alert('Pick a field and well first.'); return; }
+  state.rows.push(mkRow(opt.dataset.field,opt.dataset.name,opt.value));
+  renderRows(); saveState();
+}
+function deleteRow(idx){
+  if(!confirm('Delete this row?')) return;
+  state.rows.splice(idx,1); renderRows(); saveState();
+}
+function renderRows(){
+  rowsTbody.innerHTML='';
+  const orderMap=new Map(PROD_WELLS.map((w,i)=>[w.field+'|'+w.name, w.order??i]));
+  state.rows.sort((a,b)=>{
+    if(a.field!==b.field) return a.field<b.field?-1:1;
+    return (orderMap.get(a.field+'|'+a.well)||0)-(orderMap.get(b.field+'|'+b.well)||0);
   });
-  if(!entries.length){ alert("No wells found."); return; }
-  const key="wellStatusBatches";
-  const arr=JSON.parse(localStorage.getItem(key)||"[]");
-  arr.push({
-    recordType:"Well Status",
-    batch:true,
-    batchId: uid(),
-    wellType: entries[0]?.wellType || "",
-    field: entries[0]?.field || currentField,
-    date: $("#dateInput").value,
-    attendant: $("#attendant").value,
-    count: entries.length,
-    entries,
-    savedAt: new Date().toISOString()
+  state.rows.forEach((r,idx)=>{
+    const cls = r.status==='Closed' ? 'status-closed' : 'status-open';
+    const tr=document.createElement('tr');
+    tr.innerHTML = `
+      <td>${e(r.date)}</td><td>${e(r.time)}</td><td>${e(r.attendant)}</td>
+      <td>${e(r.field)}</td><td>${e(r.well)}</td><td>${e(r.igs)}</td>
+      <td class="${cls}">${e(r.status)}</td>
+      <td><button class="secondary" onclick="deleteRow(${idx})">Delete</button></td>`;
+    rowsTbody.appendChild(tr);
   });
-  localStorage.setItem(key, JSON.stringify(arr));
-  toast(`Saved ${entries.length} wells as one combined file`);
 }
 
-function toast(msg){
-  let t=document.getElementById("toast");
-  if(!t){t=el("div",{id:"toast",style:"position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.5);padding:10px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);font-weight:700;backdropFilter:"+"blur(6px);zIndex:9999"},[msg]);document.body.appendChild(t);}else t.textContent=msg;
-  t.style.opacity="1"; setTimeout(()=>{t.style.transition="opacity .6s"; t.style.opacity="0";},1200);
+/* ============ CSV I/O ============ */
+function exportCSV(rows, filename){
+  const headers=["Date","Time","Attendant","Field","Well","IGS_ID","Status"];
+  const csv=[headers,...rows.map(r=>[
+    r.date,r.time,r.attendant,r.field,r.well,r.igs,r.status
+  ])].map(cols=>cols.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  download(csv, filename);
 }
-document.addEventListener("DOMContentLoaded", init);
+function download(text, name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8;'}));
+  a.download=name; a.click();
+}
+function importCSV(evt){
+  const f=evt.target.files?.[0]; if(!f) return; const r=new FileReader();
+  r.onload=()=>{const t=r.result, L=t.split(/\r?\n/).filter(l=>l.trim().length); if(!L.length) return;
+    for(let i=1;i<L.length;i++){
+      const c=parseCSV(L[i]); if(!c) continue;
+      state.rows.push({
+        date:c[0],time:c[1],attendant:c[2],field:c[3],well:c[4],igs:c[5],status:c[6]
+      });
+    } renderRows(); evt.target.value=''; saveState(); alert('Imported.');
+  }; r.readAsText(f);
+}
+function parseCSV(line){
+  const out=[];let cur='';let q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i],nx=line[i+1];
+    if(ch=='"'&&q&&nx=='"'){cur+='"';i++;continue;}
+    if(ch=='"'){q=!q;continue;}
+    if(ch==','&&!q){out.push(cur);cur='';continue;}
+    cur+=ch;
+  } out.push(cur); return out;
+}
+
+/* ============ Autosave / Reset ============ */
+function saveState(){ localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(state.rows||[])); }
+function loadState(){
+  try{ const raw=localStorage.getItem(AUTOSAVE_KEY);
+    if(!raw) return; const rows=JSON.parse(raw);
+    if(Array.isArray(rows)){ state.rows=rows; }
+  }catch(e){ /* ignore */ }
+}
+function resetRows(confirmNeeded){
+  if(confirmNeeded && !confirm('Clear table rows and autosave? Make sure you exported first.')) return;
+  state.rows=[]; renderRows(); saveState();
+}
+
+/* utils */
+function today(){return new Date().toISOString().slice(0,10);}
+function e(s){return String(s??'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&gt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
 </script>
 </body>
 </html>
