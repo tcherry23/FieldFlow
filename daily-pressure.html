@@ -140,12 +140,12 @@ const WELLS = [
   { field:"Simpson Chapel", name:"Emery 2",  number:"118027", orifice:0.7500, order:302 },
   { field:"Simpson Chapel", name:"Emery 1",  number:"118028", orifice:0.7500, order:303 },
   { field:"Simpson Chapel", name:"Crays 8",  number:"118025", orifice:1.0000, order:304 },
-  { field:"Simpson Chapel", name:"Crays 1",  number:"",       orifice:0.5000, order:305 },  /* fill IGS when ready */
+  { field:"Simpson Chapel", name:"Crays 1",  number:"118024",       orifice:0.5000, order:305 },  /* add IGS when ready */
   { field:"Simpson Chapel", name:"Crays 5",  number:"118136", orifice:0.7500, order:306 },
   { field:"Simpson Chapel", name:"Crays 4",  number:"118135", orifice:0.2500, order:307 },
   { field:"Simpson Chapel", name:"Crays 3",  number:"118134", orifice:0.7500, order:308 },
   { field:"Simpson Chapel", name:"Crays 7",  number:"118138", orifice:1.0000, order:309 },
-  { field:"Simpson Chapel", name:"Crays 2",  number:"",       orifice:1.0000, order:310 },  /* fill IGS when ready */
+  { field:"Simpson Chapel", name:"Crays 2",  number:"118133",       orifice:1.0000, order:310 },  /* add IGS when ready */
   { field:"Simpson Chapel", name:"Crays 6",  number:"118137", orifice:1.0000, order:311 },
   { field:"Simpson Chapel", name:"Royal 6",  number:"118143", orifice:0.6250, order:312 },
   { field:"Simpson Chapel", name:"Royal 5",  number:"118142", orifice:0.5000, order:313 },
@@ -171,11 +171,11 @@ FIELDS.forEach(f=>{const o=document.createElement('option');o.value=f;o.textCont
   const n=new Date();
   dateEl.value=n.toISOString().slice(0,10);
   timeEl.value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
-  loadFiles(); loadState(); // restore autosaved rows & files
+  loadFiles(); loadState();
 })();
 fieldSel.addEventListener('change', ()=>{refreshWells(); afterChange();});
 wellSel.addEventListener('change', ()=>{syncWellMeta(); afterChange();});
-[orificeEl,upEl,dnEl,notesEl,lineEl,dateEl,timeEl,attendantEl,modeEl].forEach(x=>x.addEventListener('change', afterChange));
+[orificeEl,upEl,dnEl,notesEl,lineEl,dateEl,timeEl,attendantEl,modeEl].forEach(x=>x.addEventListener('input', recalc));
 $('add').addEventListener('click', addRow);
 $('export').addEventListener('click', ()=>exportCSV(state.rows, `Daily_Pressure_${today()}.csv`));
 $('import').addEventListener('change', importCSV);
@@ -207,15 +207,34 @@ function syncWellMeta(){
   const opt=wellSel.options[wellSel.selectedIndex]; if(!opt){igsEl.value='';orificeEl.value='';return;}
   igsEl.value=opt.value; orificeEl.value=Number(opt.dataset.orifice||0).toFixed(4); recalc();
 }
+function blankCalc(){or2El.textContent='—';dpEl.textContent='—';dph2oEl.textContent='—';mcfEl.textContent='—';flagEl.textContent='—';}
 function recalc(){
-  const a=+orificeEl.value||0, up=+upEl.value||0, dn=+dnEl.value||0;
-  const dp=up-dn, dpH2O=dp*27.7, or2=a*a;
-  const mcf=(a>0 && up>0 && dpH2O>0)? 0.2628*or2*Math.sqrt(up*dpH2O) : 0;
-  or2El.textContent=or2?or2.toFixed(4):'—';
-  dpEl.textContent=(up||dn)?dp.toFixed(1):'—';
-  dph2oEl.textContent=(up||dn)?dpH2O.toFixed(1):'—';
-  mcfEl.textContent=mcf?mcf.toFixed(3):'—';
-  let flag='—'; if(dp>=15 && mcf<1) flag='RED: Possible hydrate / line block'; else if(dp>=10 && mcf<3) flag='YELLOW: Watch – d/p high, flow low'; flagEl.textContent=flag;
+  const a=parseFloat(orificeEl.value);
+  const up=upEl.value===''?NaN:parseFloat(upEl.value);
+  const dn=dnEl.value===''?NaN:parseFloat(dnEl.value);
+
+  if(isNaN(a)){ blankCalc(); return; }
+
+  // Show orifice^2 immediately
+  const or2=a*a; or2El.textContent=or2?or2.toFixed(4):'—';
+
+  // Only calculate dP/MCF once BOTH pressures are present
+  if(isNaN(up) || isNaN(dn)){
+    dpEl.textContent='—'; dph2oEl.textContent='—'; mcfEl.textContent='—'; flagEl.textContent='—'; return;
+  }
+
+  const dp = up - dn;                          // ΔP (psi)
+  const dpH2O = dp * 27.7;                     // ΔP (in H2O)
+  const mcf = (a>0 && up>0 && dpH2O>0) ? 0.2628 * or2 * Math.sqrt(up * dpH2O) : 0;
+
+  dpEl.textContent=dp.toFixed(1);
+  dph2oEl.textContent=dpH2O.toFixed(1);
+  mcfEl.textContent = mcf ? mcf.toFixed(3) : '—';
+
+  let flag='—';
+  if(dp>=15 && mcf<1) flag='RED: Possible hydrate / line block';
+  else if(dp>=10 && mcf<3) flag='YELLOW: Watch – d/p high, flow low';
+  flagEl.textContent=flag;
 }
 
 /* --------- Table rows ---------- */
@@ -330,7 +349,7 @@ function downloadAllFiles(){
 
 /* Reset the day (clear rows + autosave) */
 function resetDay(){
-  if(!confirm('Clear all rows for today? Make sure you saved/ exported first.')) return;
+  if(!confirm('Clear all rows for today? Make sure you saved/exported first.')) return;
   state.rows = []; renderRows(); saveState(); status.textContent='Cleared';
 }
 
