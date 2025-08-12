@@ -1,206 +1,227 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Daily Pressure</title>
-  <style>
-    body { font-family: Arial, sans-serif; background:#f7f9fc; margin:0; }
-    header { background:#004080; color:#fff; padding:14px 16px; }
-    header h1 { margin:0; font-size:1.2rem; }
-    .wrap { max-width:900px; margin:20px auto; background:#fff; padding:16px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.08); }
-    .grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
-    label { font-weight:600; font-size:.9rem; color:#233; display:block; margin-bottom:6px; }
-    input[type="number"], input[type="date"], input[type="text"], select, textarea {
-      width:100%; padding:10px; border:1px solid #cfd7e3; border-radius:8px; box-sizing:border-box; background:#fff;
-    }
-    textarea { min-height:80px; }
-    .row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
-    .btn { background:#004080; color:#fff; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; }
-    .btn.secondary { background:#e9edf7; color:#123; }
-    .hint { font-size:.85rem; color:#667; margin-top:6px; }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FieldFlow – Daily Pressure</title>
+<style>
+  :root{--ink:#e5e7eb;--muted:#9ca3af;--pri:#0B5FFF}
+  html,body{margin:0;background:#0b1220;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:linear-gradient(90deg,#0B5FFF22,#12B88622)}
+  h1{font-size:18px;margin:0}
+  .wrap{max-width:1100px;margin:16px auto;padding:0 12px}
+  .card{background:#111827;border:1px solid #1f2937;border-radius:10px;padding:12px 14px;margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  .grid .full{grid-column:1/-1}
+  label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+  input,select{background:#0b1220;border:1px solid #1f2937;color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px;outline:none}
+  input:focus,select:focus{border-color:var(--pri)}
+  .calc{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:10px}
+  .calc>div{background:#0b1220;border:1px solid #1f2937;border-radius:8px;padding:10px 12px}
+  .calc b{display:block;color:#9ca3af;font-size:12px;margin-bottom:4px}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  button{background:#0B5FFF;border:none;color:white;padding:10px 14px;border-radius:8px;cursor:pointer}
+  button.secondary{background:#0b1220;border:1px solid #1f2937}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid #1f2937;padding:10px 8px;font-size:13px;text-align:left}
+  th{color:#9fb2ff}
+  tr.flag-yellow{background:#2f2a12} tr.flag-red{background:#331b1b}
+</style>
 </head>
 <body>
-  <header><h1>Daily Pressure</h1></header>
+<header><h1>FieldFlow – Daily Pressure</h1><span id="status" style="opacity:.75">Ready</span></header>
 
-  <div class="wrap">
+<div class="wrap">
+  <div class="card">
     <div class="grid">
-      <div>
-        <label for="field">Field</label>
-        <select id="field">
-          <option value="">Select Field</option>
-          <option value="Dixon">Dixon</option>
-          <option value="Mineral City">Mineral City</option>
-          <option value="Simpson Chapel">Simpson Chapel</option>
-        </select>
-      </div>
+      <label>Attendant
+        <select id="attendant"><option value="T. Cherry">T. Cherry</option><option>Operator A</option><option>Operator B</option></select>
+      </label>
+      <label>Date <input type="date" id="date"></label>
+      <label>Time <input type="time" id="time"></label>
 
-      <div>
-        <label for="well">Well</label>
-        <select id="well" disabled>
-          <option value="">Select Well</option>
-        </select>
-        <div class="hint" id="wellMeta"></div>
-      </div>
+      <label>Field <select id="field"></select></label>
+      <label>Well <select id="well"></select></label>
+      <label>IGS ID (auto) <input id="igs" type="text" readonly></label>
+      <label>Orifice (in) (auto; editable) <input id="orifice" type="number" step="0.0001" inputmode="decimal"></label>
+      <label>Line Group (optional) <input id="line" type="text" placeholder="e.g., Crays Segment"></label>
 
-      <div>
-        <label for="attendant">Attendant</label>
-        <select id="attendant">
-          <option value="T. Cherry">T. Cherry</option>
-          <option value="T. Ressler">T. Ressler</option>
-        </select>
-      </div>
-
-      <div>
-        <label for="date">Date</label>
-        <input id="date" type="date"/>
-      </div>
-
-      <div>
-        <label for="upstream">Upstream (PSI)</label>
-        <input id="upstream" type="number" step="0.01" inputmode="decimal" />
-      </div>
-
-      <div>
-        <label for="downstream">Downstream (PSI)</label>
-        <input id="downstream" type="number" step="0.01" inputmode="decimal" />
-      </div>
-
-      <div>
-        <label for="differential">Differential (PSI)</label>
-        <input id="differential" type="number" step="0.01" inputmode="decimal" />
-        <div class="hint">Auto-calculates = Upstream − Downstream (editable)</div>
-      </div>
-
-      <div>
-        <label for="dpH2O">ΔP (in H₂O)</label>
-        <input id="dpH2O" type="number" step="0.01" inputmode="decimal" />
-      </div>
-
-      <div>
-        <label for="orifice">Orifice (in)</label>
-        <input id="orifice" type="number" step="0.0001" inputmode="decimal" />
-        <div class="hint">Auto-fills from master list; editable</div>
-      </div>
-
-      <div>
-        <label for="mcfhr">MCF / hr</label>
-        <input id="mcfhr" type="number" step="0.01" inputmode="decimal" />
-      </div>
+      <label>Upstream PSI <input id="up" type="number" step="0.1" inputmode="decimal"></label>
+      <label>Downstream PSI <input id="dn" type="number" step="0.1" inputmode="decimal"></label>
+      <label>Mode
+        <select id="mode"><option>Withdrawal</option><option>Injection</option><option>Idle</option><option>Shut-In</option></select>
+      </label>
+      <label class="full">Notes <input id="notes" type="text" placeholder="Optional remarks"></label>
     </div>
 
-    <div style="margin-top:12px;">
-      <label for="notes">Notes</label>
-      <textarea id="notes" placeholder="Optional notes..."></textarea>
+    <div class="calc">
+      <div><b>Orifice²</b><span id="or2">—</span></div>
+      <div><b>ΔP (psi)</b><span id="dp">—</span></div>
+      <div><b>ΔP (H₂O)</b><span id="dph2o">—</span></div>
+      <div><b>MCF/hr</b><span id="mcf">—</span></div>
+      <div><b>Flag</b><span id="flag">—</span></div>
     </div>
 
-    <div class="row">
-      <button class="btn" type="button" id="saveDaily">Save</button>
-      <button class="btn secondary" type="button" onclick="location.href='index.html'">Home</button>
+    <div class="actions">
+      <button id="add">Add Row</button>
+      <button class="secondary" id="export">Export CSV</button>
+      <label class="secondary" style="padding:8px 12px;border-radius:8px;cursor:pointer">
+        Import CSV<input type="file" id="import" accept=".csv" style="display:none">
+      </label>
     </div>
   </div>
 
-  <!-- Shared backend -->
-  <script src="app.js" defer></script>
-  <script>
-    // Wait a tick to ensure app.js loaded
-    document.addEventListener('DOMContentLoaded', () => {
-      // Set today's date
-      const dateEl = document.getElementById('date');
-      dateEl.value = new Date().toISOString().slice(0,10);
+  <div class="card">
+    <table>
+      <thead>
+      <tr>
+        <th>Date</th><th>Time</th><th>Attendant</th><th>Field</th><th>Well</th><th>IGS_ID</th>
+        <th>Orifice (in)</th><th>Up</th><th>Down</th><th>ΔP psi</th><th>ΔP H₂O</th><th>MCF/hr</th><th>Mode</th><th>Line</th><th>Notes</th>
+      </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</div>
 
-      const fieldEl = document.getElementById('field');
-      const wellEl  = document.getElementById('well');
-      const metaEl  = document.getElementById('wellMeta');
+<script>
+/* ================= WELLS (Production only) =================
+   ORDER matches your Annuals sheets.
+*/
+const WELLS = [
+  // --------- DIXON (Evans first, then Corys) ---------
+  { field:"Dixon", name:"Evans 7",  number:"118537", orifice:1.0000, order:101 },
+  { field:"Dixon", name:"Evans 8",  number:"118538", orifice:1.0000, order:102 },
+  { field:"Dixon", name:"Evans 3",  number:"118508", orifice:1.0000, order:103 },
+  { field:"Dixon", name:"Evans 10", number:"118507", orifice:1.0000, order:104 },
+  { field:"Dixon", name:"Evans 5",  number:"118536", orifice:1.2500, order:105 },
+  { field:"Dixon", name:"Evans 4-H",number:"118540", orifice:1.0000, order:106 },
+  { field:"Dixon", name:"Evans 6",  number:"118541", orifice:1.0000, order:107 },
+  { field:"Dixon", name:"Cory 8",   number:"118527", orifice:1.0000, order:108 },
+  { field:"Dixon", name:"Cory 4",   number:"118526", orifice:1.0000, order:109 },
+  { field:"Dixon", name:"Cory 2",   number:"118571", orifice:1.0000, order:110 },
+  { field:"Dixon", name:"Cory 7",   number:"118574", orifice:1.0000, order:111 },
+  { field:"Dixon", name:"Cory 3",   number:"118572", orifice:1.0000, order:112 },
+  { field:"Dixon", name:"Cory 6",   number:"118573", orifice:1.0000, order:113 },
+  { field:"Dixon", name:"Cory 5",   number:"118506", orifice:1.0000, order:114 },
+  { field:"Dixon", name:"Cory 1",   number:"118505", orifice:1.0000, order:115 },
 
-      function populateWells() {
-        const field = fieldEl.value;
-        wellEl.innerHTML = '<option value="">Select Well</option>';
-        wellEl.disabled = !field;
-        metaEl.textContent = '';
-        if (!field) return;
+  // --------- MINERAL CITY (photo order you sent) ---------
+  { field:"Mineral City", name:"Rollison 4", number:"118002", orifice:0.7500, order:201 },
+  { field:"Mineral City", name:"Rollison 1", number:"118016", orifice:0.7500, order:202 },
+  { field:"Mineral City", name:"Rollison 2", number:"118017", orifice:0.7500, order:203 },
+  { field:"Mineral City", name:"G. Axe 6",   number:"118005", orifice:1.0000, order:204 },
+  { field:"Mineral City", name:"Haines 4",   number:"117997", orifice:0.3750, order:205 },
+  { field:"Mineral City", name:"Haines 1",   number:"117994", orifice:1.0000, order:206 },
+  { field:"Mineral City", name:"Haines 2",   number:"117995", orifice:1.0000, order:207 },
+  { field:"Mineral City", name:"Haines 3",   number:"117996", orifice:1.0000, order:208 },
+  { field:"Mineral City", name:"G. Axe 1",   number:"118004", orifice:1.0000, order:209 },
+  { field:"Mineral City", name:"WS Allen 1", number:"117981", orifice:1.0000, order:210 },
+  { field:"Mineral City", name:"G. Axe 2",   number:"118088", orifice:0.7500, order:211 },
+  { field:"Mineral City", name:"G. Axe 4",   number:"118090", orifice:0.7500, order:212 },
+  { field:"Mineral City", name:"G. Axe 5",   number:"118091", orifice:1.0000, order:213 },
+  { field:"Mineral City", name:"G. Axe 3",   number:"118089", orifice:0.5000, order:214 },
+  { field:"Mineral City", name:"J. Axe 1",   number:"118093", orifice:1.0000, order:215 },
 
-        // Ensure registry ready, then fill
-        if (window.FieldFlow && FieldFlow.wellsForField) {
-          const wells = FieldFlow.wellsForField(field);
-          wells.forEach(w => {
-            const opt = document.createElement('option');
-            opt.value = w; opt.textContent = w;
-            wellEl.appendChild(opt);
-          });
-        }
-      }
+  // --------- SIMPSON CHAPEL (sheet order you sent) ---------
+  { field:"Simpson Chapel", name:"Blaker 1", number:"118023", orifice:0.5000, order:301 },
+  { field:"Simpson Chapel", name:"Emery 2",  number:"118027", orifice:0.7500, order:302 },
+  { field:"Simpson Chapel", name:"Emery 1",  number:"118028", orifice:0.7500, order:303 },
+  { field:"Simpson Chapel", name:"Crays 8",  number:"118025", orifice:1.0000, order:304 },
+  { field:"Simpson Chapel", name:"Crays 1",  number:"118024",       orifice:0.5000, order:305 },  // add IGS when you have it
+  { field:"Simpson Chapel", name:"Crays 5",  number:"118136", orifice:0.7500, order:306 },
+  { field:"Simpson Chapel", name:"Crays 4",  number:"118135", orifice:0.2500, order:307 },
+  { field:"Simpson Chapel", name:"Crays 3",  number:"118134", orifice:0.7500, order:308 },
+  { field:"Simpson Chapel", name:"Crays 7",  number:"118138", orifice:1.0000, order:309 },
+  { field:"Simpson Chapel", name:"Crays 2",  number:"118133",       orifice:1.0000, order:310 },  // add IGS when you have it
+  { field:"Simpson Chapel", name:"Crays 6",  number:"118137", orifice:1.0000, order:311 },
+  { field:"Simpson Chapel", name:"Royal 6",  number:"118143", orifice:0.6250, order:312 },
+  { field:"Simpson Chapel", name:"Royal 5",  number:"118142", orifice:0.5000, order:313 },
+  { field:"Simpson Chapel", name:"Royal 4",  number:"118030", orifice:0.5000, order:314 },
+  { field:"Simpson Chapel", name:"Royal 7",  number:"118031", orifice:1.0000, order:315 },
+  { field:"Simpson Chapel", name:"Royal 1",  number:"118029", orifice:0.5000, order:316 }
+];
 
-      fieldEl.addEventListener('change', () => {
-        populateWells();
-      });
+const FIELDS=[...new Set(WELLS.map(w=>w.field))];
+const state={rows:[]};
+const $=id=>document.getElementById(id);
+const dateEl=$('date'),timeEl=$('time'),attendantEl=$('attendant'),fieldSel=$('field'),wellSel=$('well'),
+igsEl=$('igs'),orificeEl=$('orifice'),lineEl=$('line'),upEl=$('up'),dnEl=$('dn'),modeEl=$('mode'),notesEl=$('notes'),
+or2El=$('or2'),dpEl=$('dp'),dph2oEl=$('dph2o'),mcfEl=$('mcf'),flagEl=$('flag'),rowsTbody=$('rows'),status=$('status');
 
-      wellEl.addEventListener('change', () => {
-        const field = fieldEl.value;
-        const well  = wellEl.value;
-        if (!field || !well || !window.FieldFlow) return;
-        const id   = FieldFlow.resolveWellId(field, well);
-        const ori  = FieldFlow.resolveOrifice(field, well);
-        document.getElementById('orifice').value = ori ? Number(ori).toFixed(4) : '';
-        metaEl.textContent = id ? `Well # ${id}` : '';
-      });
+FIELDS.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;fieldSel.appendChild(o);});
+(function initDT(){const n=new Date();dateEl.value=n.toISOString().slice(0,10);timeEl.value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');})();
 
-      // Differential auto-calc on change of upstream/downstream
-      function recalcDiff() {
-        const up = parseFloat(document.getElementById('upstream').value || '0');
-        const dn = parseFloat(document.getElementById('downstream').value || '0');
-        if (!isNaN(up) && !isNaN(dn)) {
-          document.getElementById('differential').value = (up - dn).toFixed(2);
-        }
-      }
-      document.getElementById('upstream').addEventListener('input', recalcDiff);
-      document.getElementById('downstream').addEventListener('input', recalcDiff);
+fieldSel.addEventListener('change', refreshWells);
+wellSel.addEventListener('change', syncWellMeta);
+[orificeEl,upEl,dnEl].forEach(x=>x.addEventListener('input', recalc));
+$('add').addEventListener('click', addRow);
+$('export').addEventListener('click', exportCSV);
+$('import').addEventListener('change', importCSV);
 
-      // Save handler
-      document.getElementById('saveDaily').addEventListener('click', function () {
-        const get = id => document.getElementById(id);
-        const num = v => (v === '' || v == null) ? 0 : Number(v);
+refreshWells(); recalc();
 
-        const payload = {
-          field:      get('field').value || '',
-          well:       get('well').value || '',
-          attendant:  get('attendant').value || '',
-          date:       get('date').value || new Date().toISOString().slice(0,10),
-          upstream:   num(get('upstream').value),
-          downstream: num(get('downstream').value),
-          differential: num(get('differential').value),
-          dpH2O:      num(get('dpH2O').value),
-          orifice:    num(get('orifice').value),
-          mcfhr:      num(get('mcfhr').value),
-          notes:      get('notes').value || ''
-        };
-
-        if (!payload.field) { alert('Select a Field.'); return; }
-        if (!payload.well)  { alert('Select a Well.'); return; }
-
-        if (!window.FieldFlow || !FieldFlow.saveDailyPressure) {
-          alert('Backend not loaded. Make sure app.js is included.'); return;
-        }
-
-        FieldFlow.saveDailyPressure(payload);
-        alert('Daily pressure saved.');
-
-        // Optional: clear numeric inputs after save
-        ['upstream','downstream','differential','dpH2O','mcfhr','notes'].forEach(id=>{
-          const el = get(id); if (el) el.value = '';
-        });
-        // keep date, field, well, attendant for faster next entry
-      });
-
-      // If app.js is still loading registry, populate after init
-      if (window.FieldFlow && FieldFlow.init) {
-        FieldFlow.init().then(() => {
-          // If user already picked field before init finished
-          if (fieldEl.value) populateWells();
-        });
-      }
-    });
-  </script>
+function wellsForField(f){return WELLS.filter(w=>w.field===f).sort((a,b)=>(a.order??9999)-(b.order??9999));}
+function refreshWells(){
+  wellSel.innerHTML='';
+  wellsForField(fieldSel.value).forEach(w=>{
+    const opt=document.createElement('option');
+    opt.value=w.number; opt.textContent=w.name; opt.dataset.name=w.name; opt.dataset.orifice=w.orifice;
+    wellSel.appendChild(opt);
+  });
+  syncWellMeta();
+}
+function syncWellMeta(){
+  const opt=wellSel.options[wellSel.selectedIndex]; if(!opt){igsEl.value='';orificeEl.value='';return;}
+  igsEl.value=opt.value; orificeEl.value=Number(opt.dataset.orifice||0).toFixed(4); recalc();
+}
+function recalc(){
+  const a=+orificeEl.value||0, up=+upEl.value||0, dn=+dnEl.value||0;
+  const dp=up-dn, dpH2O=dp*27.7, or2=a*a;
+  const mcf=(a>0 && up>0 && dpH2O>0)? 0.2628*or2*Math.sqrt(up*dpH2O) : 0;
+  or2El.textContent=or2?or2.toFixed(4):'—';
+  dpEl.textContent=(up||dn)?dp.toFixed(1):'—';
+  dph2oEl.textContent=(up||dn)?dpH2O.toFixed(1):'—';
+  mcfEl.textContent=mcf?mcf.toFixed(3):'—';
+  let flag='—'; if(dp>=15 && mcf<1) flag='RED: Possible hydrate / line block'; else if(dp>=10 && mcf<3) flag='YELLOW: Watch – d/p high, flow low'; flagEl.textContent=flag;
+}
+function addRow(){
+  const row={date:dateEl.value,time:timeEl.value,attendant:attendantEl.value,field:fieldSel.value,
+    well:wellSel.options[wellSel.selectedIndex]?.dataset.name||'',igs:igsEl.value,orifice:orificeEl.value,
+    up:upEl.value,dn:dnEl.value,dp:dpEl.textContent.replace('—',''),dph2o:dph2oEl.textContent.replace('—',''),
+    mcf:mcfEl.textContent.replace('—',''),mode:modeEl.value,line:lineEl.value,notes:notesEl.value};
+  state.rows.push(row); renderRows(); status.textContent='Added';
+}
+function renderRows(){
+  rowsTbody.innerHTML=''; state.rows.forEach(r=>{
+    const tr=document.createElement('tr'); const dp=+r.dp, mcf=+r.mcf;
+    if(dp>=15 && mcf<1) tr.classList.add('flag-red'); else if(dp>=10 && mcf<3) tr.classList.add('flag-yellow');
+    tr.innerHTML=`<td>${e(r.date)}</td><td>${e(r.time)}</td><td>${e(r.attendant)}</td><td>${e(r.field)}</td><td>${e(r.well)}</td><td>${e(r.igs)}</td>
+      <td>${e(r.orifice)}</td><td>${e(r.up)}</td><td>${e(r.dn)}</td><td>${e(r.dp)}</td><td>${e(r.dph2o)}</td><td>${e(r.mcf)}</td>
+      <td>${e(r.mode)}</td><td>${e(r.line)}</td><td>${e(r.notes)}</td>`; rowsTbody.appendChild(tr);
+  });
+}
+function e(s){return String(s??'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
+function exportCSV(){
+  const headers=["Date","Time","Attendant","Field","Well","IGS_ID","Orifice (in)","Upstream PSI","Downstream PSI","DeltaP psi","DeltaP H2O","MCF/hour","Mode","Line Group","Notes"];
+  const rows=state.rows.map(r=>[r.date,r.time,r.attendant,r.field,r.well,r.igs,r.orifice,r.up,r.dn,r.dp,r.dph2o,r.mcf,r.mode,r.line,r.notes]);
+  const csv=[headers,...rows].map(cols=>cols.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`Daily_Pressure_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+}
+function importCSV(evt){
+  const f=evt.target.files?.[0]; if(!f) return; const r=new FileReader();
+  r.onload=()=>{const t=r.result, L=t.split(/\r?\n/).filter(l=>l.trim().length); if(!L.length) return;
+    for(let i=1;i<L.length;i++){const c=parseCSV(L[i]); if(!c) continue;
+      state.rows.push({date:c[0],time:c[1],attendant:c[2],field:c[3],well:c[4],igs:c[5],orifice:c[6],up:c[7],dn:c[8],dp:c[9],dph2o:c[10],mcf:c[11],mode:c[12],line:c[13],notes:c[14]});
+    } renderRows(); status.textContent='Imported'; evt.target.value=''; };
+  r.readAsText(f);
+}
+function parseCSV(line){
+  const out=[];let cur='';let q=false;for(let i=0;i<line.length;i++){
+    const ch=line[i],nx=line[i+1]; if(ch=='"'&&q&&nx=='"'){cur+='"';i++;continue;}
+    if(ch=='"'){q=!q;continue;} if(ch==','&&!q){out.push(cur);cur='';continue;} cur+=ch;
+  } out.push(cur); return out;
+}
+</script>
 </body>
 </html>
