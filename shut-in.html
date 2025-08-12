@@ -1,121 +1,493 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Shut-In Logs</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    h2, h3 {
-      text-align: center;
-    }
-    select, input, button, textarea {
-      margin: 5px;
-      padding: 5px;
-      font-size: 16px;
-    }
-    .well-section {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin: 10px 0;
-      background: #f9f9f9;
-    }
-    .flex {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .flex label {
-      flex: 1 1 200px;
-    }
-    .button-row {
-      text-align: center;
-      margin-top: 20px;
-    }
-    .home-button {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 10px 15px;
-      background-color: #4CAF50;
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-    }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FieldFlow – Shut‑In Series</title>
+<style>
+  :root{--ink:#e5e7eb;--muted:#9ca3af;--pri:#0B5FFF}
+  html,body{margin:0;background:#0b1220;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  header{padding:18px 16px;background:linear-gradient(180deg,#0B5FFF22,#0000)}
+  .brand{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  h1{margin:0;font-size:20px}
+  .tag{color:#9ca3af;margin-top:6px}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 14px 28px}
+  .card{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:14px;margin-top:14px}
+  .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  .grid .full{grid-column:1/-1}
+  label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+  input,select{background:#0b1220;border:1px solid #1f2937;color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px;outline:none}
+  input:focus,select:focus{border-color:var(--pri)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  button{background:#0B5FFF;border:none;color:#fff;padding:10px 14px;border-radius:8px;cursor:pointer}
+  button.secondary{background:#0b1220;border:1px solid #1f2937}
+  button.warn{background:#b91c1c}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid #1f2937;padding:8px 6px;font-size:12px;text-align:left;vertical-align:middle}
+  th{color:#9fb2ff;position:sticky;top:0;background:#111827}
+  footer{border-top:1px solid #1f2937;padding:18px 16px;color:#9ca3af;font-size:12px}
+  footer .footwrap{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
+  a.link{color:#9fb2ff;text-decoration:none}
+</style>
 </head>
 <body>
-  <a href="index.html" class="home-button">Home</a>
-  <h2>Shut-In Log</h2>
+<header>
+  <div class="brand">
+    <div>
+      <h1>FieldFlow</h1>
+      <div class="tag">Shut‑In Pressures • Series mode (production wells only)</div>
+    </div>
+    <div class="row">
+      <button class="secondary" onclick="clearSeries(confirm('Clear ALL data for this series?'))">Reset Series</button>
+    </div>
+  </div>
+</header>
 
-  <label for="fieldSelect">Select Field:</label>
-  <select id="fieldSelect" onchange="renderWells()">
-    <option value="">-- Choose Field --</option>
-    <option value="Dixon">Dixon</option>
-    <option value="Simpson Chapel">Simpson Chapel</option>
-    <option value="Mineral City">Mineral City</option>
-  </select>
+<div class="wrap">
+  <!-- SERIES CONFIG -->
+  <div class="card">
+    <div class="grid">
+      <label>Series Name
+        <input id="seriesName" placeholder="e.g., Winter Start 2025">
+      </label>
+      <label>Field
+        <select id="field"></select>
+      </label>
+      <label>Start Date
+        <input id="startDate" type="date">
+      </label>
+      <label># Days
+        <input id="numDays" type="number" min="1" step="1" value="10">
+      </label>
 
-  <div id="wellsContainer"></div>
-
-  <div class="button-row">
-    <button onclick="saveLogs()">Save Logs</button>
-    <button onclick="exportLogs()">Export</button>
+      <label>Default Pressure Type
+        <select id="defType">
+          <option value="Tubing" selected>Tubing</option>
+          <option value="Annulus">Annulus</option>
+        </select>
+      </label>
+      <label>Current Day
+        <select id="day"></select>
+      </label>
+      <div class="row">
+        <button class="secondary" id="prevDay">◀︎ Prev Day</button>
+        <button class="secondary" id="nextDay">Next Day ▶︎</button>
+      </div>
+      <div></div>
+    </div>
   </div>
 
-  <script>
-    const fieldWells = {
-      "Dixon": ["Evans 10", "Evans 5", "Evan 4-H", "Cory 8", "Cory 4", "Cory 2", "Cory 7", "Cory 3", "Cory 6", "Cory 5", "Cory 1"],
-      "Simpson Chapel": ["Blaker 1", "Emery 2", "Emery 1", "Crays 8", "Crays 5", "Crays 4", "Crays 3", "Crays 7", "Crays 2", "Crays 6", "Royal 6", "Royal 5", "Royal 4", "Royal 7", "Royal 1"],
-      "Mineral City": ["Haines 1", "Haines 2", "Haines 3", "Haines 4", "G. Axe 1", "G. Axe 2", "G. Axe 3", "G. Axe 4", "G. Axe 5", "G. Axe 6", "J. Axe 1", "Rollison 1", "Rollison 2", "Rollison 3", "Rollison 4", "Headley 1"]
-    };
+  <!-- PER-DAY CONTROLS -->
+  <div class="card">
+    <div class="grid">
+      <label>Attendant
+        <select id="attendant">
+          <option value="T. Cherry">T. Cherry</option>
+          <option value="T. Ressler">T. Ressler</option>
+          <option>Operator A</option><option>Operator B</option>
+        </select>
+      </label>
+      <label>Date (auto-suggests)
+        <input id="date" type="date">
+      </label>
+      <label>Time
+        <input id="time" type="time">
+      </label>
+      <label>Pressure Type (for add/autofill)
+        <select id="ptype">
+          <option value="Tubing">Tubing</option>
+          <option value="Annulus">Annulus</option>
+        </select>
+      </label>
 
-    function renderWells() {
-      const container = document.getElementById("wellsContainer");
-      container.innerHTML = "";
-      const selectedField = document.getElementById("fieldSelect").value;
-      if (!selectedField) return;
+      <label>Well
+        <select id="well"></select>
+      </label>
+      <label>IGS ID (auto)
+        <input id="igs" type="text" readonly placeholder="auto">
+      </label>
+      <label>Shut‑In PSI
+        <input id="psi" type="number" step="0.1" inputmode="decimal">
+      </label>
+      <label>Notes
+        <input id="notes" placeholder="Optional remarks">
+      </label>
 
-      fieldWells[selectedField].forEach(well => {
-        const now = new Date().toISOString().slice(0, 16);
-        const div = document.createElement("div");
-        div.className = "well-section";
-        div.innerHTML = `
-          <h3>${well}</h3>
-          <div class="flex">
-            <label>Annulus or Tubing:
-              <select>
-                <option value="Annulus">Annulus</option>
-                <option value="Tubing">Tubing</option>
-              </select>
-            </label>
-            <label>Pressure (PSI):
-              <input type="number" placeholder="Enter PSI">
-            </label>
-            <label>Temperature (°F):
-              <input type="number" placeholder="Enter Temp">
-            </label>
-            <label>Date/Time:
-              <input type="datetime-local" value="${now}">
-            </label>
-            <label>Notes:
-              <textarea placeholder="Optional notes..." rows="2" cols="30"></textarea>
-            </label>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-    }
+      <label class="full">
+        <input id="carryPrev" type="checkbox"> Carry previous day’s PSI/notes on Auto‑Fill
+      </label>
+    </div>
 
-    function saveLogs() {
-      alert("Logs saved! (Functionality to store or export can be added)");
-    }
+    <div class="actions">
+      <button id="autofill">Auto‑Fill All Wells (this day)</button>
+      <button class="secondary" id="add">Add Selected Well</button>
+      <button class="secondary" id="exportDay">Export CSV – Current Day</button>
+      <button class="secondary" id="exportSeries">Export CSV – Full Series</button>
+      <button class="warn" id="clearDay">Clear Current Day</button>
+    </div>
+  </div>
 
-    function exportLogs() {
-      alert("Exporting... (Coming soon)");
-    }
-  </script>
+  <!-- TABLE -->
+  <div class="card" style="overflow:auto;max-height:60vh">
+    <table>
+      <thead>
+        <tr>
+          <th>Day</th><th>Date</th><th>Time</th><th>Attendant</th>
+          <th>Field</th><th>Well</th><th>IGS_ID</th>
+          <th>Pressure Type</th><th>Shut‑In PSI</th><th>Notes</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</div>
+
+<footer>
+  <div class="footwrap">
+    <div>© 2025 FieldFlow | Underground Gas Storage</div>
+    <a class="link" href="terms.html">Terms of Use</a>
+  </div>
+</footer>
+
+<script>
+/* ================= PRODUCTION WELLS (order you use everywhere) ================= */
+const PROD_WELLS = [
+  // DIXON
+  { field:"Dixon", name:"Evans 7",  number:"118537", order:101 },
+  { field:"Dixon", name:"Evans 8",  number:"118538", order:102 },
+  { field:"Dixon", name:"Evans 3",  number:"118508", order:103 },
+  { field:"Dixon", name:"Evans 10", number:"118507", order:104 },
+  { field:"Dixon", name:"Evans 5",  number:"118536", order:105 },
+  { field:"Dixon", name:"Evans 4-H",number:"118540", order:106 },
+  { field:"Dixon", name:"Evans 6",  number:"118541", order:107 },
+  { field:"Dixon", name:"Cory 8",   number:"118527", order:108 },
+  { field:"Dixon", name:"Cory 4",   number:"118526", order:109 },
+  { field:"Dixon", name:"Cory 2",   number:"118571", order:110 },
+  { field:"Dixon", name:"Cory 7",   number:"118574", order:111 },
+  { field:"Dixon", name:"Cory 3",   number:"118572", order:112 },
+  { field:"Dixon", name:"Cory 6",   number:"118573", order:113 },
+  { field:"Dixon", name:"Cory 5",   number:"118506", order:114 },
+  { field:"Dixon", name:"Cory 1",   number:"118505", order:115 },
+  // MINERAL CITY
+  { field:"Mineral City", name:"Rollison 4", number:"118002", order:201 },
+  { field:"Mineral City", name:"Rollison 1", number:"118016", order:202 },
+  { field:"Mineral City", name:"Rollison 2", number:"118017", order:203 },
+  { field:"Mineral City", name:"G. Axe 6",   number:"118005", order:204 },
+  { field:"Mineral City", name:"Haines 4",   number:"117997", order:205 },
+  { field:"Mineral City", name:"Haines 1",   number:"117994", order:206 },
+  { field:"Mineral City", name:"Haines 2",   number:"117995", order:207 },
+  { field:"Mineral City", name:"Haines 3",   number:"117996", order:208 },
+  { field:"Mineral City", name:"G. Axe 1",   number:"118004", order:209 },
+  { field:"Mineral City", name:"WS Allen 1", number:"117981", order:210 },
+  { field:"Mineral City", name:"G. Axe 2",   number:"118088", order:211 },
+  { field:"Mineral City", name:"G. Axe 4",   number:"118090", order:212 },
+  { field:"Mineral City", name:"G. Axe 5",   number:"118091", order:213 },
+  { field:"Mineral City", name:"G. Axe 3",   number:"118089", order:214 },
+  { field:"Mineral City", name:"J. Axe 1",   number:"118093", order:215 },
+  // SIMPSON CHAPEL
+  { field:"Simpson Chapel", name:"Blaker 1", number:"118023", order:301 },
+  { field:"Simpson Chapel", name:"Emery 2",  number:"118027", order:302 },
+  { field:"Simpson Chapel", name:"Emery 1",  number:"118028", order:303 },
+  { field:"Simpson Chapel", name:"Crays 8",  number:"118025", order:304 },
+  { field:"Simpson Chapel", name:"Crays 1",  number:"118024", order:305 },
+  { field:"Simpson Chapel", name:"Crays 5",  number:"118136", order:306 },
+  { field:"Simpson Chapel", name:"Crays 4",  number:"118135", order:307 },
+  { field:"Simpson Chapel", name:"Crays 3",  number:"118134", order:308 },
+  { field:"Simpson Chapel", name:"Crays 7",  number:"118138", order:309 },
+  { field:"Simpson Chapel", name:"Crays 2",  number:"118133", order:310 },
+  { field:"Simpson Chapel", name:"Crays 6",  number:"118137", order:311 },
+  { field:"Simpson Chapel", name:"Royal 6",  number:"118143", order:312 },
+  { field:"Simpson Chapel", name:"Royal 5",  number:"118142", order:313 },
+  { field:"Simpson Chapel", name:"Royal 4",  number:"118030", order:314 },
+  { field:"Simpson Chapel", name:"Royal 7",  number:"118031", order:315 },
+  { field:"Simpson Chapel", name:"Royal 1",  number:"118029", order:316 }
+];
+
+/* ================= STATE ================= */
+const SERIES_KEY='ff_shutin_series_v1'; // saves all series in one object
+const FIELDS=[...new Set(PROD_WELLS.map(w=>w.field))];
+const $=id=>document.getElementById(id);
+
+let app = {
+  seriesName:'',
+  field: FIELDS[0]||'',
+  startDate: '',
+  numDays: 10,
+  defType: 'Tubing',
+  attendant: 'T. Cherry',
+  data: {} // {"FIELD|SERIES": { meta:{...}, days: { "1":[rows], ... } }}
+};
+
+const els = {
+  seriesName:$('seriesName'), field:$('field'), startDate:$('startDate'), numDays:$('numDays'),
+  defType:$('defType'), day:$('day'),
+  attendant:$('attendant'), date:$('date'), time:$('time'),
+  ptype:$('ptype'), well:$('well'), igs:$('igs'), psi:$('psi'), notes:$('notes'),
+  carryPrev:$('carryPrev'),
+  rows:$('rows'),
+  prevDay:$('prevDay'), nextDay:$('nextDay'),
+  autofill:$('autofill'), add:$('add'),
+  exportDay:$('exportDay'), exportSeries:$('exportSeries'), clearDay:$('clearDay')
+};
+
+/* ========== INIT UI ========== */
+FIELDS.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;els.field.appendChild(o);});
+buildDayOptions(10);
+fillNowDefaults();
+refreshWellDropdown();
+restoreAll();
+render();
+
+/* events */
+['input','change'].forEach(ev=>{
+  [els.seriesName, els.field, els.startDate, els.numDays, els.defType, els.attendant].forEach(el=>el.addEventListener(ev, ()=>{ensureSeries(); saveAll(); render();}));
+  [els.date, els.time, els.ptype, els.psi, els.notes, els.carryPrev].forEach(el=>el.addEventListener(ev, saveAll));
+});
+els.day.addEventListener('change', ()=>{saveAll(); suggestDate(); render();});
+els.prevDay.addEventListener('click', ()=>{changeDay(-1);});
+els.nextDay.addEventListener('click', ()=>{changeDay(1);});
+
+els.field.addEventListener('change', ()=>{refreshWellDropdown(); ensureSeries(); saveAll(); render();});
+els.well.addEventListener('change', ()=>{syncWellMeta(); saveAll();});
+
+els.autofill.addEventListener('click', autoFillAllForDay);
+els.add.addEventListener('click', addSelectedRow);
+els.exportDay.addEventListener('click', exportCurrentDayCSV);
+els.exportSeries.addEventListener('click', exportFullSeriesCSV);
+els.clearDay.addEventListener('click', ()=>clearCurrentDay(true));
+
+/* ========== helpers ========== */
+function fillNowDefaults(){
+  const n=new Date();
+  els.date.value=n.toISOString().slice(0,10);
+  els.time.value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+}
+function buildDayOptions(n){
+  els.day.innerHTML='';
+  for(let i=1;i<=n;i++){ const o=document.createElement('option'); o.value=String(i); o.textContent='Day '+i; els.day.appendChild(o);}
+}
+function changeDay(delta){
+  let d = parseInt(els.day.value||'1',10)+delta;
+  const N=parseInt(els.numDays.value||'10',10);
+  if(d<1) d=1; if(d>N) d=N;
+  els.day.value=String(d);
+  suggestDate(); saveAll(); render();
+}
+function suggestDate(){
+  const s=els.startDate.value;
+  if(!s) return;
+  const base=new Date(s+'T00:00:00');
+  const d=parseInt(els.day.value||'1',10)-1;
+  const dt=new Date(base.getTime()+d*86400000);
+  els.date.value = dt.toISOString().slice(0,10);
+}
+function ensureSeries(){
+  app.seriesName = els.seriesName.value.trim();
+  app.field = els.field.value;
+  app.startDate = els.startDate.value;
+  app.numDays = parseInt(els.numDays.value||'10',10);
+  app.defType = els.defType.value;
+  app.attendant = els.attendant.value;
+
+  // adjust day options if numDays changed
+  buildDayOptions(app.numDays);
+  if(parseInt(els.day.value||'1',10)>app.numDays){ els.day.value=String(app.numDays); }
+
+  const key = seriesKey();
+  if(!app.data[key]){
+    app.data[key] = { meta:{
+        seriesName: app.seriesName, field: app.field, startDate: app.startDate,
+        numDays: app.numDays, defType: app.defType
+      }, days:{} };
+  }else{
+    app.data[key].meta = { seriesName: app.seriesName, field: app.field, startDate: app.startDate,
+      numDays: app.numDays, defType: app.defType };
+  }
+}
+function seriesKey(){ return (els.field.value||'')+'|'+(els.seriesName.value||''); }
+
+function wellsForField(f){ return PROD_WELLS.filter(w=>w.field===f).sort((a,b)=>(a.order??0)-(b.order??0)); }
+function refreshWellDropdown(){
+  els.well.innerHTML='';
+  wellsForField(els.field.value).forEach(w=>{
+    const o=document.createElement('option');
+    o.value = w.number; o.textContent = w.name; o.dataset.name = w.name; o.dataset.field = w.field;
+    els.well.appendChild(o);
+  });
+  syncWellMeta();
+}
+function syncWellMeta(){
+  const opt=els.well.options[els.well.selectedIndex];
+  els.igs.value = opt ? opt.value : '';
+}
+
+/* ========== rows per DAY ========== */
+function currentDayRows(){
+  const key=seriesKey();
+  const d=els.day.value||'1';
+  const rec = app.data[key]?.days?.[d] || [];
+  return rec;
+}
+function setCurrentDayRows(rows){
+  const key=seriesKey(); const d=els.day.value||'1';
+  if(!app.data[key]) app.data[key]={meta:{},days:{}};
+  app.data[key].days[d]=rows;
+}
+function addSelectedRow(){
+  ensureSeries();
+  const opt=els.well.options[els.well.selectedIndex];
+  if(!opt){ alert('Pick a well first.'); return; }
+  const row = {
+    day: parseInt(els.day.value||'1',10),
+    date: els.date.value,
+    time: els.time.value,
+    attendant: els.attendant.value,
+    field: opt.dataset.field,
+    well: opt.dataset.name,
+    igs: opt.value,
+    ptype: els.ptype.value,
+    psi: els.psi.value,
+    notes: els.notes.value
+  };
+  const rows = currentDayRows(); rows.push(row);
+  setCurrentDayRows(rows); saveAll(); render();
+}
+function autoFillAllForDay(){
+  ensureSeries();
+  const rows=[];
+  const d = parseInt(els.day.value||'1',10);
+  const wells = wellsForField(els.field.value);
+  const carry = els.carryPrev.checked;
+  const prevDay = String(d-1);
+  const key=seriesKey();
+  const prevRows = carry && d>1 ? (app.data[key]?.days?.[prevDay]||[]) : [];
+  const prevByWell = new Map(prevRows.map(r=>[(r.igs||r.well), r]));
+
+  wells.forEach(w=>{
+    const prev = prevByWell.get(w.number) || prevByWell.get(w.name) || {};
+    rows.push({
+      day:d,
+      date: els.date.value,
+      time: els.time.value,
+      attendant: els.attendant.value,
+      field: w.field,
+      well: w.name,
+      igs: w.number,
+      ptype: els.ptype.value || app.defType,
+      psi: carry && prev.psi ? prev.psi : '',
+      notes: carry && prev.notes ? prev.notes : ''
+    });
+  });
+  setCurrentDayRows(rows); saveAll(); render();
+}
+function deleteRow(idx){
+  const rows=currentDayRows();
+  rows.splice(idx,1);
+  setCurrentDayRows(rows); saveAll(); render();
+}
+function clearCurrentDay(confirmFlag){
+  if(confirmFlag && !confirm('Clear rows for the current day only?')) return;
+  setCurrentDayRows([]); saveAll(); render();
+}
+
+/* ========== RENDER TABLE ========== */
+function render(){
+  ensureSeries();
+  els.ptype.value = els.ptype.value || app.defType || 'Tubing';
+
+  const rows = currentDayRows();
+  // stable order by configured well order
+  const orderMap=new Map(PROD_WELLS.map((w,i)=>[w.field+'|'+w.name, w.order??i]));
+  rows.sort((a,b)=>{
+    if(a.field!==b.field) return a.field<b.field?-1:1;
+    return (orderMap.get(a.field+'|'+a.well)||0) - (orderMap.get(b.field+'|'+b.well)||0);
+  });
+
+  els.rows.innerHTML='';
+  rows.forEach((r,idx)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `
+      <td>${e(r.day)}</td>
+      <td>${e(r.date)}</td>
+      <td>${e(r.time)}</td>
+      <td>${e(r.attendant)}</td>
+      <td>${e(r.field)}</td>
+      <td>${e(r.well)}</td>
+      <td>${e(r.igs)}</td>
+      <td>${e(r.ptype)}</td>
+      <td>${e(r.psi)}</td>
+      <td>${e(r.notes)}</td>
+      <td><button class="secondary" onclick="deleteRow(${idx})">Delete</button></td>`;
+    els.rows.appendChild(tr);
+  });
+
+  // keep suggested date aligned with startDate + (day-1)
+  suggestDate();
+}
+
+/* ========== CSV EXPORTS ========== */
+function exportCurrentDayCSV(){
+  const key=seriesKey(); const d=els.day.value||'1';
+  const rows = app.data[key]?.days?.[d] || [];
+  if(!rows.length){ alert('No rows for this day.'); return; }
+  const headers=["Series","Field","Day","Date","Time","Attendant","Well","IGS_ID","Pressure Type","Shut-In PSI","Notes"];
+  const csv=[headers, ...rows.map(r=>[
+    app.seriesName, app.field, r.day, r.date, r.time, r.attendant, r.well, r.igs, r.ptype, r.psi, r.notes
+  ])].map(cols=>cols.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(',')).join('\n');
+  download(csv, `${safe(app.seriesName)}_${app.field}_Day${d}.csv`);
+}
+function exportFullSeriesCSV(){
+  const key=seriesKey();
+  const dset = app.data[key]?.days || {};
+  const headers=["Series","Field","Day","Date","Time","Attendant","Well","IGS_ID","Pressure Type","Shut-In PSI","Notes"];
+  const all=[];
+  Object.keys(dset).sort((a,b)=>parseInt(a)-parseInt(b)).forEach(k=>{
+    dset[k].forEach(r=>{
+      all.push([app.seriesName, app.field, r.day, r.date, r.time, r.attendant, r.well, r.igs, r.ptype, r.psi, r.notes]);
+    });
+  });
+  if(!all.length){ alert('No data in this series yet.'); return; }
+  const csv=[headers, ...all].map(cols=>cols.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(',')).join('\n');
+  download(csv, `${safe(app.seriesName)}_${app.field}_FULL.csv`);
+}
+
+/* ========== STORAGE ========== */
+function saveAll(){
+  ensureSeries();
+  try{
+    localStorage.setItem(SERIES_KEY, JSON.stringify(app));
+  }catch(e){ console.warn('Save failed', e); }
+}
+function restoreAll(){
+  try{
+    const raw=localStorage.getItem(SERIES_KEY); if(!raw) return;
+    const obj=JSON.parse(raw); if(!obj||typeof obj!=='object') return;
+    app = obj;
+    // populate UI with last used meta
+    els.seriesName.value = app.seriesName||'';
+    els.field.value = app.field||FIELDS[0]||'';
+    refreshWellDropdown();
+    els.startDate.value = app.startDate||'';
+    els.numDays.value = String(app.numDays||10);
+    buildDayOptions(parseInt(els.numDays.value,10));
+    els.defType.value = app.defType||'Tubing';
+    els.attendant.value = app.attendant||'T. Cherry';
+    if(!els.day.value) els.day.value='1';
+    suggestDate();
+  }catch(e){ console.warn('Restore failed', e); }
+}
+function clearSeries(doIt){
+  if(!doIt) return;
+  // clear only this series key (Series+Field)
+  const key=seriesKey();
+  if(app.data[key]) delete app.data[key];
+  saveAll(); render();
+}
+
+/* ========== utils ========== */
+function download(text,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8;'})); a.download=name; a.click(); }
+function e(s){return String(s??'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
+function safe(s){return String(s||'Series').replace(/[^\w\-]+/g,'_');}
+</script>
 </body>
 </html>
