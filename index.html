@@ -1,174 +1,103 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>FieldFlow</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FieldFlow – Home</title>
 <style>
-  :root {
-    --bg: #0f172a;        /* slate-900 */
-    --card: #111827;      /* gray-900 */
-    --ink: #e5e7eb;       /* gray-200 */
-    --muted: #94a3b8;     /* slate-400 */
-    --accent: #22c55e;    /* green-500 */
-    --accent-2: #38bdf8;  /* sky-400 */
-    --danger: #ef4444;    /* red-500 */
-    --shadow: 0 10px 30px rgba(0,0,0,.35);
-    --radius: 14px;
-  }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body {
-    margin: 0;
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
-    color: var(--ink);
-    background: radial-gradient(1200px 600px at 10% -10%, #1f2937 0%, #0b1222 50%, #0a0f1f 100%), var(--bg);
-  }
-  header {
-    padding: 28px 20px 8px;
-    text-align: center;
-  }
-  .logo {
-    font-weight: 800;
-    font-size: 28px;
-    letter-spacing: .5px;
-  }
-  .sub { color: var(--muted); font-size: 14px; margin-top: 6px; }
-  main { max-width: 960px; margin: 18px auto 40px; padding: 0 16px; }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-  }
-  .card {
-    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: var(--radius);
-    padding: 16px 18px;
-    box-shadow: var(--shadow);
-    display: flex; align-items: center; gap: 14px;
-    text-decoration: none; color: var(--ink);
-    transition: transform .12s ease, border-color .12s ease, background .12s ease;
-  }
-  .card:hover { transform: translateY(-2px); border-color: rgba(56,189,248,.35); background: rgba(56,189,248,.06); }
-  .ico {
-    width: 44px; height: 44px; border-radius: 10px;
-    display: grid; place-items: center; font-size: 22px;
-    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08);
-  }
-  .title { font-weight: 700; font-size: 16px; line-height: 1.15; }
-  .desc { color: var(--muted); font-size: 12px; margin-top: 2px; }
-  footer { max-width: 960px; margin: 24px auto 40px; padding: 0 16px; color: var(--muted); }
-  .footrow { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-  .link { color: var(--accent-2); text-decoration: none; }
-  .link:hover { text-decoration: underline; }
-  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
-  .pill { padding: 2px 8px; border-radius: 999px; font-size: 11px; border: 1px solid rgba(255,255,255,.12); color: var(--muted); }
+  :root{--ink:#e5e7eb;--muted:#9ca3af;--pri:#0B5FFF}
+  html,body{margin:0;background:#0b1220;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:linear-gradient(90deg,#0B5FFF22,#12B88622)}
+  h1{font-size:18px;margin:0}
+  .wrap{max-width:1100px;margin:18px auto;padding:0 14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  .card{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:16px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:8px}
+  .card:hover{border-color:#345bff44;box-shadow:0 0 0 1px #345bff33 inset}
+  .card h2{margin:0;font-size:16px;color:#dbe2ff}
+  .card p{margin:0;color:#9ca3af;font-size:13px;line-height:1.35}
+  .foot{margin-top:18px;font-size:12px;color:#9ca3af;display:flex;justify-content:space-between;align-items:center}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{background:#0B5FFF;border:none;color:white;padding:8px 12px;border-radius:8px;cursor:pointer}
+  .btn.secondary{background:#0b1220;border:1px solid #1f2937;color:#e5e7eb}
 </style>
 </head>
 <body>
-  <header>
-    <div class="logo">FieldFlow</div>
-    <div class="sub">Underground Gas Storage • Fast logging • Smart checks</div>
-  </header>
+<header>
+  <h1>FieldFlow – Home</h1>
+  <div class="row">
+    <button class="btn secondary" onclick="clearAutosaves()">Reset Autosave</button>
+  </div>
+</header>
 
-  <main>
-    <div class="grid">
+<div class="wrap">
+  <div class="grid">
+    <a class="card" href="daily-pressure.html">
+      <h2>Daily Pressure Log</h2>
+      <p>All wells per field • ΔP & MCF/hr • Goal tracker</p>
+    </a>
 
-      <a class="card" href="daily-pressure.html">
-        <div class="ico">📈</div>
-        <div>
-          <div class="title">Daily Pressure Log</div>
-          <div class="desc">All wells per field • MCF calc • Goal tracker</div>
-        </div>
-      </a>
+    <a class="card" href="annual-inspections.html">
+      <h2>Annual Inspections</h2>
+      <p>Prod + OBS • Valve/Leak checks • Auto date</p>
+    </a>
 
-      <a class="card" href="annual-inspections.html">
-        <div class="ico">✅</div>
-        <div>
-          <div class="title">Annual Inspections</div>
-          <div class="desc">Prod + OBS • Valve/leak checks • Auto date • Save</div>
-        </div>
-      </a>
+    <a class="card" href="daily-activity.html">
+      <h2>Daily Activity</h2>
+      <p>Timeline notes • Tasks • Clean exports</p>
+    </a>
 
-      <a class="card" href="files.html">
-        <div class="ico">🗂️</div>
-        <div>
-          <div class="title">Files</div>
-          <div class="desc">Central archive • Filters • Printable accordion</div>
-        </div>
-      </a>
+    <a class="card" href="shut-in.html">
+      <h2>Shut‑In Logs</h2>
+      <p>10‑day series • Annulus/Tubing • Trends</p>
+    </a>
 
-      <a class="card" href="daily-activity.html">
-        <div class="ico">📝</div>
-        <div>
-          <div class="title">Daily Activity</div>
-          <div class="desc">Area 2402 • 7:00–3:00 timeline • Clean exports</div>
-        </div>
-      </a>
+    <a class="card" href="swd-readings.html">
+      <h2>SWD Readings</h2>
+      <p>Mineral & Simpson • Pressures & volumes • Monday reminder</p>
+    </a>
 
-      <a class="card" href="shut-in.html">
-        <div class="ico">🛠️</div>
-        <div>
-          <div class="title">Shut-In Logs</div>
-          <div class="desc">10-day series • Annulus/Tubing • Trends</div>
-          <span class="pill">Coming soon</span>
-        </div>
-      </a>
+    <a class="card" href="obs-readings.html">
+      <h2>OBS Readings</h2>
+      <p>On‑Water dropdown • Auto time/date • Save/CSV on page</p>
+    </a>
 
-      <a class="card" href="swd.html">
-        <div class="ico">🧪</div>
-        <div>
-          <div class="title">SWD Readings</div>
-          <div class="desc">Axe 8 • Crays 16 • Crays 14 • Monday 8am reminder</div>
-          <span class="pill">Coming soon</span>
-        </div>
-      </a>
+    <a class="card" href="well-status.html">
+      <h2>Well Status Tracker</h2>
+      <p>Open/Closed • Color coded • Save & export</p>
+    </a>
 
-      <a class="card" href="obs-readings.html">
-        <div class="ico">🧭</div>
-        <div>
-          <div class="title">OBS Readings</div>
-          <div class="desc">On-Water dropdown • Auto time/date • Save</div>
-          <span class="pill">Coming soon</span>
-        </div>
-      </a>
+    <a class="card" href="gps-route.html">
+      <h2>GPS Route</h2>
+      <p>Track & optimize field route (offline‑friendly)</p>
+    </a>
+  </div>
 
-      <a class="card" href="well-status.html">
-        <div class="ico">🚦</div>
-        <div>
-          <div class="title">Well Status Tracker</div>
-          <div class="desc">Open/Closed • Color coded • Save & export</div>
-          <span class="pill">Coming soon</span>
-        </div>
-      </a>
+  <div class="foot">
+    <div>Tip: add this to your tablet home screen for one‑tap access.</div>
+    <div id="lastSaved">Autosave: —</div>
+  </div>
+</div>
 
-      <a class="card" href="gps.html">
-        <div class="ico">🗺️</div>
-        <div>
-          <div class="title">GPS Route</div>
-          <div class="desc">Track & optimize field route</div>
-          <span class="pill">Coming soon</span>
-        </div>
-      </a>
-
-      <a class="card" href="export.html">
-        <div class="ico">📤</div>
-        <div>
-          <div class="title">Export</div>
-          <div class="desc">Email / CSV / Save to device</div>
-          <span class="pill">Coming soon</span>
-        </div>
-      </a>
-
-    </div>
-  </main>
-
-  <footer>
-    <div class="footrow">
-      <div>© 2025 FieldFlow | Underground Gas Storage</div>
-      <div><a class="link" href="terms.html">Terms of Use</a></div>
-    </div>
-  </footer>
+<script>
+/* Clear per‑page autosaves from the home screen if needed */
+const KEYS = [
+  'ff_daily_autosave_v1',
+  'ff_targets_v1',
+  'ff_annual_autosave_v1',
+  'ff_annual_autosave_v2',
+  'ff_obs_autosave_v1'
+];
+function clearAutosaves(){
+  if(!confirm('Clear saved rows & autosave data for all pages?')) return;
+  KEYS.forEach(k=>localStorage.removeItem(k));
+  localStorage.setItem('ff_last_saved_ts', Date.now().toString());
+  alert('Autosave cleared.');
+  updateLastSaved();
+}
+function updateLastSaved(){
+  const t = localStorage.getItem('ff_last_saved_ts');
+  document.getElementById('lastSaved').textContent = t ? ('Autosave: ' + new Date(parseInt(t,10)).toLocaleString()) : 'Autosave: —';
+}
+updateLastSaved();
+</script>
 </body>
 </html>
