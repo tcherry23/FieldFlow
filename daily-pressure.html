@@ -29,6 +29,10 @@
   .files-list{display:flex;flex-direction:column;gap:8px}
   .file-row{display:flex;justify-content:space-between;align-items:center;background:#0b1220;border:1px solid #1f2937;border-radius:8px;padding:8px 10px}
   .file-row small{color:#9ca3af}
+  .goal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
+  .goal>div{background:#0b1220;border:1px solid #1f2937;border-radius:8px;padding:10px 12px}
+  .goal b{display:block;color:#9ca3af;font-size:12px;margin-bottom:4px}
+  .goal input{width:100%}
 </style>
 </head>
 <body>
@@ -55,6 +59,15 @@
         <select id="mode"><option>Withdrawal</option><option>Injection</option><option>Idle</option><option>Shut-In</option></select>
       </label>
       <label class="full">Notes <input id="notes" type="text" placeholder="Optional remarks"></label>
+    </div>
+
+    <!-- Daily Field Target panel -->
+    <div class="goal">
+      <div><b>Target MCF/hr (Field)</b>
+        <input id="fieldTarget" type="number" step="0.001" inputmode="decimal" placeholder="Enter target for this field">
+      </div>
+      <div><b>Current MCF/hr (Field)</b><span id="fieldCurrent">—</span></div>
+      <div><b>Remaining to Target</b><span id="fieldRemain">—</span></div>
     </div>
 
     <div class="calc">
@@ -156,6 +169,7 @@ const WELLS = [
 
 const AUTOSAVE_KEY='ff_daily_autosave_v1';
 const FILES_KEY='ff_files';
+const TARGETS_KEY='ff_targets_v1'; // stores per (date + field) target MCF/hr
 
 const FIELDS=[...new Set(WELLS.map(w=>w.field))];
 const state={rows:[]};
@@ -163,7 +177,7 @@ const $=id=>document.getElementById(id);
 const dateEl=$('date'),timeEl=$('time'),attendantEl=$('attendant'),fieldSel=$('field'),wellSel=$('well'),
 igsEl=$('igs'),orificeEl=$('orifice'),lineEl=$('line'),upEl=$('up'),dnEl=$('dn'),modeEl=$('mode'),notesEl=$('notes'),
 or2El=$('or2'),dpEl=$('dp'),dph2oEl=$('dph2o'),mcfEl=$('mcf'),flagEl=$('flag'),rowsTbody=$('rows'),status=$('status'),
-filesBox=$('files');
+filesBox=$('files'), fieldTargetEl=$('fieldTarget'), fieldCurrentEl=$('fieldCurrent'), fieldRemainEl=$('fieldRemain');
 
 // init
 FIELDS.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;fieldSel.appendChild(o);});
@@ -171,12 +185,16 @@ FIELDS.forEach(f=>{const o=document.createElement('option');o.value=f;o.textCont
   const n=new Date();
   dateEl.value=n.toISOString().slice(0,10);
   timeEl.value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
-  loadFiles(); loadState();
+  loadFiles(); loadState(); loadTargets(); refreshWells(); recalc(); updateFieldTotals();
 })();
-fieldSel.addEventListener('change', ()=>{refreshWells(); afterChange();});
-wellSel.addEventListener('change', ()=>{syncWellMeta(); afterChange();});
-[orificeEl,upEl,dnEl,notesEl,lineEl,dateEl,timeEl,attendantEl,modeEl].forEach(x=>x.addEventListener('input', recalc));
-$('add').addEventListener('click', addRow);
+
+fieldSel.addEventListener('change', ()=>{refreshWells(); recalc(); loadTargetForCurrent(); updateFieldTotals(); afterChange();});
+wellSel.addEventListener('change', ()=>{syncWellMeta(); recalc(); updateFieldTotals(); afterChange();});
+[orificeEl,upEl,dnEl,notesEl,lineEl,dateEl,timeEl,attendantEl,modeEl].forEach(x=>x.addEventListener('input', ()=>{recalc(); updateFieldTotals(); afterChange();}));
+fieldTargetEl.addEventListener('input', ()=>{saveTargetForCurrent(); updateFieldTotals();});
+
+// buttons
+$('add').addEventListener('click', ()=>{addRow(); updateFieldTotals();});
 $('export').addEventListener('click', ()=>exportCSV(state.rows, `Daily_Pressure_${today()}.csv`));
 $('import').addEventListener('change', importCSV);
 $('saveField').addEventListener('click', saveCurrentFieldToFiles);
@@ -184,13 +202,8 @@ $('saveBundle').addEventListener('click', saveBundleToFiles);
 $('exportAllFiles').addEventListener('click', downloadAllFiles);
 $('resetDay').addEventListener('click', resetDay);
 window.addEventListener('beforeunload', (e)=>{
-  if (state.rows && state.rows.length){
-    saveState();
-    e.preventDefault(); e.returnValue='';
-  }
+  if (state.rows && state.rows.length){ saveState(); e.preventDefault(); e.returnValue=''; }
 });
-
-refreshWells(); recalc();
 
 /* --------- Wells / calc ---------- */
 function wellsForField(f){return WELLS.filter(w=>w.field===f).sort((a,b)=>(a.order??9999)-(b.order??9999));}
@@ -205,7 +218,7 @@ function refreshWells(){
 }
 function syncWellMeta(){
   const opt=wellSel.options[wellSel.selectedIndex]; if(!opt){igsEl.value='';orificeEl.value='';return;}
-  igsEl.value=opt.value; orificeEl.value=Number(opt.dataset.orifice||0).toFixed(4); recalc();
+  igsEl.value=opt.value; orificeEl.value=Number(opt.dataset.orifice||0).toFixed(4);
 }
 function blankCalc(){or2El.textContent='—';dpEl.textContent='—';dph2oEl.textContent='—';mcfEl.textContent='—';flagEl.textContent='—';}
 function recalc(){
@@ -215,16 +228,12 @@ function recalc(){
 
   if(isNaN(a)){ blankCalc(); return; }
 
-  // Show orifice^2 immediately
   const or2=a*a; or2El.textContent=or2?or2.toFixed(4):'—';
 
-  // Only calculate dP/MCF once BOTH pressures are present
-  if(isNaN(up) || isNaN(dn)){
-    dpEl.textContent='—'; dph2oEl.textContent='—'; mcfEl.textContent='—'; flagEl.textContent='—'; return;
-  }
+  if(isNaN(up) || isNaN(dn)){ dpEl.textContent='—'; dph2oEl.textContent='—'; mcfEl.textContent='—'; flagEl.textContent='—'; return; }
 
-  const dp = up - dn;                          // ΔP (psi)
-  const dpH2O = dp * 27.7;                     // ΔP (in H2O)
+  const dp = up - dn;
+  const dpH2O = dp * 27.7;
   const mcf = (a>0 && up>0 && dpH2O>0) ? 0.2628 * or2 * Math.sqrt(up * dpH2O) : 0;
 
   dpEl.textContent=dp.toFixed(1);
@@ -235,6 +244,32 @@ function recalc(){
   if(dp>=15 && mcf<1) flag='RED: Possible hydrate / line block';
   else if(dp>=10 && mcf<3) flag='YELLOW: Watch – d/p high, flow low';
   flagEl.textContent=flag;
+}
+
+/* --------- Field target math ---------- */
+function targetKey(){ return `${dateEl.value}::${fieldSel.value}`; }
+function loadTargets(){ try{ window._targets = JSON.parse(localStorage.getItem(TARGETS_KEY)||'{}'); }catch{ window._targets = {}; } }
+function saveTargets(){ localStorage.setItem(TARGETS_KEY, JSON.stringify(window._targets||{})); }
+function loadTargetForCurrent(){
+  const key=targetKey(); const t=(window._targets||{})[key];
+  fieldTargetEl.value = (t!==undefined && t!==null && t!=='') ? t : '';
+}
+function saveTargetForCurrent(){
+  const key=targetKey(); window._targets = window._targets || {};
+  const v = fieldTargetEl.value===''? '' : Number(fieldTargetEl.value);
+  window._targets[key]=v; saveTargets();
+}
+function fieldLiveMcf(){
+  const v=mcfEl.textContent.trim(); return v && v!=='—' ? Number(v) : 0;
+}
+function updateFieldTotals(){
+  const fld=fieldSel.value;
+  const sum = (state.rows||[]).filter(r=>r.field===fld).reduce((s,r)=>s + (Number(r.mcf)||0), 0);
+  // include current live calc (not yet added) in preview
+  const preview = sum + fieldLiveMcf();
+  const tgt = fieldTargetEl.value===''? NaN : Number(fieldTargetEl.value);
+  fieldCurrentEl.textContent = preview ? preview.toFixed(3) : '—';
+  fieldRemainEl.textContent = isNaN(tgt) ? '—' : (tgt - preview).toFixed(3);
 }
 
 /* --------- Table rows ---------- */
@@ -253,6 +288,7 @@ function renderRows(){
       <td>${e(r.orifice)}</td><td>${e(r.up)}</td><td>${e(r.dn)}</td><td>${e(r.dp)}</td><td>${e(r.dph2o)}</td><td>${e(r.mcf)}</td>
       <td>${e(r.mode)}</td><td>${e(r.line)}</td><td>${e(r.notes)}</td>`; rowsTbody.appendChild(tr);
   });
+  updateFieldTotals();
 }
 
 /* --------- CSV helpers ---------- */
@@ -350,7 +386,7 @@ function downloadAllFiles(){
 /* Reset the day (clear rows + autosave) */
 function resetDay(){
   if(!confirm('Clear all rows for today? Make sure you saved/exported first.')) return;
-  state.rows = []; renderRows(); saveState(); status.textContent='Cleared';
+  state.rows = []; renderRows(); saveState(); status.textContent='Cleared'; updateFieldTotals();
 }
 
 /* utils */
