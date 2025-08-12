@@ -21,10 +21,14 @@
   .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
   button{background:#0B5FFF;border:none;color:white;padding:10px 14px;border-radius:8px;cursor:pointer}
   button.secondary{background:#0b1220;border:1px solid #1f2937}
+  button.warn{background:#b91c1c}
   table{width:100%;border-collapse:collapse}
   th,td{border-bottom:1px solid #1f2937;padding:10px 8px;font-size:13px;text-align:left}
   th{color:#9fb2ff}
   tr.flag-yellow{background:#2f2a12} tr.flag-red{background:#331b1b}
+  .files-list{display:flex;flex-direction:column;gap:8px}
+  .file-row{display:flex;justify-content:space-between;align-items:center;background:#0b1220;border:1px solid #1f2937;border-radius:8px;padding:8px 10px}
+  .file-row small{color:#9ca3af}
 </style>
 </head>
 <body>
@@ -63,7 +67,11 @@
 
     <div class="actions">
       <button id="add">Add Row</button>
-      <button class="secondary" id="export">Export CSV</button>
+      <button class="secondary" id="export">Export CSV (all rows)</button>
+      <button class="secondary" id="saveField">Save Field → Files</button>
+      <button class="secondary" id="saveBundle">Save Bundle (All Rows)</button>
+      <button class="secondary" id="exportAllFiles">Download All Files</button>
+      <button class="warn" id="resetDay">Reset Day (clear rows)</button>
       <label class="secondary" style="padding:8px 12px;border-radius:8px;cursor:pointer">
         Import CSV<input type="file" id="import" accept=".csv" style="display:none">
       </label>
@@ -80,6 +88,11 @@
       </thead>
       <tbody id="rows"></tbody>
     </table>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Files</h3>
+    <div id="files" class="files-list"></div>
   </div>
 </div>
 
@@ -105,7 +118,7 @@ const WELLS = [
   { field:"Dixon", name:"Cory 5",   number:"118506", orifice:1.0000, order:114 },
   { field:"Dixon", name:"Cory 1",   number:"118505", orifice:1.0000, order:115 },
 
-  // --------- MINERAL CITY (photo order you sent) ---------
+  // --------- MINERAL CITY (your photo order) ---------
   { field:"Mineral City", name:"Rollison 4", number:"118002", orifice:0.7500, order:201 },
   { field:"Mineral City", name:"Rollison 1", number:"118016", orifice:0.7500, order:202 },
   { field:"Mineral City", name:"Rollison 2", number:"118017", orifice:0.7500, order:203 },
@@ -122,17 +135,17 @@ const WELLS = [
   { field:"Mineral City", name:"G. Axe 3",   number:"118089", orifice:0.5000, order:214 },
   { field:"Mineral City", name:"J. Axe 1",   number:"118093", orifice:1.0000, order:215 },
 
-  // --------- SIMPSON CHAPEL (sheet order you sent) ---------
+  // --------- SIMPSON CHAPEL (sheet order) ---------
   { field:"Simpson Chapel", name:"Blaker 1", number:"118023", orifice:0.5000, order:301 },
   { field:"Simpson Chapel", name:"Emery 2",  number:"118027", orifice:0.7500, order:302 },
   { field:"Simpson Chapel", name:"Emery 1",  number:"118028", orifice:0.7500, order:303 },
   { field:"Simpson Chapel", name:"Crays 8",  number:"118025", orifice:1.0000, order:304 },
-  { field:"Simpson Chapel", name:"Crays 1",  number:"118024",       orifice:0.5000, order:305 },  // add IGS when you have it
+  { field:"Simpson Chapel", name:"Crays 1",  number:"",       orifice:0.5000, order:305 },  /* fill IGS when ready */
   { field:"Simpson Chapel", name:"Crays 5",  number:"118136", orifice:0.7500, order:306 },
   { field:"Simpson Chapel", name:"Crays 4",  number:"118135", orifice:0.2500, order:307 },
   { field:"Simpson Chapel", name:"Crays 3",  number:"118134", orifice:0.7500, order:308 },
   { field:"Simpson Chapel", name:"Crays 7",  number:"118138", orifice:1.0000, order:309 },
-  { field:"Simpson Chapel", name:"Crays 2",  number:"118133",       orifice:1.0000, order:310 },  // add IGS when you have it
+  { field:"Simpson Chapel", name:"Crays 2",  number:"",       orifice:1.0000, order:310 },  /* fill IGS when ready */
   { field:"Simpson Chapel", name:"Crays 6",  number:"118137", orifice:1.0000, order:311 },
   { field:"Simpson Chapel", name:"Royal 6",  number:"118143", orifice:0.6250, order:312 },
   { field:"Simpson Chapel", name:"Royal 5",  number:"118142", orifice:0.5000, order:313 },
@@ -141,25 +154,45 @@ const WELLS = [
   { field:"Simpson Chapel", name:"Royal 1",  number:"118029", orifice:0.5000, order:316 }
 ];
 
+const AUTOSAVE_KEY='ff_daily_autosave_v1';
+const FILES_KEY='ff_files';
+
 const FIELDS=[...new Set(WELLS.map(w=>w.field))];
 const state={rows:[]};
 const $=id=>document.getElementById(id);
 const dateEl=$('date'),timeEl=$('time'),attendantEl=$('attendant'),fieldSel=$('field'),wellSel=$('well'),
 igsEl=$('igs'),orificeEl=$('orifice'),lineEl=$('line'),upEl=$('up'),dnEl=$('dn'),modeEl=$('mode'),notesEl=$('notes'),
-or2El=$('or2'),dpEl=$('dp'),dph2oEl=$('dph2o'),mcfEl=$('mcf'),flagEl=$('flag'),rowsTbody=$('rows'),status=$('status');
+or2El=$('or2'),dpEl=$('dp'),dph2oEl=$('dph2o'),mcfEl=$('mcf'),flagEl=$('flag'),rowsTbody=$('rows'),status=$('status'),
+filesBox=$('files');
 
+// init
 FIELDS.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;fieldSel.appendChild(o);});
-(function initDT(){const n=new Date();dateEl.value=n.toISOString().slice(0,10);timeEl.value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');})();
-
-fieldSel.addEventListener('change', refreshWells);
-wellSel.addEventListener('change', syncWellMeta);
-[orificeEl,upEl,dnEl].forEach(x=>x.addEventListener('input', recalc));
+(function initDT(){
+  const n=new Date();
+  dateEl.value=n.toISOString().slice(0,10);
+  timeEl.value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  loadFiles(); loadState(); // restore autosaved rows & files
+})();
+fieldSel.addEventListener('change', ()=>{refreshWells(); afterChange();});
+wellSel.addEventListener('change', ()=>{syncWellMeta(); afterChange();});
+[orificeEl,upEl,dnEl,notesEl,lineEl,dateEl,timeEl,attendantEl,modeEl].forEach(x=>x.addEventListener('change', afterChange));
 $('add').addEventListener('click', addRow);
-$('export').addEventListener('click', exportCSV);
+$('export').addEventListener('click', ()=>exportCSV(state.rows, `Daily_Pressure_${today()}.csv`));
 $('import').addEventListener('change', importCSV);
+$('saveField').addEventListener('click', saveCurrentFieldToFiles);
+$('saveBundle').addEventListener('click', saveBundleToFiles);
+$('exportAllFiles').addEventListener('click', downloadAllFiles);
+$('resetDay').addEventListener('click', resetDay);
+window.addEventListener('beforeunload', (e)=>{
+  if (state.rows && state.rows.length){
+    saveState();
+    e.preventDefault(); e.returnValue='';
+  }
+});
 
 refreshWells(); recalc();
 
+/* --------- Wells / calc ---------- */
 function wellsForField(f){return WELLS.filter(w=>w.field===f).sort((a,b)=>(a.order??9999)-(b.order??9999));}
 function refreshWells(){
   wellSel.innerHTML='';
@@ -184,12 +217,14 @@ function recalc(){
   mcfEl.textContent=mcf?mcf.toFixed(3):'—';
   let flag='—'; if(dp>=15 && mcf<1) flag='RED: Possible hydrate / line block'; else if(dp>=10 && mcf<3) flag='YELLOW: Watch – d/p high, flow low'; flagEl.textContent=flag;
 }
+
+/* --------- Table rows ---------- */
 function addRow(){
   const row={date:dateEl.value,time:timeEl.value,attendant:attendantEl.value,field:fieldSel.value,
     well:wellSel.options[wellSel.selectedIndex]?.dataset.name||'',igs:igsEl.value,orifice:orificeEl.value,
     up:upEl.value,dn:dnEl.value,dp:dpEl.textContent.replace('—',''),dph2o:dph2oEl.textContent.replace('—',''),
     mcf:mcfEl.textContent.replace('—',''),mode:modeEl.value,line:lineEl.value,notes:notesEl.value};
-  state.rows.push(row); renderRows(); status.textContent='Added';
+  state.rows.push(row); renderRows(); status.textContent='Added'; afterChange();
 }
 function renderRows(){
   rowsTbody.innerHTML=''; state.rows.forEach(r=>{
@@ -200,20 +235,25 @@ function renderRows(){
       <td>${e(r.mode)}</td><td>${e(r.line)}</td><td>${e(r.notes)}</td>`; rowsTbody.appendChild(tr);
   });
 }
-function e(s){return String(s??'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
-function exportCSV(){
+
+/* --------- CSV helpers ---------- */
+function exportCSV(rows, filename){
   const headers=["Date","Time","Attendant","Field","Well","IGS_ID","Orifice (in)","Upstream PSI","Downstream PSI","DeltaP psi","DeltaP H2O","MCF/hour","Mode","Line Group","Notes"];
-  const rows=state.rows.map(r=>[r.date,r.time,r.attendant,r.field,r.well,r.igs,r.orifice,r.up,r.dn,r.dp,r.dph2o,r.mcf,r.mode,r.line,r.notes]);
-  const csv=[headers,...rows].map(cols=>cols.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
-  a.download=`Daily_Pressure_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  const csv=[headers,...rows.map(r=>[r.date,r.time,r.attendant,r.field,r.well,r.igs,r.orifice,r.up,r.dn,r.dp,r.dph2o,r.mcf,r.mode,r.line,r.notes])]
+    .map(cols=>cols.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  download(csv, filename);
+}
+function download(text, name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8;'}));
+  a.download=name; a.click();
 }
 function importCSV(evt){
   const f=evt.target.files?.[0]; if(!f) return; const r=new FileReader();
   r.onload=()=>{const t=r.result, L=t.split(/\r?\n/).filter(l=>l.trim().length); if(!L.length) return;
     for(let i=1;i<L.length;i++){const c=parseCSV(L[i]); if(!c) continue;
       state.rows.push({date:c[0],time:c[1],attendant:c[2],field:c[3],well:c[4],igs:c[5],orifice:c[6],up:c[7],dn:c[8],dp:c[9],dph2o:c[10],mcf:c[11],mode:c[12],line:c[13],notes:c[14]});
-    } renderRows(); status.textContent='Imported'; evt.target.value=''; };
+    } renderRows(); status.textContent='Imported'; evt.target.value=''; afterChange(); };
   r.readAsText(f);
 }
 function parseCSV(line){
@@ -222,6 +262,80 @@ function parseCSV(line){
     if(ch=='"'){q=!q;continue;} if(ch==','&&!q){out.push(cur);cur='';continue;} cur+=ch;
   } out.push(cur); return out;
 }
+function today(){return new Date().toISOString().slice(0,10);}
+
+/* --------- Autosave ---------- */
+function saveState(){ localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(state.rows||[])); }
+function loadState(){
+  try{
+    const raw=localStorage.getItem(AUTOSAVE_KEY);
+    if(!raw) return;
+    const rows=JSON.parse(raw);
+    if(Array.isArray(rows)){ state.rows=rows; renderRows(); status.textContent='Restored autosave'; }
+  }catch(e){ console.warn('Autosave restore failed', e); }
+}
+function afterChange(){ saveState(); }
+
+/* --------- Files (localStorage) ---------- */
+function loadFiles(){ window._files = JSON.parse(localStorage.getItem(FILES_KEY)||'[]'); renderFiles(); }
+function saveFiles(){ localStorage.setItem(FILES_KEY, JSON.stringify(window._files||[])); renderFiles(); }
+function renderFiles(){
+  filesBox.innerHTML='';
+  const arr=window._files||[];
+  if(!arr.length){ filesBox.innerHTML='<small>No saved files yet. Use “Save Field → Files” or “Save Bundle”.</small>'; return; }
+  arr.forEach((f,idx)=>{
+    const row=document.createElement('div'); row.className='file-row';
+    row.innerHTML = `<div><strong>${e(f.name)}</strong><br><small>${e(f.meta||'CSV')}</small></div>
+      <div>
+        <button class="secondary" onclick="download(atob('${btoa(f.content)}'),'${e(f.name)}')">Download</button>
+        <button class="secondary" onclick="delFile(${idx})">Delete</button>
+      </div>`;
+    filesBox.appendChild(row);
+  });
+}
+function delFile(i){ window._files.splice(i,1); saveFiles(); }
+
+/* Save current field into Files */
+function saveCurrentFieldToFiles(){
+  const fld=fieldSel.value;
+  const rows = state.rows.filter(r=>r.field===fld);
+  if(!rows.length){ status.textContent='No rows for this field yet'; return; }
+  const fname = `${fld.replace(/\s+/g,'_')}_Daily_${today()}.csv`;
+  const headers=["Date","Time","Attendant","Field","Well","IGS_ID","Orifice (in)","Upstream PSI","Downstream PSI","DeltaP psi","DeltaP H2O","MCF/hour","Mode","Line Group","Notes"];
+  const csv=[headers,...rows.map(r=>[r.date,r.time,r.attendant,r.field,r.well,r.igs,r.orifice,r.up,r.dn,r.dp,r.dph2o,r.mcf,r.mode,r.line,r.notes])]
+    .map(cols=>cols.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  window._files = window._files || [];
+  window._files.push({name:fname, content:csv, meta:`${fld} • ${rows.length} rows • ${today()}`});
+  saveFiles(); status.textContent='Saved to Files'; afterChange();
+}
+
+/* Save ALL rows as one bundle file */
+function saveBundleToFiles(){
+  if (!state.rows.length){ status.textContent='No rows to save.'; return; }
+  const fname = `Daily_Bundle_${today()}.csv`;
+  const headers=["Date","Time","Attendant","Field","Well","IGS_ID","Orifice (in)","Upstream PSI","Downstream PSI","DeltaP psi","DeltaP H2O","MCF/hour","Mode","Line Group","Notes"];
+  const csv=[headers,...state.rows.map(r=>[r.date,r.time,r.attendant,r.field,r.well,r.igs,r.orifice,r.up,r.dn,r.dp,r.dph2o,r.mcf,r.mode,r.line,r.notes])]
+    .map(cols=>cols.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  window._files = window._files || [];
+  window._files.push({name:fname, content:csv, meta:`All fields • ${state.rows.length} rows • ${today()}`});
+  saveFiles(); status.textContent='Bundle saved to Files'; afterChange();
+}
+
+/* Download all saved files (each as its own CSV) */
+function downloadAllFiles(){
+  const arr=window._files||[]; if(!arr.length){status.textContent='No files to download'; return;}
+  arr.forEach(f=>download(f.content, f.name));
+  status.textContent='Downloading all files…';
+}
+
+/* Reset the day (clear rows + autosave) */
+function resetDay(){
+  if(!confirm('Clear all rows for today? Make sure you saved/ exported first.')) return;
+  state.rows = []; renderRows(); saveState(); status.textContent='Cleared';
+}
+
+/* utils */
+function e(s){return String(s??'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
 </script>
 </body>
 </html>
