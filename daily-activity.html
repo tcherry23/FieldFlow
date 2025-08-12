@@ -1,147 +1,252 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>FieldFlow — Daily Activity</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FieldFlow – Daily Activity Log</title>
 <style>
-  :root{--bg:#0f172a;--panel:#0b1222;--ink:#e5e7eb;--muted:#94a3b8;--line:rgba(255,255,255,.12);--accent:#38bdf8;--r:14px;--shadow:0 10px 30px rgba(0,0,0,.35)}
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial}
-  header{padding:18px;text-align:center;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01))}
-  h1{margin:6px 0 2px;font-size:22px}.muted{color:var(--muted);font-size:13px}
-  main{max-width:1080px;margin:18px auto 80px;padding:0 14px}
-  .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);margin-bottom:12px}
-  label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
-  select,input,textarea{background:#0a0f1f;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 10px;font-size:14px;width:100%}
-  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-  @media(max-width:900px){.row{grid-template-columns:1fr 1fr}}
-  @media(max-width:560px){.row{grid-template-columns:1fr}}
-  .table{border:1px solid var(--line);border-radius:12px;overflow:hidden}
-  .thead,.trow{display:grid;grid-template-columns:160px 1fr 120px 1fr 60px}
-  .thead{background:rgba(255,255,255,.06);font-weight:700}
-  .tcell{border-bottom:1px solid var(--line);padding:8px}
-  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  button{background:linear-gradient(180deg,rgba(56,189,248,.25),rgba(56,189,248,.12));border:1px solid rgba(56,189,248,.5);color:white;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700}
-  button.secondary{background:transparent;border:1px solid var(--line);color:var(--ink)}
-  .home{position:fixed;right:16px;bottom:16px}
+  :root{--ink:#e5e7eb;--muted:#9ca3af;--pri:#0B5FFF}
+  html,body{margin:0;background:#0b1220;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  header{padding:18px 16px;background:linear-gradient(180deg,#0B5FFF22,#0000)}
+  .brand{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  h1{margin:0;font-size:20px}
+  .tag{color:#9ca3af;margin-top:6px}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 14px 28px}
+  .card{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:14px;margin-top:14px}
+  .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+  input,select,textarea{background:#0b1220;border:1px solid #1f2937;color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px;outline:none}
+  textarea{min-height:72px;resize:vertical}
+  input:focus,select:focus,textarea:focus{border-color:var(--pri)}
+  table{width:100%;border-collapse:collapse}
+  th,td{border:1px solid #1f2937;padding:8px 6px;font-size:13px;vertical-align:top}
+  th{background:#0f1627;color:#cdd7ff;text-align:left}
+  .time{width:82px;white-space:nowrap;color:#cbd5e1;background:#0f1627}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  button{background:#0B5FFF;border:none;color:#fff;padding:10px 14px;border-radius:8px;cursor:pointer}
+  button.secondary{background:#0b1220;border:1px solid #1f2937}
+  button.warn{background:#b91c1c}
+  footer{border-top:1px solid #1f2937;padding:18px 16px;color:#9ca3af;font-size:12px}
+  footer .footwrap{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
+  a.link{color:#9fb2ff;text-decoration:none}
 </style>
 </head>
 <body>
 <header>
-  <h1>Daily Activity</h1>
-  <div class="muted">Add multiple activity lines • Save as one combined file</div>
+  <div class="brand">
+    <div>
+      <h1>FieldFlow</h1>
+      <div class="tag">Daily Activity Log • Area 2402</div>
+    </div>
+    <div>
+      <button class="secondary" onclick="resetDay(true)">Reset Autosave</button>
+    </div>
+  </div>
 </header>
 
-<main>
+<div class="wrap">
   <div class="card">
-    <div class="row">
-      <div>
-        <label>Date</label>
-        <input id="dateInput" type="text" readonly/>
-      </div>
-      <div>
-        <label>Attendant</label>
-        <select id="attendant"><option>T. Cherry</option><option>T. Ressler</option></select>
-      </div>
-      <div>
-        <label>Add Row</label>
-        <button id="addRowBtn" type="button">+ Activity</button>
-      </div>
-      <div>
-        <label>Actions</label>
-        <div class="btns">
-          <button id="saveAllBtn" type="button">Save All (Combined)</button>
-          <button id="clearAllBtn" class="secondary" type="button">Clear All</button>
-        </div>
-      </div>
+    <div class="grid">
+      <label>Employee
+        <select id="employee">
+          <option value="T. Cherry">T. Cherry</option>
+          <option value="T. Ressler">T. Ressler</option>
+          <option>Operator A</option>
+          <option>Operator B</option>
+        </select>
+      </label>
+      <label>Date <input type="date" id="date"></label>
+      <label>Clock # (optional) <input id="clock" type="text" placeholder="—"></label>
+      <label>Location (overall day, optional) <input id="dayLoc" type="text" placeholder="e.g., Dixon/Mineral/Shop"></label>
     </div>
   </div>
 
-  <div class="table">
-    <div class="thead">
-      <div class="tcell">Field</div>
-      <div class="tcell">Activity</div>
-      <div class="tcell">Hours</div>
-      <div class="tcell">Notes</div>
-      <div class="tcell">—</div>
+  <div class="card" style="overflow:auto">
+    <table id="tbl">
+      <thead>
+        <tr><th class="time">AM</th><th>Job Description</th><th>Location</th></tr>
+      </thead>
+      <tbody id="body">
+        <!-- rows injected -->
+      </tbody>
+    </table>
+    <div class="actions">
+      <button id="exportCsv" class="secondary">Export CSV</button>
+      <label class="secondary" style="padding:9px 12px;border-radius:8px;cursor:pointer">
+        Import CSV<input type="file" id="importCsv" accept=".csv" style="display:none">
+      </label>
+      <button id="print" class="secondary">Print</button>
+      <button class="warn" onclick="resetDay()">Clear Day</button>
     </div>
-    <div id="tbody"></div>
   </div>
 
-  <a class="home" href="index.html"><button class="secondary">← Home</button></a>
-</main>
+  <div class="card">
+    <div class="grid">
+      <label class="full">Remarks
+        <textarea id="remarks" placeholder="Notes for the day…"></textarea>
+      </label>
+      <label>Signature <input id="sign" placeholder="Type name for now (draw pad later)"></label>
+      <div></div><div></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footwrap">
+    <div>© 2025 FieldFlow | Underground Gas Storage</div>
+    <a class="link" href="terms.html">Terms of Use</a>
+  </div>
+</footer>
 
 <script>
-const fields = ["Dixon","Simpson Chapel","Mineral City"];
-const $ = s => document.querySelector(s);
-const el = (t,a={},c=[])=>{const n=document.createElement(t);Object.entries(a).forEach(([k,v])=>k.startsWith("on")?n.addEventListener(k.slice(2),v):n.setAttribute(k,v));c.forEach(x=>n.appendChild(typeof x==="string"?document.createTextNode(x):x));return n;};
-const todayStr=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;};
-const uid=(p="DA")=>`${p}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+const KEY = 'ff_daily_activity_autosave_v1';
+const SLOTS = [
+  // label, meridiem shown like the paper
+  ["7:00","AM"],["7:30",""],["8:00",""],["8:30",""],["9:00",""],["9:30",""],
+  ["10:00",""],["10:30",""],["11:00",""],["11:30",""],
+  ["12:00","PM"],["12:30",""],["1:00",""],["1:30",""],["2:00",""],["2:30",""],["3:00",""]
+];
+
+const $ = id => document.getElementById(id);
+const body = $('body'); // tbody
+const dateEl = $('date');
 
 function init(){
-  $("#dateInput").value=todayStr();
-  $("#addRowBtn").addEventListener("click", addRow);
-  $("#saveAllBtn").addEventListener("click", saveBatch);
-  $("#clearAllBtn").addEventListener("click", ()=>{$("#tbody").innerHTML="";});
-  addRow(); // start with one row
-}
-function addRow(){
-  const rId = uid("ROW");
-  const row = el("div",{class:"trow",id:rId},[
-    cell(selectField()), cell(inputText("",`act-${rId}`)),
-    cell(inputNum("",`hrs-${rId}`)), cell(inputText("",`note-${rId}`)),
-    cell(removeBtn(rId))
-  ]);
-  $("#tbody").appendChild(row);
-}
-function selectField(){
-  const s=el("select",{}); fields.forEach(f=>s.appendChild(new Option(f,f))); return s;
-}
-function inputText(v,id){ return el("input",{type:"text",value:v,id:id||""}); }
-function inputNum(v,id){ return el("input",{type:"number",inputmode:"decimal",value:v,id:id||""}); }
-function removeBtn(rid){ return el("button",{type:"button",onClick:()=>document.getElementById(rid)?.remove()},["Remove"]); }
-function cell(child){ const d=el("div",{class:"tcell"}); d.appendChild(child); return d; }
+  // date
+  const n = new Date();
+  dateEl.value = n.toISOString().slice(0,10);
 
-function gather(){
-  const rows=[...document.querySelectorAll(".trow")];
-  return rows.map(r=>{
-    const sel = r.querySelector("select");
-    const inputs = r.querySelectorAll("input");
-    return {
-      recordType:"Daily Activity",
-      field: sel.value,
-      activity: inputs[0].value,
-      hours: inputs[1].value,
-      notes: inputs[2].value
-    };
-  }).filter(e=>e.activity || e.notes || e.hours);
-}
-
-function saveBatch(){
-  const entries = gather();
-  if (!entries.length){ alert("Add at least one activity."); return; }
-  const key="dailyActivityBatches";
-  const arr=JSON.parse(localStorage.getItem(key)||"[]");
-  arr.push({
-    recordType:"Daily Activity",
-    batch:true,
-    batchId: uid(),
-    date: $("#dateInput").value,
-    attendant: $("#attendant").value,
-    count: entries.length,
-    entries,
-    savedAt: new Date().toISOString()
+  // build table rows like the paper
+  const tb = $('body'); tb.innerHTML='';
+  SLOTS.forEach((s,i)=>{
+    const tr = document.createElement('tr');
+    const ampm = s[1];
+    tr.innerHTML = `
+      <td class="time">${ampm?ampm+" ":""}${s[0]}</td>
+      <td><textarea rows="2" data-field="job" data-slot="${i}" placeholder="What did you do?"></textarea></td>
+      <td><input data-field="loc" data-slot="${i}" placeholder="Where?"></td>`;
+    tb.appendChild(tr);
   });
-  localStorage.setItem(key, JSON.stringify(arr));
-  toast(`Saved ${entries.length} activities as one combined file`);
+
+  // listeners for autosave
+  document.querySelectorAll('input, textarea, select').forEach(el=>{
+    el.addEventListener('input', save);
+    el.addEventListener('change', save);
+  });
+
+  // import/export/print
+  $('exportCsv').addEventListener('click', doExport);
+  $('importCsv').addEventListener('change', doImport);
+  $('print').addEventListener('click', ()=>window.print());
+
+  // restore autosave
+  restore();
+}
+init();
+
+/* Autosave */
+function collect(){
+  const data = {
+    employee: $('employee').value,
+    date: $('date').value,
+    clock: $('clock').value,
+    dayLoc: $('dayLoc').value,
+    rows: SLOTS.map((_,i)=>({
+      job: val(`[data-field="job"][data-slot="${i}"]`),
+      loc: val(`[data-field="loc"][data-slot="${i}"]`)
+    })),
+    remarks: $('remarks').value,
+    sign: $('sign').value
+  };
+  return data;
+}
+function fill(data){
+  $('employee').value=data.employee||'T. Cherry';
+  $('date').value=data.date||$('date').value;
+  $('clock').value=data.clock||'';
+  $('dayLoc').value=data.dayLoc||'';
+  (data.rows||[]).forEach((r,i)=>{
+    sel(`[data-field="job"][data-slot="${i}"]`).value=r.job||'';
+    sel(`[data-field="loc"][data-slot="${i}"]`).value=r.loc||'';
+  });
+  $('remarks').value=data.remarks||'';
+  $('sign').value=data.sign||'';
+}
+function save(){
+  localStorage.setItem(KEY, JSON.stringify(collect()));
+}
+function restore(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    if(data && typeof data==='object'){ fill(data); }
+  }catch(e){}
+}
+function resetDay(confirmNeeded){
+  if(confirmNeeded && !confirm('Clear all entries and autosave?')) return;
+  localStorage.removeItem(KEY);
+  init();
 }
 
-function toast(msg){
-  let t=document.getElementById("toast");
-  if(!t){t=el("div",{id:"toast",style:"position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.5);padding:10px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);font-weight:700;backdropFilter:"+"blur(6px);zIndex:9999"},[msg]);document.body.appendChild(t);}else t.textContent=msg;
-  t.style.opacity="1"; setTimeout(()=>{t.style.transition="opacity .6s"; t.style.opacity="0";},1200);
+/* CSV IO */
+function doExport(){
+  const d = collect();
+  const headers = ["Date","Employee","Clock","Day Location","Slot","Time","Job Description","Location","Remarks","Signature"];
+  const rows = [];
+  SLOTS.forEach((s,i)=>{
+    rows.push([
+      d.date, d.employee, d.clock, d.dayLoc,
+      i+1, s[0], (d.rows[i]?.job||''), (d.rows[i]?.loc||''), d.remarks, d.sign
+    ]);
+  });
+  const csv = [headers, ...rows]
+    .map(cols=>cols.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(','))
+    .join('\n');
+  download(csv, `Daily_Activity_${d.date}.csv`);
 }
-document.addEventListener("DOMContentLoaded", init);
+function doImport(evt){
+  const f=evt.target.files?.[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+      const text=r.result;
+      const lines=text.split(/\r?\n/).filter(l=>l.trim().length);
+      if(lines.length<2) return;
+      const cells = line=>parseCSV(line);
+      const meta = cells(lines[1]); // first data row
+      const data = {employee: meta[1], date: meta[0], clock: meta[2], dayLoc: meta[3], rows: [], remarks:'', sign:''};
+      for(let i=1;i<lines.length;i++){
+        const c = cells(lines[i]); if(c.length<10) continue;
+        const slotIndex = (+c[4]||1)-1;
+        data.rows[slotIndex] = {job:c[6]||'', loc:c[7]||''};
+        data.remarks = c[8]||data.remarks;
+        data.sign = c[9]||data.sign;
+      }
+      fill(data); save();
+      evt.target.value='';
+      alert('Imported.');
+    }catch(e){ alert('Could not import CSV.'); }
+  };
+  r.readAsText(f);
+}
+function parseCSV(line){
+  const out=[];let cur='';let q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i],nx=line[i+1];
+    if(ch=='"'&&q&&nx=='"'){cur+='"';i++;continue;}
+    if(ch=='"'){q=!q;continue;}
+    if(ch==','&&!q){out.push(cur);cur='';continue;}
+    cur+=ch;
+  } out.push(cur); return out;
+}
+function download(text, name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8;'}));
+  a.download=name; a.click();
+}
+
+/* helpers */
+function val(selr){ const el=document.querySelector(selr); return el?el.value:''; }
+function sel(selr){ return document.querySelector(selr); }
 </script>
 </body>
 </html>
