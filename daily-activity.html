@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FieldFlow – Daily Activity (Hourly)</title>
+<title>FieldFlow – Daily Activity (Mon–Fri)</title>
 <style>
   :root{--ink:#e5e7eb;--muted:#9ca3af;--pri:#0B5FFF}
   html,body{margin:0;background:#0b1220;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
@@ -16,14 +16,11 @@
   label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
   input,select,textarea{background:#0b1220;border:1px solid #1f2937;color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px;outline:none}
   input:focus,select:focus,textarea:focus{border-color:var(--pri)}
-  textarea{min-height:80px;resize:vertical;width:100%}
+  textarea{min-height:110px;resize:vertical;width:100%}
   table{width:100%;border-collapse:collapse}
   th,td{border:1px solid #1f2937;padding:8px 6px;font-size:13px;vertical-align:top}
   th{background:#0f1627;color:#cdd7ff;text-align:left}
-  .time{width:140px;white-space:nowrap;color:#cbd5e1;background:#0f1627}
-  .rowtools{display:flex;gap:8px;align-items:center;margin-top:6px}
-  .mini{background:#0b1220;border:1px solid #2a3347;color:#e5e7eb;border-radius:6px;padding:6px 8px;cursor:pointer;font-size:12px}
-  .mini:hover{border-color:#445276}
+  .day{width:160px;white-space:nowrap;color:#cbd5e1;background:#0f1627}
   .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
   button{background:#0B5FFF;border:none;color:#fff;padding:10px 14px;border-radius:8px;cursor:pointer}
   button.secondary{background:#0b1220;border:1px solid #1f2937}
@@ -31,14 +28,12 @@
   footer{border-top:1px solid #1f2937;padding:18px 16px;color:#9ca3af;font-size:12px}
   footer .footwrap{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
   a.link{color:#9fb2ff;text-decoration:none}
-
-  /* Print-friendly */
   @media print{
     body{background:#fff;color:#000}
     .card, header, footer{border:none;box-shadow:none}
     .card{background:#fff;border:1px solid #ccc}
     textarea, input, select{border:1px solid #aaa}
-    .actions, .mini{display:none}
+    .actions{display:none}
   }
 </style>
 </head>
@@ -47,15 +42,16 @@
   <div class="brand">
     <div>
       <h1>FieldFlow</h1>
-      <div class="tag">Daily Activity Log • Hourly (7:00–3:00)</div>
+      <div class="tag">Daily Activity Log • Monday–Friday</div>
     </div>
     <div>
-      <button class="secondary" onclick="resetDay(true)">Reset Autosave</button>
+      <button class="secondary" onclick="resetWeek(true)">Reset Autosave</button>
     </div>
   </div>
 </header>
 
 <div class="wrap">
+  <!-- Top controls -->
   <div class="card">
     <div class="grid">
       <label>Attendant
@@ -65,34 +61,41 @@
           <option>Operator A</option><option>Operator B</option>
         </select>
       </label>
-      <label>Date <input type="date" id="date"></label>
-      <label>Clock # (optional) <input id="clock" type="text" placeholder="—"></label>
-      <label>Area / Notes (optional) <input id="dayNote" type="text" placeholder="e.g., Dixon / SC / Shop"></label>
+      <label>Week Of (Monday)
+        <input type="date" id="weekOf">
+      </label>
+      <label>Clock # (optional)
+        <input id="clock" type="text" placeholder="—">
+      </label>
+      <label>Week Note (optional)
+        <input id="weekNote" type="text" placeholder="e.g., Dixon focus / valve work">
+      </label>
     </div>
-  </div>
-
-  <div class="card" style="overflow:auto">
-    <table>
-      <thead>
-        <tr><th class="time">Time</th><th>Job Description</th></tr>
-      </thead>
-      <tbody id="rows"></tbody>
-    </table>
-
     <div class="actions">
+      <button class="secondary" id="fillDates">Auto‑fill Mon–Fri dates</button>
+      <button class="secondary" id="printBtn">Print</button>
       <button id="exportCsv" class="secondary">Export CSV</button>
       <label class="secondary" style="padding:9px 12px;border-radius:8px;cursor:pointer">
         Import CSV<input type="file" id="importCsv" accept=".csv" style="display:none">
       </label>
-      <button id="printBtn" class="secondary">Print</button>
-      <button class="warn" onclick="resetDay()">Clear Day</button>
+      <button class="warn" onclick="resetWeek()">Clear Week</button>
     </div>
+  </div>
+
+  <!-- Week table -->
+  <div class="card" style="overflow:auto">
+    <table>
+      <thead>
+        <tr><th class="day">Day</th><th>Date</th><th>Job Description</th></tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
   </div>
 
   <div class="card">
     <div class="grid">
-      <label class="full">Remarks
-        <textarea id="remarks" placeholder="End‑of‑day notes…"></textarea>
+      <label class="full">End‑of‑Week Remarks
+        <textarea id="remarks" placeholder="Notes / incidents / follow‑ups…"></textarea>
       </label>
       <label>Signature <input id="sign" placeholder="Type name for now"></label>
       <div></div><div></div>
@@ -108,88 +111,111 @@
 </footer>
 
 <script>
-const KEY='ff_daily_activity_hourly_v2';
-const SLOTS=["7:00 AM","8:00 AM","9:00 AM","10:00 AM","11:00 AM","12:00 PM","1:00 PM","2:00 PM","3:00 PM"];
+const KEY='ff_daily_activity_week_v1';
+const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday"];
 const $=id=>document.getElementById(id);
 
 function buildRows(){
   const tb=$('rows'); tb.innerHTML='';
-  SLOTS.forEach((t,i)=>{
+  DAYS.forEach((d,i)=>{
     const tr=document.createElement('tr');
     tr.innerHTML = `
-      <td class="time">${t}</td>
-      <td>
-        <textarea data-slot="${i}" placeholder="Describe the work for this hour…"></textarea>
-        <div class="rowtools">
-          <button class="mini" data-copy-from="${i-1}" onclick="copyFromAbove(${i})" ${i===0?'disabled title="No previous hour"':''}>Same as above</button>
-        </div>
-      </td>`;
+      <td class="day">${d}</td>
+      <td><input type="date" data-day="${i}" data-field="date"></td>
+      <td><textarea data-day="${i}" data-field="desc" placeholder="What did you do?"></textarea></td>`;
     tb.appendChild(tr);
   });
 }
 
-function init(){
-  buildRows();
-  const n=new Date(); $('date').value=n.toISOString().slice(0,10);
-  document.querySelectorAll('input, textarea, select').forEach(el=>{
-    el.addEventListener('input', save); el.addEventListener('change', save);
-  });
-  $('exportCsv').addEventListener('click', exportCSV);
-  $('importCsv').addEventListener('change', importCSV);
-  $('printBtn').addEventListener('click', ()=>window.print());
-  restore();
+function mondayOf(dateStr){
+  if(!dateStr) return null;
+  const dt=new Date(dateStr+'T00:00:00');
+  const dow=dt.getDay();            // 0=Sun ... 6=Sat
+  const offset = (dow+6)%7;         // days since Monday
+  return new Date(dt.getTime()-offset*86400000);
 }
 
-/* Copy previous hour */
-function copyFromAbove(i){
-  if(i<=0) return;
-  const prev = sel(`[data-slot="${i-1}"]`);
-  const cur  = sel(`[data-slot="${i}"]`);
-  if(!cur || !prev) return;
-  cur.value = prev.value || '';
-  cur.focus();
-  // place cursor at end
-  cur.selectionStart = cur.selectionEnd = cur.value.length;
+function fillMonToFri(){
+  const mondayStr = $('weekOf').value;
+  const m = mondayOf(mondayStr);
+  if(!m) return;
+  for(let i=0;i<DAYS.length;i++){
+    const di=new Date(m.getTime()+i*86400000);
+    const iso=di.toISOString().slice(0,10);
+    sel(`[data-day="${i}"][data-field="date"]`).value = iso;
+  }
   save();
 }
 
+function init(){
+  buildRows();
+  // default Week Of = today rounded down to Monday
+  const today=new Date();
+  const dow=today.getDay(); // 0..6 Sun..Sat
+  const monday=new Date(today.getTime()-((dow+6)%7)*86400000);
+  $('weekOf').value = monday.toISOString().slice(0,10);
+  fillMonToFri();
+
+  // listeners
+  document.querySelectorAll('input, textarea, select').forEach(el=>{
+    el.addEventListener('input', save);
+    el.addEventListener('change', save);
+  });
+  $('fillDates').addEventListener('click', ()=>{ fillMonToFri(); alert('Dates filled Mon–Fri.'); });
+  $('exportCsv').addEventListener('click', exportCSV);
+  $('importCsv').addEventListener('change', importCSV);
+  $('printBtn').addEventListener('click', ()=>window.print());
+
+  restore();
+}
 init();
 
 /* Autosave */
 function collect(){
   return {
     employee:$('employee').value,
-    date:$('date').value,
+    weekOf:$('weekOf').value,
     clock:$('clock').value,
-    dayNote:$('dayNote').value,
-    slots: SLOTS.map((_,i)=>val(`[data-slot="${i}"]`)),
+    weekNote:$('weekNote').value,
+    days: DAYS.map((_,i)=>({
+      date: val(`[data-day="${i}"][data-field="date"]`),
+      desc: val(`[data-day="${i}"][data-field="desc"]`)
+    })),
     remarks:$('remarks').value,
     sign:$('sign').value
   };
 }
 function fill(d){
-  $('employee').value=d.employee||'T. Cherry';
-  $('date').value=d.date||$('date').value;
-  $('clock').value=d.clock||'';
-  $('dayNote').value=d.dayNote||'';
-  (d.slots||[]).forEach((txt,i)=>{ sel(`[data-slot="${i}"]`).value = txt||''; });
-  $('remarks').value=d.remarks||'';
-  $('sign').value=d.sign||'';
+  $('employee').value = d.employee || 'T. Cherry';
+  $('weekOf').value = d.weekOf || $('weekOf').value;
+  $('clock').value = d.clock || '';
+  $('weekNote').value = d.weekNote || '';
+  (d.days||[]).forEach((r,i)=>{
+    const dateEl = sel(`[data-day="${i}"][data-field="date"]`);
+    const descEl = sel(`[data-day="${i}"][data-field="desc"]`);
+    if(dateEl) dateEl.value = r.date || dateEl.value;
+    if(descEl) descEl.value = r.desc || '';
+  });
+  $('remarks').value = d.remarks || '';
+  $('sign').value = d.sign || '';
 }
 function save(){ localStorage.setItem(KEY, JSON.stringify(collect())); }
 function restore(){ try{ const raw=localStorage.getItem(KEY); if(raw){ fill(JSON.parse(raw)); } }catch{} }
-function resetDay(confirmFlag){
-  if(confirmFlag && !confirm('Clear all entries and autosave?')) return;
+function resetWeek(confirmFlag){
+  if(confirmFlag && !confirm('Clear all entries and autosave for this week?')) return;
   localStorage.removeItem(KEY); buildRows(); init();
 }
 
 /* CSV */
 function exportCSV(){
   const d=collect();
-  const headers=["Date","Attendant","Clock","Area Note","Slot","Time","Job Description","Remarks","Signature"];
-  const rows=SLOTS.map((t,i)=>[d.date,d.employee,d.clock,d.dayNote,i+1,t,d.slots[i]||'',d.remarks,d.sign]);
+  const headers=["Week Of (Mon)","Attendant","Clock","Week Note","Day","Date","Job Description","End‑of‑Week Remarks","Signature"];
+  const rows = [];
+  DAYS.forEach((name,i)=>{
+    rows.push([d.weekOf,d.employee,d.clock,d.weekNote,name,d.days[i]?.date||'',d.days[i]?.desc||'',d.remarks,d.sign]);
+  });
   const csv=[headers,...rows].map(cols=>cols.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(',')).join('\n');
-  download(csv, `Daily_Activity_Hourly_${d.date}.csv`);
+  download(csv, `Daily_Activity_Week_${d.weekOf||'week'}.csv`);
 }
 function importCSV(evt){
   const f=evt.target.files?.[0]; if(!f) return; const r=new FileReader();
@@ -197,17 +223,23 @@ function importCSV(evt){
     const lines=r.result.split(/\r?\n/).filter(l=>l.trim().length); if(lines.length<2) return;
     const parse=line=>{const a=[];let c='',q=false;for(let i=0;i<line.length;i++){const ch=line[i],nx=line[i+1];if(ch=='"'&&q&&nx=='"'){c+='"';i++;continue;}if(ch=='"'){q=!q;continue;}if(ch==','&&!q){a.push(c);c='';continue;}c+=ch;}a.push(c);return a;}
     const first=parse(lines[1]);
-    const d={date:first[0],employee:first[1],clock:first[2],dayNote:first[3],slots:Array(SLOTS.length).fill(''),remarks:'',sign:''};
-    for(let i=1;i<lines.length;i++){const c=parse(lines[i]); const slot=(+c[4]||1)-1; if(slot>=0&&slot<SLOTS.length)d.slots[slot]=c[6]||''; d.remarks=c[7]||d.remarks; d.sign=c[8]||d.sign;}
-    fill(d); save(); evt.target.value=''; alert('Imported.');
+    const data={weekOf:first[0],employee:first[1],clock:first[2],weekNote:first[3],days:Array(5).fill(null).map(()=>({date:'',desc:''})),remarks:'',sign:''};
+    for(let i=1;i<lines.length && i<=5;i++){
+      const c=parse(lines[i]); // [weekOf, emp, clock, weekNote, Day, Date, Desc, Remarks, Sign]
+      const idx = i-1;
+      data.days[idx] = {date:c[5]||'', desc:c[6]||''};
+      data.remarks = c[7]||data.remarks;
+      data.sign = c[8]||data.sign;
+    }
+    fill(data); save(); evt.target.value=''; alert('Imported.');
   }catch(e){ alert('Could not import CSV.'); } };
   r.readAsText(f);
 }
-function download(text,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'})); a.download=name; a.click(); }
 
 /* helpers */
 function val(q){const el=document.querySelector(q); return el?el.value:'';}
 function sel(q){return document.querySelector(q);}
+function download(text,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'})); a.download=name; a.click(); }
 </script>
 </body>
 </html>
