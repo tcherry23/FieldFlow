@@ -15,6 +15,9 @@
   label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
   input,select{background:#0b1220;border:1px solid #1f2937;color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px;outline:none}
   input:focus,select:focus{border-color:var(--pri)}
+  .goal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
+  .goal>div{background:#0b1220;border:1px solid #1f2937;border-radius:8px;padding:10px 12px}
+  .goal b{display:block;color:#9ca3af;font-size:12px;margin-bottom:4px}
   .calc{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:10px}
   .calc>div{background:#0b1220;border:1px solid #1f2937;border-radius:8px;padding:10px 12px}
   .calc b{display:block;color:#9ca3af;font-size:12px;margin-bottom:4px}
@@ -23,16 +26,15 @@
   button.secondary{background:#0b1220;border:1px solid #1f2937}
   button.warn{background:#b91c1c}
   table{width:100%;border-collapse:collapse}
-  th,td{border-bottom:1px solid #1f2937;padding:10px 8px;font-size:13px;text-align:left}
+  th,td{border-bottom:1px solid #1f2937;padding:10px 8px;font-size:13px;text-align:left;vertical-align:middle}
   th{color:#9fb2ff}
-  tr.flag-yellow{background:#2f2a12} tr.flag-red{background:#331b1b}
+  tr.flag-yellow{background:#2f2a12}
+  tr.flag-red{background:#331b1b}
   .files-list{display:flex;flex-direction:column;gap:8px}
   .file-row{display:flex;justify-content:space-between;align-items:center;background:#0b1220;border:1px solid #1f2937;border-radius:8px;padding:8px 10px}
   .file-row small{color:#9ca3af}
-  .goal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
-  .goal>div{background:#0b1220;border:1px solid #1f2937;border-radius:8px;padding:10px 12px}
-  .goal b{display:block;color:#9ca3af;font-size:12px;margin-bottom:4px}
-  .goal input{width:100%}
+  .btn-row{background:#0b1220;border:1px solid #374151;color:#e5e7eb;border-radius:6px;padding:6px 10px;cursor:pointer}
+  .btn-row:hover{border-color:#4b5563}
 </style>
 </head>
 <body>
@@ -96,7 +98,7 @@
       <thead>
       <tr>
         <th>Date</th><th>Time</th><th>Attendant</th><th>Field</th><th>Well</th><th>IGS_ID</th>
-        <th>Orifice (in)</th><th>Up</th><th>Down</th><th>ΔP psi</th><th>ΔP H₂O</th><th>MCF/hr</th><th>Mode</th><th>Line</th><th>Notes</th>
+        <th>Orifice (in)</th><th>Up</th><th>Down</th><th>ΔP psi</th><th>ΔP H₂O</th><th>MCF/hr</th><th>Mode</th><th>Line</th><th>Notes</th><th></th>
       </tr>
       </thead>
       <tbody id="rows"></tbody>
@@ -153,12 +155,12 @@ const WELLS = [
   { field:"Simpson Chapel", name:"Emery 2",  number:"118027", orifice:0.7500, order:302 },
   { field:"Simpson Chapel", name:"Emery 1",  number:"118028", orifice:0.7500, order:303 },
   { field:"Simpson Chapel", name:"Crays 8",  number:"118025", orifice:1.0000, order:304 },
-  { field:"Simpson Chapel", name:"Crays 1",  number:"118024",       orifice:0.5000, order:305 },  /* add IGS when ready */
+  { field:"Simpson Chapel", name:"Crays 1",  number:"118024", orifice:0.5000, order:305 },
   { field:"Simpson Chapel", name:"Crays 5",  number:"118136", orifice:0.7500, order:306 },
   { field:"Simpson Chapel", name:"Crays 4",  number:"118135", orifice:0.2500, order:307 },
   { field:"Simpson Chapel", name:"Crays 3",  number:"118134", orifice:0.7500, order:308 },
   { field:"Simpson Chapel", name:"Crays 7",  number:"118138", orifice:1.0000, order:309 },
-  { field:"Simpson Chapel", name:"Crays 2",  number:"118133",       orifice:1.0000, order:310 },  /* add IGS when ready */
+  { field:"Simpson Chapel", name:"Crays 2",  number:"118133", orifice:1.0000, order:310 },
   { field:"Simpson Chapel", name:"Crays 6",  number:"118137", orifice:1.0000, order:311 },
   { field:"Simpson Chapel", name:"Royal 6",  number:"118143", orifice:0.6250, order:312 },
   { field:"Simpson Chapel", name:"Royal 5",  number:"118142", orifice:0.5000, order:313 },
@@ -185,7 +187,7 @@ FIELDS.forEach(f=>{const o=document.createElement('option');o.value=f;o.textCont
   const n=new Date();
   dateEl.value=n.toISOString().slice(0,10);
   timeEl.value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
-  loadFiles(); loadState(); loadTargets(); refreshWells(); recalc(); updateFieldTotals();
+  loadFiles(); loadState(); loadTargets(); refreshWells(); recalc(); updateFieldTotals(); loadTargetForCurrent();
 })();
 
 fieldSel.addEventListener('change', ()=>{refreshWells(); recalc(); loadTargetForCurrent(); updateFieldTotals(); afterChange();});
@@ -265,8 +267,7 @@ function fieldLiveMcf(){
 function updateFieldTotals(){
   const fld=fieldSel.value;
   const sum = (state.rows||[]).filter(r=>r.field===fld).reduce((s,r)=>s + (Number(r.mcf)||0), 0);
-  // include current live calc (not yet added) in preview
-  const preview = sum + fieldLiveMcf();
+  const preview = sum + fieldLiveMcf(); // include current typed well
   const tgt = fieldTargetEl.value===''? NaN : Number(fieldTargetEl.value);
   fieldCurrentEl.textContent = preview ? preview.toFixed(3) : '—';
   fieldRemainEl.textContent = isNaN(tgt) ? '—' : (tgt - preview).toFixed(3);
@@ -280,13 +281,23 @@ function addRow(){
     mcf:mcfEl.textContent.replace('—',''),mode:modeEl.value,line:lineEl.value,notes:notesEl.value};
   state.rows.push(row); renderRows(); status.textContent='Added'; afterChange();
 }
+function deleteRow(idx){
+  if(!confirm('Delete this row?')) return;
+  state.rows.splice(idx,1);
+  renderRows();
+  status.textContent='Row deleted';
+  afterChange();
+}
 function renderRows(){
-  rowsTbody.innerHTML=''; state.rows.forEach(r=>{
+  rowsTbody.innerHTML='';
+  state.rows.forEach((r,idx)=>{
     const tr=document.createElement('tr'); const dp=+r.dp, mcf=+r.mcf;
     if(dp>=15 && mcf<1) tr.classList.add('flag-red'); else if(dp>=10 && mcf<3) tr.classList.add('flag-yellow');
     tr.innerHTML=`<td>${e(r.date)}</td><td>${e(r.time)}</td><td>${e(r.attendant)}</td><td>${e(r.field)}</td><td>${e(r.well)}</td><td>${e(r.igs)}</td>
       <td>${e(r.orifice)}</td><td>${e(r.up)}</td><td>${e(r.dn)}</td><td>${e(r.dp)}</td><td>${e(r.dph2o)}</td><td>${e(r.mcf)}</td>
-      <td>${e(r.mode)}</td><td>${e(r.line)}</td><td>${e(r.notes)}</td>`; rowsTbody.appendChild(tr);
+      <td>${e(r.mode)}</td><td>${e(r.line)}</td><td>${e(r.notes)}</td>
+      <td><button class="btn-row" onclick="deleteRow(${idx})">Delete</button></td>`;
+    rowsTbody.appendChild(tr);
   });
   updateFieldTotals();
 }
