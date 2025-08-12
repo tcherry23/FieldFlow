@@ -1,87 +1,325 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>OBS Readings – FieldFlow</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    h2 { text-align: center; }
-    label { display: inline-block; width: 200px; margin-bottom: 5px; }
-    select, input[type="number"], input[type="text"] {
-      padding: 5px;
-      margin-bottom: 10px;
-      width: 200px;
-    }
-    .well-entry {
-      border: 1px solid #ccc;
-      background: #f9f9f9;
-      padding: 15px;
-      margin-bottom: 20px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      margin-top: 20px;
-    }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FieldFlow – OBS Readings</title>
+<style>
+  :root{--ink:#e5e7eb;--muted:#9ca3af;--pri:#0B5FFF}
+  html,body{margin:0;background:#0b1220;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:linear-gradient(90deg,#0B5FFF22,#12B88622)}
+  h1{font-size:18px;margin:0}
+  .wrap{max-width:1200px;margin:16px auto;padding:0 12px}
+  .card{background:#111827;border:1px solid #1f2937;border-radius:10px;padding:12px 14px;margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  .grid .full{grid-column:1/-1}
+  label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+  input,select{background:#0b1220;border:1px solid #1f2937;color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px;outline:none}
+  input:focus,select:focus{border-color:var(--pri)}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  button{background:#0B5FFF;border:none;color:white;padding:10px 14px;border-radius:8px;cursor:pointer}
+  button.secondary{background:#0b1220;border:1px solid #1f2937}
+  button.warn{background:#b91c1c}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid #1f2937;padding:8px 6px;font-size:12px;text-align:left;vertical-align:middle}
+  th{color:#9fb2ff;position:sticky;top:0;background:#111827}
+  .files-list{display:flex;flex-direction:column;gap:8px}
+  .file-row{display:flex;justify-content:space-between;align-items:center;background:#0b1220;border:1px solid #1f2937;border-radius:8px;padding:8px 10px}
+  .file-row small{color:#9ca3af}
+  .btn-row{background:#0b1220;border:1px solid #374151;color:#e5e7eb;border-radius:6px;padding:6px 10px;cursor:pointer}
+  .btn-row:hover{border-color:#4b5563}
+</style>
 </head>
 <body>
-  <h2>Observation Well Readings</h2>
+<header><h1>FieldFlow – OBS Readings</h1><span id="status" style="opacity:.75">Ready</span></header>
 
-  <label for="field">Select Field:</label>
-  <select id="field" onchange="showWells()">
-    <option value="">-- Select --</option>
-    <option value="Dixon">Dixon</option>
-    <option value="Mineral City">Mineral City</option>
-    <option value="Simpson Chapel">Simpson Chapel</option>
-  </select>
+<div class="wrap">
+  <div class="card">
+    <div class="grid">
+      <label>Attendant
+        <select id="attendant"><option value="T. Cherry">T. Cherry</option><option>Operator A</option><option>Operator B</option></select>
+      </label>
+      <label>Date <input type="date" id="date"></label>
+      <label>Time <input type="time" id="time"></label>
+      <label>Field <select id="field"></select></label>
 
-  <div id="wellsContainer"></div>
+      <label>Well (OBS only) <select id="well"></select></label>
+      <label>IGS ID (auto) <input id="igs" type="text" placeholder="(blank for now)" readonly></label>
+      <label>On Water?
+        <select id="onWater"><option value="No" selected>No</option><option>Yes</option></select>
+      </label>
+      <div></div>
 
-  <button onclick="goHome()">Home</button>
+      <label>Tubing Pressure (PSI) <input id="tubPSI" type="number" step="0.1" inputmode="decimal"></label>
+      <label>Annulus Pressure (PSI) <input id="annPSI" type="number" step="0.1" inputmode="decimal"></label>
+      <label>Surface Casing (PSI) <input id="surfPSI" type="number" step="0.1" inputmode="decimal"></label>
+      <label>Blow Down Time (min) <input id="bdTime" type="number" step="1" inputmode="numeric"></label>
 
-  <script>
-    const obsWells = {
-      "Dixon": ["Evans 1", "Evans 2", "Evans 9", "Hendren 1", "Mount 1", "Dowden 1"],
-      "Mineral City": ["Horning 1", "G Axe 7", "Boruff 1", "Floyd 1", "Rollison 5", "Foster 1"],
-      "Simpson Chapel": ["Blackmore 3", "RH Stone 1", "Royal 2", "Royal 3", "Rollison 5", "Royal 9", "S Blackmore 1", "Blackmore 4", "Royal 8"]
-    };
+      <label class="full">Remarks <input id="notes" type="text" placeholder="Optional remarks"></label>
+    </div>
 
-    function showWells() {
-      const field = document.getElementById("field").value;
-      const container = document.getElementById("wellsContainer");
-      container.innerHTML = "";
+    <div class="actions">
+      <button id="autofill">Auto‑Fill All OBS Wells (Field)</button>
+      <button class="secondary" id="add">Add Selected Well</button>
+      <button class="secondary" id="export">Export CSV (all rows)</button>
+      <button class="secondary" id="saveField">Save Field → Files</button>
+      <button class="secondary" id="saveBundle">Save Bundle (All Rows)</button>
+      <button class="secondary" id="exportAllFiles">Download All Files</button>
+      <button class="warn" id="resetRows">Reset Rows (clear table)</button>
+      <label class="secondary" style="padding:8px 12px;border-radius:8px;cursor:pointer">
+        Import CSV<input type="file" id="import" accept=".csv" style="display:none">
+      </label>
+    </div>
+  </div>
 
-      const today = new Date().toISOString().split('T')[0];
+  <div class="card" style="overflow:auto;max-height:60vh">
+    <table>
+      <thead>
+      <tr>
+        <th>Date</th><th>Time</th><th>Attendant</th><th>Field</th><th>Well</th><th>IGS_ID</th>
+        <th>Tubing PSI</th><th>Annulus PSI</th><th>Surface Casing PSI</th><th>Blow Down (min)</th><th>On Water</th>
+        <th>Remarks</th><th></th>
+      </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
 
-      if (obsWells[field]) {
-        obsWells[field].forEach(well => {
-          const div = document.createElement("div");
-          div.className = "well-entry";
-          div.innerHTML = `
-            <h3>${well}</h3>
-            <label>Date:</label><input type="text" value="${today}" readonly><br>
-            <label>Surface Casing Pressure:</label><input type="number"><br>
-            <label>Annulus Pressure:</label><input type="number"><br>
-            <label>Tubing Pressure:</label><input type="number"><br>
-            <label>Blow Down Time:</label><input type="text"><br>
-            <label>On Water:</label>
-            <select>
-              <option value="">-- Select --</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select><br>
-            <label>Remarks:</label><input type="text" style="width: 100%;"><br>
-          `;
-          container.appendChild(div);
-        });
-      }
-    }
+  <div class="card">
+    <h3 style="margin-top:0">Files</h3>
+    <div id="files" class="files-list"></div>
+  </div>
+</div>
 
-    function goHome() {
-      window.location.href = "index.html";
-    }
-  </script>
+<script>
+/* ================= OBS WELL LISTS ================= */
+const OBS_WELLS = [
+  // DIXON
+  { field:"Dixon", name:"Evans 1", number:"", order:1001 },
+  { field:"Dixon", name:"Evans 2", number:"", order:1002 },
+  { field:"Dixon", name:"Evans 9", number:"", order:1003 },
+  { field:"Dixon", name:"Hendren 1", number:"", order:1004 },
+  { field:"Dixon", name:"Mount 1", number:"", order:1005 },
+  { field:"Dixon", name:"Dowden 1", number:"", order:1006 },
+
+  // MINERAL CITY
+  { field:"Mineral City", name:"Horning 1", number:"", order:1101 },
+  { field:"Mineral City", name:"G Axe 7", number:"", order:1102 },
+  { field:"Mineral City", name:"Boruff 1", number:"", order:1103 },
+  { field:"Mineral City", name:"Floyd 1", number:"", order:1104 },
+  { field:"Mineral City", name:"Rollison 5", number:"", order:1105 },
+  { field:"Mineral City", name:"Foster 1", number:"", order:1106 },
+
+  // SIMPSON CHAPEL
+  { field:"Simpson Chapel", name:"Blackmore 3", number:"", order:1201 },
+  { field:"Simpson Chapel", name:"RH Stone 1", number:"", order:1202 },
+  { field:"Simpson Chapel", name:"Royal 2", number:"", order:1203 },
+  { field:"Simpson Chapel", name:"Royal 3", number:"", order:1204 },
+  { field:"Simpson Chapel", name:"Rollison 5", number:"", order:1205 },
+  { field:"Simpson Chapel", name:"Royal 9", number:"", order:1206 },
+  { field:"Simpson Chapel", name:"S Blackmore 1", number:"", order:1207 },
+  { field:"Simpson Chapel", name:"Blackmore 4", number:"", order:1208 },
+  { field:"Simpson Chapel", name:"Royal 8", number:"", order:1209 }
+];
+
+const AUTOSAVE_KEY='ff_obs_autosave_v1';
+const FILES_KEY='ff_files'; // shared Files panel
+const FIELDS=[...new Set(OBS_WELLS.map(w=>w.field))];
+
+const state={rows:[]};
+const $=id=>document.getElementById(id);
+const status=$('status');
+const attendantEl=$('attendant'), dateEl=$('date'), timeEl=$('time'), fieldSel=$('field'),
+wellSel=$('well'), igsEl=$('igs'), onWaterEl=$('onWater'),
+tubEl=$('tubPSI'), annEl=$('annPSI'), surfEl=$('surfPSI'), bdEl=$('bdTime'), notesEl=$('notes'),
+rowsTbody=$('rows'), filesBox=$('files');
+
+// init
+FIELDS.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;fieldSel.appendChild(o);});
+(function initDT(){
+  const n=new Date();
+  dateEl.value=n.toISOString().slice(0,10);
+  timeEl.value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  refreshWellDropdown(); loadFiles(); loadState(); renderRows();
+})();
+fieldSel.addEventListener('change', ()=>{refreshWellDropdown(); syncWellMeta();});
+wellSel.addEventListener('change', ()=>syncWellMeta());
+['input','change'].forEach(ev=>{
+  [attendantEl,dateEl,timeEl,onWaterEl,tubEl,annEl,surfEl,bdEl,notesEl].forEach(el=>el.addEventListener(ev, saveState));
+});
+
+// buttons
+$('add').addEventListener('click', addSelectedRow);
+$('autofill').addEventListener('click', autoFillAllForField);
+$('export').addEventListener('click', ()=>exportCSV(state.rows, `OBS_Readings_${today()}.csv`));
+$('import').addEventListener('change', importCSV);
+$('saveField').addEventListener('click', saveCurrentFieldToFiles);
+$('saveBundle').addEventListener('click', saveBundleToFiles);
+$('exportAllFiles').addEventListener('click', downloadAllFiles);
+$('resetRows').addEventListener('click', resetRows);
+window.addEventListener('beforeunload', (e)=>{
+  if (state.rows && state.rows.length){ saveState(); e.preventDefault(); e.returnValue=''; }
+});
+
+/* ---------- Dropdowns ---------- */
+function obsFor(field){ return OBS_WELLS.filter(w=>w.field===field).sort((a,b)=>(a.order??0)-(b.order??0)); }
+function refreshWellDropdown(){
+  wellSel.innerHTML='';
+  obsFor(fieldSel.value).forEach(w=>{
+    const opt=document.createElement('option');
+    opt.value=w.number; opt.textContent=w.name; opt.dataset.name=w.name; opt.dataset.field=w.field;
+    wellSel.appendChild(opt);
+  });
+}
+function syncWellMeta(){
+  const opt=wellSel.options[wellSel.selectedIndex];
+  igsEl.value = opt ? opt.value : '';
+}
+
+/* ---------- Rows ---------- */
+function mkRow(field,name,igs){
+  return {
+    date:dateEl.value,time:timeEl.value,attendant:attendantEl.value,
+    field,well:name,igs:igs||'',
+    tubing:tubEl.value,annulus:annEl.value,surface:surfEl.value,blowdown:bdEl.value,onwater:onWaterEl.value,
+    notes:notesEl.value
+  };
+}
+function addSelectedRow(){
+  const opt=wellSel.options[wellSel.selectedIndex];
+  if(!opt){ status.textContent='Pick a field and well first.'; return; }
+  const row = mkRow(opt.dataset.field, opt.dataset.name, opt.value);
+  state.rows.push(row); renderRows(); saveState(); status.textContent='Added row';
+}
+function autoFillAllForField(){
+  if(!fieldSel.value){ status.textContent='Choose a field first.'; return; }
+  if(!confirm(`Auto-fill all OBS wells for ${fieldSel.value}? This adds rows to the table.`)) return;
+  obsFor(fieldSel.value).forEach(w=>{
+    const row = mkRow(w.field, w.name, w.number);
+    state.rows.push(row);
+  });
+  renderRows(); saveState(); status.textContent='Auto-filled wells';
+}
+function deleteRow(idx){
+  if(!confirm('Delete this row?')) return;
+  state.rows.splice(idx,1); renderRows(); saveState(); status.textContent='Row deleted';
+}
+function renderRows(){
+  rowsTbody.innerHTML='';
+  state.rows.forEach((r,idx)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `
+      <td>${e(r.date)}</td><td>${e(r.time)}</td><td>${e(r.attendant)}</td><td>${e(r.field)}</td>
+      <td>${e(r.well)}</td><td>${e(r.igs)}</td>
+      <td>${e(r.tubing)}</td><td>${e(r.annulus)}</td><td>${e(r.surface)}</td><td>${e(r.blowdown)}</td><td>${e(r.onwater)}</td>
+      <td>${e(r.notes)}</td>
+      <td><button class="btn-row" onclick="deleteRow(${idx})">Delete</button></td>`;
+    rowsTbody.appendChild(tr);
+  });
+}
+
+/* ---------- CSV / Files ---------- */
+function exportCSV(rows, filename){
+  const headers=["Date","Time","Attendant","Field","Well","IGS_ID",
+    "Tubing PSI","Annulus PSI","Surface Casing PSI","Blow Down (min)","On Water","Remarks"];
+  const csv=[headers,...rows.map(r=>[
+    r.date,r.time,r.attendant,r.field,r.well,r.igs,
+    r.tubing,r.annulus,r.surface,r.blowdown,r.onwater,r.notes
+  ])].map(cols=>cols.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  download(csv, filename);
+}
+function download(text, name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8;'}));
+  a.download=name; a.click();
+}
+function importCSV(evt){
+  const f=evt.target.files?.[0]; if(!f) return; const r=new FileReader();
+  r.onload=()=>{const t=r.result, L=t.split(/\r?\n/).filter(l=>l.trim().length); if(!L.length) return;
+    for(let i=1;i<L.length;i++){
+      const c=parseCSV(L[i]); if(!c) continue;
+      state.rows.push({
+        date:c[0],time:c[1],attendant:c[2],field:c[3],well:c[4],igs:c[5],
+        tubing:c[6],annulus:c[7],surface:c[8],blowdown:c[9],onwater:c[10],notes:c[11]
+      });
+    } renderRows(); status.textContent='Imported'; evt.target.value=''; saveState();
+  }; r.readAsText(f);
+}
+function parseCSV(line){
+  const out=[];let cur='';let q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i],nx=line[i+1];
+    if(ch=='"'&&q&&nx=='"'){cur+='"';i++;continue;}
+    if(ch=='"'){q=!q;continue;}
+    if(ch==','&&!q){out.push(cur);cur='';continue;}
+    cur+=ch;
+  } out.push(cur); return out;
+}
+function today(){return new Date().toISOString().slice(0,10);}
+
+/* ---------- Autosave ---------- */
+function saveState(){ localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(state.rows||[])); }
+function loadState(){
+  try{
+    const raw=localStorage.getItem(AUTOSAVE_KEY);
+    if(!raw) return;
+    const rows=JSON.parse(raw);
+    if(Array.isArray(rows)){ state.rows=rows; }
+  }catch(e){ console.warn('Autosave restore failed', e); }
+}
+
+/* ---------- Files (localStorage) ---------- */
+function loadFiles(){ window._files = JSON.parse(localStorage.getItem(FILES_KEY)||'[]'); renderFiles(); }
+function saveFiles(){ localStorage.setItem(FILES_KEY, JSON.stringify(window._files||[])); renderFiles(); }
+function renderFiles(){
+  filesBox.innerHTML='';
+  const arr=window._files||[];
+  if(!arr.length){ filesBox.innerHTML='<small>No saved files yet. Use “Save Field → Files” or “Save Bundle”.</small>'; return; }
+  arr.forEach((f,idx)=>{
+    const row=document.createElement('div'); row.className='file-row';
+    row.innerHTML = `<div><strong>${e(f.name)}</strong><br><small>${e(f.meta||'CSV')}</small></div>
+      <div><button class="secondary" onclick="download(atob('${btoa(f.content)}'),'${e(f.name)}')">Download</button>
+           <button class="secondary" onclick="delFile(${idx})">Delete</button></div>`;
+    filesBox.appendChild(row);
+  });
+}
+function delFile(i){ window._files.splice(i,1); saveFiles(); }
+
+function saveCurrentFieldToFiles(){
+  const fld=fieldSel.value;
+  const rows = state.rows.filter(r=>r.field===fld);
+  if(!rows.length){ status.textContent='No rows for this field yet'; return; }
+  const fname = `${fld.replace(/\s+/g,'_')}_OBS_${today()}.csv`;
+  const headers=["Date","Time","Attendant","Field","Well","IGS_ID",
+    "Tubing PSI","Annulus PSI","Surface Casing PSI","Blow Down (min)","On Water","Remarks"];
+  const csv=[headers,...rows.map(r=>[
+    r.date,r.time,r.attendant,r.field,r.well,r.igs,
+    r.tubing,r.annulus,r.surface,r.blowdown,r.onwater,r.notes
+  ])].map(cols=>cols.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  window._files = window._files || [];
+  window._files.push({name:fname, content:csv, meta:`${fld} • ${rows.length} rows • ${today()}`});
+  saveFiles(); status.textContent='Saved to Files';
+}
+function saveBundleToFiles(){
+  if (!state.rows.length){ status.textContent='No rows to save.'; return; }
+  const fname = `OBS_Bundle_${today()}.csv`;
+  const headers=["Date","Time","Attendant","Field","Well","IGS_ID",
+    "Tubing PSI","Annulus PSI","Surface Casing PSI","Blow Down (min)","On Water","Remarks"];
+  const csv=[headers,...state.rows.map(r=>[
+    r.date,r.time,r.attendant,r.field,r.well,r.igs,
+    r.tubing,r.annulus,r.surface,r.blowdown,r.onwater,r.notes
+  ])].map(cols=>cols.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  window._files = window._files || [];
+  window._files.push({name:fname, content:csv, meta:`All fields • ${state.rows.length} rows • ${today()}`});
+  saveFiles(); status.textContent='Bundle saved to Files';
+}
+function downloadAllFiles(){
+  const arr=window._files||[]; if(!arr.length){status.textContent='No files to download'; return;}
+  arr.forEach(f=>download(f.content, f.name));
+  status.textContent='Downloading all files…';
+}
+
+/* utils */
+function e(s){return String(s??'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
+</script>
 </body>
 </html>
