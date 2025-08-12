@@ -6,25 +6,34 @@
 <style>
   :root{--ink:#e5e7eb;--muted:#9ca3af;--pri:#0B5FFF}
   html,body{margin:0;background:#0b1220;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-  header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:linear-gradient(90deg,#0B5FFF22,#12B88622)}
-  h1{font-size:18px;margin:0}
-  .wrap{max-width:1100px;margin:18px auto;padding:0 14px}
+  header{padding:18px 16px;background:linear-gradient(180deg,#0B5FFF22,#00000000)}
+  .brand{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  h1{margin:0;font-size:20px}
+  .tag{color:#9ca3af;margin-top:6px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{background:#0B5FFF;border:none;color:white;padding:8px 12px;border-radius:8px;cursor:pointer}
+  .btn.secondary{background:#0b1220;border:1px solid #1f2937;color:#e5e7eb}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 14px 24px}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
   .card{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:16px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:8px}
   .card:hover{border-color:#345bff44;box-shadow:0 0 0 1px #345bff33 inset}
   .card h2{margin:0;font-size:16px;color:#dbe2ff}
   .card p{margin:0;color:#9ca3af;font-size:13px;line-height:1.35}
-  .foot{margin-top:18px;font-size:12px;color:#9ca3af;display:flex;justify-content:space-between;align-items:center}
-  .row{display:flex;gap:8px;flex-wrap:wrap}
-  .btn{background:#0B5FFF;border:none;color:white;padding:8px 12px;border-radius:8px;cursor:pointer}
-  .btn.secondary{background:#0b1220;border:1px solid #1f2937;color:#e5e7eb}
+  footer{border-top:1px solid #1f2937;padding:18px 16px;color:#9ca3af;font-size:12px}
+  footer .footwrap{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
+  a.link{color:#9fb2ff;text-decoration:none}
 </style>
 </head>
 <body>
 <header>
-  <h1>FieldFlow – Home</h1>
-  <div class="row">
-    <button class="btn secondary" onclick="clearAutosaves()">Reset Autosave</button>
+  <div class="brand">
+    <div>
+      <h1>FieldFlow</h1>
+      <div class="tag">Underground Gas Storage • Fast logging • Smart checks</div>
+    </div>
+    <div class="row">
+      <button class="btn secondary" onclick="clearAutosaves()">Reset Autosave</button>
+    </div>
   </div>
 </header>
 
@@ -70,15 +79,17 @@
       <p>Track & optimize field route (offline‑friendly)</p>
     </a>
   </div>
-
-  <div class="foot">
-    <div>Tip: add this to your tablet home screen for one‑tap access.</div>
-    <div id="lastSaved">Autosave: —</div>
-  </div>
 </div>
 
+<footer>
+  <div class="footwrap">
+    <div>© 2025 FieldFlow | Underground Gas Storage</div>
+    <a class="link" href="terms.html">Terms of Use</a>
+  </div>
+</footer>
+
 <script>
-/* Clear per‑page autosaves from the home screen if needed */
+/* Clears saved draft data localStorage keys used by pages */
 const KEYS = [
   'ff_daily_autosave_v1',
   'ff_targets_v1',
@@ -91,13 +102,7 @@ function clearAutosaves(){
   KEYS.forEach(k=>localStorage.removeItem(k));
   localStorage.setItem('ff_last_saved_ts', Date.now().toString());
   alert('Autosave cleared.');
-  updateLastSaved();
 }
-function updateLastSaved(){
-  const t = localStorage.getItem('ff_last_saved_ts');
-  document.getElementById('lastSaved').textContent = t ? ('Autosave: ' + new Date(parseInt(t,10)).toLocaleString()) : 'Autosave: —';
-}
-updateLastSaved();
 </script>
 </body>
 </html>
