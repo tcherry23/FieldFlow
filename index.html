@@ -51,12 +51,12 @@
 
     <a class="card" href="daily-activity.html">
       <h2>Daily Activity</h2>
-      <p>Timeline notes • Tasks • Clean exports</p>
+      <p>Mon–Fri notes • Per‑day dates • CSV/JSON save</p>
     </a>
 
     <a class="card" href="shut-in.html">
       <h2>Shut‑In Logs</h2>
-      <p>10‑day series • Annulus/Tubing • Trends</p>
+      <p>Series mode • Day picker • Auto‑fill wells</p>
     </a>
 
     <a class="card" href="swd-readings.html">
@@ -66,17 +66,12 @@
 
     <a class="card" href="obs-readings.html">
       <h2>OBS Readings</h2>
-      <p>On‑Water dropdown • Auto time/date • Save/CSV on page</p>
+      <p>On‑Water dropdown • Auto time/date • Save/CSV</p>
     </a>
 
     <a class="card" href="well-status.html">
       <h2>Well Status Tracker</h2>
-      <p>Open/Closed • Color coded • Save & export</p>
-    </a>
-
-    <a class="card" href="gps-route.html">
-      <h2>GPS Route</h2>
-      <p>Track & optimize field route (offline‑friendly)</p>
+      <p>One‑at‑a‑time • Open/Closed • Color coded</p>
     </a>
   </div>
 </div>
@@ -89,18 +84,25 @@
 </footer>
 
 <script>
-/* Clears saved draft data localStorage keys used by pages */
+/* Clear per‑page autosaves from the home screen if needed */
 const KEYS = [
   'ff_daily_autosave_v1',
   'ff_targets_v1',
   'ff_annual_autosave_v1',
   'ff_annual_autosave_v2',
-  'ff_obs_autosave_v1'
+  'ff_obs_autosave_v1',
+  'ff_shutin_series_v1',
+  'ff_wellstatus_autosave_v1',
+  'ff_daily_activity_week_v2:unspecified'
 ];
 function clearAutosaves(){
   if(!confirm('Clear saved rows & autosave data for all pages?')) return;
+  // remove known keys and any weekly activity keys
   KEYS.forEach(k=>localStorage.removeItem(k));
-  localStorage.setItem('ff_last_saved_ts', Date.now().toString());
+  for(let i=localStorage.length-1;i>=0;i--){
+    const k=localStorage.key(i);
+    if(k && k.startsWith('ff_daily_activity_week_v2:')) localStorage.removeItem(k);
+  }
   alert('Autosave cleared.');
 }
 </script>
